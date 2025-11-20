@@ -2,40 +2,55 @@
 
 ![Version](https://img.shields.io/badge/version-2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.7%2B-green)
-![License](https://img.shields.io/badge/license-HT-lightgrey)
+![License](https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-lightgrey)
 
-## Domain-Specific Bias Detection and Mitigation Toolkit
+### A domain-aware pre-processing toolkit for detecting and mitigating demographic bias in UK datasets before modelling.
 
-BiasClean v2.0 is an open-source bias-cleaning pre-processing toolkit designed to treat demographic bias with the same rigour as dirty data. It uses domain-specific, region-specific weighted fairness features for UK datasets.
+BiasClean v2.0 is an evidence-based fairness cleaning engine designed to remove demographic representation bias with the same rigour traditionally applied to dirty or missing data.  
+It provides a transparent, defensible, multi-domain weighting framework aligned with UK structural inequality patterns and regulatory expectations.
 
-## 🎯 Key Features
+---
 
-- **7 UK Domains**: Justice, Health, Finance, Education, Hiring, Business, Governance
-- **7 Universal Fairness Features**: Ethnicity, SocioeconomicStatus, Region, Age, Gender, DisabilityStatus, MigrationStatus
-- **Evidence-Based Weights**: Derived from ONS, NHS, MoJ, FCA, DfE, EHRC, BEIS
-- **Mathematical Rigor**: Representation ratio-based disparity measurement
-- **Selective Downsampling**: Bias reduction with controlled data loss (8-15%)
+## 🎯 Key Capabilities
 
-## 📊 Performance Summary
+- **7 UK Domains:** Justice, Health, Finance, Education, Hiring, Business, Governance  
+- **7 Universal Fairness Features:** Ethnicity, SocioeconomicStatus, Region, Age, Gender, DisabilityStatus, MigrationStatus  
+- **Domain-Specific Weights:** Evidence-based 7×7 matrix constructed from ONS, NHS, MoJ, FCA, DfE, EHRC, BEIS sources  
+- **Representation-Ratio Fairness Scoring:** Detects under- and over-representation patterns  
+- **Selective Downsampling:** Controlled bias reduction (typical data loss 8–15%)  
+- **Regulatory-Grade Transparency:** Clear audit trail, justification and evidence base  
+- **Report Generation:** Before/after fairness comparisons for governance and audit
 
-| Metric | Result |
-|--------|--------|
-| Average Bias Reduction | 1.95% |
-| Average Data Loss | 8.00% |
-| Most Biased Domain | Governance |
-| Least Biased Domain | Finance |
-| Domains Supported | 7 |
+---
 
-## 🚀 Quick Start
+## 🔍 Why BiasClean Is Different
 
-```python
-from biasclean_v2 import BiasClean, generate_synthetic_data
+- **UK-aligned design:** Uses national statistics, regulatory guidance and structural inequality research  
+- **Domain specificity:** Not a generic fairness tool; each domain has its own evidence-weighted feature profile  
+- **Reproducible methodology:** Transparent SIW–ESW–PLW weighting framework  
+- **Audit ready:** Designed for peer review and compliance teams  
+- **No black box steps:** Every weight, feature and fairness measure is visible and explainable  
+- **Robust feature architecture:** Seven fairness features validated in Step 1 & Step 2 technical reports  
 
-# Initialize and test
-bias_clean = BiasClean()
-bias_clean.fit('health')
+---
 
-df = generate_synthetic_data('health', n_samples=1000)
-bias_score = bias_clean.score(df)
-df_corrected = bias_clean.transform(df, mode='soft')
-report = bias_clean.report(df, df_corrected)
+## 📚 Regulatory Alignment
+
+BiasClean supports UK requirements for transparency and fairness:
+
+- Equality Act 2010 (protected characteristics)
+- MoJ disparity monitoring (Race & CJS)
+- NHS health inequality frameworks
+- FCA fairness in lending and financial inclusion expectations
+- DfE attainment inequality frameworks
+- EHRC systemic inequality guidance
+- BEIS business equity and investment disparity studies
+
+These sources collectively inform the domain-specific weighting logic and fairness feature architecture.
+
+---
+
+## 📦 Installation
+
+```bash
+pip install biasclean_v2
