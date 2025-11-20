@@ -1,8 +1,15 @@
-# BiasClean v2.0
+# 🧹 BiasClean v2.0
 
+![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey)
+[![GitHub](https://img.shields.io/badge/GitHub-HTavakoli%2FBiasClean-blue)](https://github.com/HTavakoli/BiasClean)
 ![Version](https://img.shields.io/badge/version-2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.7%2B-green)
-![License](https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-lightgrey)
+
+Open-source toolkit for detecting and mitigating demographic bias in UK datasets.  
+Developed to support the **BiasClean™** fairness pre-processing framework described in:
+
+**_BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits_ (Tavakoli, 2025).**
+
 
 ### A domain-aware pre-processing toolkit for detecting and mitigating demographic bias in UK datasets before modelling.
 
