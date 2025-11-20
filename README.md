@@ -1,7 +1,7 @@
 # 🧹 BiasClean v2.0
 
 ![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey)
-[![GitHub](https://img.shields.io/badge/GitHub-HTavakoli%2FBiasClean-blue)](https://github.com/HTavakoli/BiasClean)
+[![GitHub](https://img.shields.io/badge/GitHub-AI-Fairness-com%2FBiasClean-blue)](https://github.com/HTavakoli/BiasClean)
 ![Version](https://img.shields.io/badge/version-2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.7%2B-green)
 
