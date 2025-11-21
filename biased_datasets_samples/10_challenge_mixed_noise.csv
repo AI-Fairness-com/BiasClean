@@ -1,0 +1,1001 @@
+Ethnicity,Age,Gender,SocioeconomicStatus,DisabilityStatus,Region,MigrationStatus,Outcome
+White,72,Male,Unknown,No,Scotland,Migrant,1
+White,46,Male,High,No,Wales,Unknown,0
+White,76,Male,High,No,North West,UK-born,0
+White,78,Male,Low,Yes,North West,UK-born,1
+White,41,Female,Medium,No,North West,UK-born,0
+Black,78,Male,Medium,No,North West,UK-born,1
+White,44,Female,Medium,No,North West,UK-born,1
+White,68,Male,High,No,Wales,Unknown,0
+White,43,Female,Medium,No,South East,UK-born,0
+Asian,37,Female,Low,No,South East,UK-born,0
+White,21,Female,Medium,Yes,London,UK-born,0
+White,39,Female,Low,No,Northern Ireland,UK-born,1
+White,24,Female,High,No,Northern Ireland,UK-born,0
+White,74,Female,Medium,Prefer not to say,South East,UK-born,1
+Asian,79,Female,Medium,No,London,UK-born,1
+White,75,Female,High,No,Other,UK-born,1
+White,71,Female,Medium,No,North West,UK-born,0
+Black,35,Female,Low,Yes,London,UK-born,1
+Asian,27,Female,High,No,South East,UK-born,1
+White,48,Male,Medium,No,Wales,Migrant,0
+White,43,Male,High,No,London,UK-born,0
+White,72,Male,Medium,No,North West,UK-born,0
+White,64,Male,Medium,No,North West,UK-born,0
+White,62,Female,Medium,Yes,Scotland,Migrant,0
+Mixed,43,Male,Low,No,London,UK-born,0
+White,79,Other,Medium,No,Other,UK-born,0
+Asian,42,Male,High,No,London,UK-born,1
+Mixed,73,Male,Low,No,Scotland,UK-born,0
+White,69,Female,High,Prefer not to say,South East,Migrant,0
+Mixed,35,Male,Medium,No,London,UK-born,0
+Prefer not to say,41,Male,Medium,No,North West,UK-born,0
+Asian,71,Female,High,No,London,UK-born,0
+White,61,Female,Unknown,No,Scotland,UK-born,1
+Mixed,32,Female,Medium,No,London,Migrant,1
+Asian,25,Male,Medium,No,North West,UK-born,1
+Asian,60,Male,Medium,No,South East,UK-born,0
+Mixed,42,Female,High,No,Other,UK-born,0
+Asian,52,Female,Low,No,Wales,UK-born,0
+Asian,41,Male,High,No,Wales,UK-born,1
+White,63,Male,High,No,Wales,UK-born,0
+Asian,75,Female,High,Prefer not to say,Scotland,UK-born,1
+Other,57,Female,High,No,London,Migrant,1
+Asian,70,Prefer not to say,Low,No,Other,UK-born,0
+Other,55,Female,Unknown,No,Scotland,UK-born,0
+White,38,Prefer not to say,Medium,No,Northern Ireland,UK-born,1
+White,71,Female,Low,No,North West,UK-born,0
+White,18,Female,Medium,No,South East,UK-born,0
+White,43,Male,Medium,Yes,North West,UK-born,1
+White,27,Male,Low,No,South East,Migrant,0
+White,43,Other,High,Yes,London,UK-born,1
+Asian,19,Prefer not to say,High,No,Scotland,UK-born,0
+Other,57,Female,High,Yes,Wales,UK-born,0
+White,31,Male,Medium,No,London,UK-born,1
+White,50,Other,Unknown,No,South East,UK-born,1
+Prefer not to say,74,Female,Low,No,Scotland,Unknown,1
+Mixed,56,Male,Low,No,South East,UK-born,1
+Mixed,18,Male,Medium,No,Other,UK-born,0
+White,47,Male,Low,No,London,UK-born,1
+Asian,54,Female,High,No,Other,Unknown,1
+White,35,Female,Medium,Yes,Other,UK-born,0
+Asian,47,Male,Low,No,Other,UK-born,0
+White,44,Male,High,No,London,UK-born,1
+Asian,77,Non-binary,Low,No,South East,UK-born,0
+White,66,Female,Low,Yes,South East,UK-born,0
+Other,66,Female,Medium,No,Northern Ireland,UK-born,0
+White,47,Female,High,No,Northern Ireland,UK-born,0
+White,62,Non-binary,Medium,No,London,UK-born,1
+Mixed,70,Male,Medium,No,London,UK-born,0
+Black,53,Male,Low,Yes,North West,UK-born,1
+White,38,Male,High,No,London,Migrant,0
+White,71,Female,Medium,No,North West,UK-born,0
+White,33,Female,Medium,No,Northern Ireland,UK-born,1
+White,34,Male,Medium,No,North West,UK-born,1
+White,35,Male,Medium,No,Wales,UK-born,0
+Mixed,51,Male,High,No,South East,UK-born,1
+Asian,38,Male,Unknown,No,South East,UK-born,0
+Other,29,Other,Low,Yes,Scotland,UK-born,1
+White,48,Other,High,Prefer not to say,Northern Ireland,UK-born,1
+White,27,Male,High,No,North West,UK-born,0
+Mixed,58,Female,High,No,London,UK-born,1
+White,72,Male,High,No,South East,UK-born,1
+White,75,Female,Medium,No,Scotland,UK-born,0
+White,21,Female,Medium,No,London,Migrant,1
+White,32,Male,High,No,London,UK-born,0
+White,70,Female,Unknown,Yes,London,UK-born,1
+Asian,76,Female,Low,Prefer not to say,South East,UK-born,0
+White,72,Male,Medium,No,South East,Unknown,0
+White,79,Male,High,Prefer not to say,London,Migrant,0
+Prefer not to say,59,Female,Unknown,No,London,UK-born,1
+White,58,Female,Medium,No,South East,Migrant,1
+Mixed,45,Female,Medium,No,North West,UK-born,0
+Asian,75,Female,Medium,No,North West,UK-born,0
+White,24,Male,High,No,South East,Unknown,0
+Black,28,Female,High,No,Northern Ireland,Migrant,0
+Asian,46,Male,Medium,No,North West,UK-born,0
+Asian,51,Male,Low,No,Scotland,UK-born,0
+White,69,Female,Unknown,Prefer not to say,Northern Ireland,UK-born,0
+White,75,Male,Low,No,Northern Ireland,UK-born,1
+Black,78,Non-binary,Medium,No,Northern Ireland,UK-born,1
+Black,69,Female,Medium,No,North West,UK-born,1
+Mixed,47,Female,High,No,Scotland,UK-born,1
+White,44,Male,Medium,No,South East,UK-born,1
+White,42,Female,Medium,No,Northern Ireland,UK-born,1
+Prefer not to say,73,Male,Medium,No,South East,UK-born,1
+White,65,Male,Medium,No,Wales,UK-born,0
+White,55,Female,Medium,Prefer not to say,North West,UK-born,1
+Mixed,57,Male,Medium,No,South East,UK-born,1
+White,40,Non-binary,Low,No,South East,UK-born,0
+White,73,Prefer not to say,Low,No,Scotland,UK-born,1
+White,46,Male,Medium,No,Other,UK-born,1
+White,72,Female,Medium,No,London,UK-born,1
+White,67,Male,High,No,Other,Migrant,1
+White,28,Female,High,No,Northern Ireland,UK-born,0
+White,77,Male,High,No,Scotland,UK-born,1
+White,71,Other,High,No,London,UK-born,1
+Other,21,Female,Medium,No,Northern Ireland,UK-born,1
+Mixed,53,Female,Unknown,No,Scotland,UK-born,0
+Mixed,48,Male,Medium,No,North West,UK-born,1
+Black,27,Female,Low,No,Northern Ireland,Migrant,1
+Asian,71,Female,Medium,No,Scotland,UK-born,1
+White,33,Female,Medium,No,South East,Unknown,1
+White,73,Female,High,Prefer not to say,London,UK-born,1
+White,70,Male,High,No,Wales,UK-born,0
+Prefer not to say,47,Male,Unknown,No,South East,UK-born,0
+Asian,52,Male,Medium,No,South East,UK-born,0
+Prefer not to say,61,Male,High,No,North West,UK-born,1
+White,34,Male,Medium,Yes,Wales,UK-born,1
+Asian,22,Female,Medium,No,Other,UK-born,0
+Black,20,Male,Low,No,South East,UK-born,0
+White,33,Male,High,No,Northern Ireland,Migrant,0
+Asian,68,Male,Medium,Yes,Scotland,UK-born,0
+White,21,Female,Low,Yes,Northern Ireland,UK-born,1
+White,26,Male,Low,No,Northern Ireland,Migrant,1
+Black,21,Male,Medium,No,South East,UK-born,1
+White,38,Female,Low,No,Scotland,UK-born,0
+Other,27,Prefer not to say,Unknown,No,Other,UK-born,0
+White,70,Male,Medium,No,Scotland,UK-born,0
+White,48,Male,Low,No,North West,Unknown,1
+White,34,Male,Medium,No,South East,UK-born,1
+Mixed,33,Female,Low,No,London,Migrant,1
+Mixed,56,Male,Unknown,No,Other,UK-born,0
+White,64,Female,Low,No,Scotland,Migrant,0
+Mixed,67,Male,High,No,South East,UK-born,0
+White,23,Male,High,No,London,Migrant,0
+White,47,Female,Low,No,Wales,UK-born,1
+Mixed,32,Non-binary,High,Prefer not to say,Northern Ireland,UK-born,0
+Mixed,60,Male,Low,No,North West,UK-born,0
+White,69,Male,High,No,Other,UK-born,1
+White,48,Male,Unknown,No,South East,UK-born,1
+Mixed,47,Female,Low,No,Wales,UK-born,0
+White,54,Male,Low,No,South East,Migrant,0
+Mixed,33,Male,High,Yes,South East,UK-born,0
+Asian,61,Male,Low,No,Scotland,UK-born,1
+Asian,70,Male,Medium,No,London,UK-born,1
+Asian,53,Female,High,No,South East,UK-born,0
+Asian,79,Male,Unknown,No,London,UK-born,0
+White,19,Female,High,Yes,South East,UK-born,1
+White,45,Male,High,No,Wales,UK-born,1
+Asian,65,Non-binary,Low,No,Other,Unknown,1
+White,57,Male,Medium,No,London,UK-born,0
+Asian,34,Male,Unknown,Yes,South East,UK-born,1
+White,58,Non-binary,Medium,No,London,Migrant,1
+White,55,Non-binary,High,No,Northern Ireland,UK-born,1
+White,53,Male,Unknown,No,London,UK-born,0
+White,49,Female,Medium,Prefer not to say,Wales,Unknown,0
+Prefer not to say,71,Female,High,No,London,UK-born,0
+Black,76,Male,Unknown,No,South East,UK-born,0
+White,42,Male,Medium,No,South East,UK-born,0
+Asian,30,Female,High,No,South East,UK-born,0
+Asian,31,Male,Low,No,Scotland,UK-born,0
+Mixed,61,Female,Unknown,No,South East,UK-born,0
+Black,77,Male,Low,Yes,North West,Migrant,0
+White,42,Female,High,Yes,London,UK-born,0
+White,52,Female,High,No,North West,UK-born,1
+White,46,Female,Medium,Yes,Wales,UK-born,0
+White,32,Prefer not to say,Medium,Yes,South East,UK-born,1
+White,32,Female,Medium,No,Northern Ireland,UK-born,0
+White,64,Male,Low,No,London,UK-born,1
+White,64,Male,High,No,Northern Ireland,Migrant,0
+White,57,Male,Medium,No,Scotland,UK-born,0
+Other,34,Female,Unknown,No,North West,UK-born,0
+White,42,Male,Medium,No,London,Migrant,0
+White,40,Female,Medium,No,London,Migrant,1
+White,63,Male,Medium,No,North West,Migrant,1
+White,49,Male,High,No,Northern Ireland,UK-born,1
+Other,75,Male,Low,No,Other,UK-born,0
+White,48,Non-binary,High,Yes,Other,UK-born,0
+Asian,40,Female,High,Prefer not to say,South East,Unknown,0
+Asian,55,Male,Low,No,South East,UK-born,0
+Asian,34,Male,High,Yes,Wales,UK-born,0
+White,46,Male,Low,No,Other,Migrant,1
+Asian,19,Female,Low,No,London,UK-born,1
+Black,28,Male,High,No,South East,UK-born,0
+Prefer not to say,33,Female,Low,No,Northern Ireland,UK-born,1
+Asian,68,Male,Medium,No,North West,UK-born,0
+White,34,Female,Medium,Yes,Northern Ireland,UK-born,1
+White,38,Female,High,No,London,UK-born,1
+Black,76,Male,High,No,Wales,UK-born,0
+Asian,38,Male,High,No,South East,UK-born,0
+White,23,Male,High,Prefer not to say,Scotland,Migrant,0
+White,63,Female,Medium,No,South East,Migrant,1
+Prefer not to say,62,Other,Unknown,No,Scotland,UK-born,1
+Black,40,Male,Medium,No,Wales,UK-born,0
+White,75,Male,High,No,North West,UK-born,0
+White,74,Male,Unknown,No,Other,UK-born,0
+Mixed,78,Male,Low,No,London,UK-born,1
+Asian,49,Male,Medium,Prefer not to say,Scotland,UK-born,0
+White,56,Male,Medium,No,Other,UK-born,0
+White,62,Male,Unknown,No,Northern Ireland,UK-born,1
+White,55,Male,Medium,Yes,Scotland,UK-born,0
+White,46,Male,Medium,Yes,Northern Ireland,UK-born,1
+Asian,48,Female,Low,No,London,UK-born,1
+Black,42,Female,Medium,No,North West,Migrant,0
+Asian,19,Male,High,Prefer not to say,Other,UK-born,0
+Asian,39,Male,Unknown,No,Other,UK-born,1
+Asian,54,Non-binary,High,No,Scotland,UK-born,1
+White,61,Male,Medium,No,London,UK-born,1
+White,32,Male,Medium,No,London,UK-born,1
+White,23,Male,High,No,Other,UK-born,0
+Mixed,75,Male,Unknown,No,Northern Ireland,Unknown,0
+White,50,Male,Medium,No,South East,UK-born,0
+White,28,Female,Medium,Prefer not to say,Other,UK-born,0
+White,70,Male,Low,No,London,UK-born,0
+Prefer not to say,29,Male,Medium,No,South East,UK-born,0
+Black,41,Female,High,No,Scotland,UK-born,0
+Black,20,Male,High,Yes,London,UK-born,1
+White,47,Male,Unknown,No,Other,Unknown,1
+White,36,Female,Medium,Yes,South East,UK-born,1
+White,62,Female,Low,No,South East,UK-born,1
+Mixed,78,Male,Medium,No,North West,UK-born,1
+White,60,Male,High,No,Wales,UK-born,1
+Mixed,72,Male,Unknown,No,London,Migrant,1
+Asian,24,Female,Unknown,No,Scotland,UK-born,0
+Black,29,Male,Low,No,London,Migrant,0
+White,67,Female,Unknown,No,London,Migrant,0
+Other,46,Male,Medium,No,London,UK-born,0
+White,65,Male,Medium,No,North West,Migrant,0
+Asian,25,Male,Medium,Prefer not to say,North West,UK-born,1
+White,38,Female,Unknown,No,South East,UK-born,1
+White,74,Female,Unknown,No,North West,UK-born,1
+Prefer not to say,30,Female,Medium,No,North West,UK-born,0
+White,66,Female,Medium,No,North West,UK-born,1
+Asian,44,Male,Low,No,London,UK-born,0
+Asian,21,Other,Low,Yes,Northern Ireland,UK-born,0
+Other,49,Male,Low,No,Scotland,UK-born,0
+White,41,Male,Medium,No,London,UK-born,1
+Asian,58,Male,Medium,No,South East,UK-born,0
+Prefer not to say,26,Prefer not to say,Medium,No,Wales,UK-born,0
+Black,27,Male,High,No,Wales,UK-born,0
+Mixed,28,Female,High,No,Wales,UK-born,0
+Black,50,Male,High,No,Wales,UK-born,0
+Asian,66,Female,High,No,Scotland,UK-born,0
+White,24,Male,Medium,No,South East,UK-born,0
+White,28,Female,Medium,No,South East,Migrant,1
+White,62,Male,High,Prefer not to say,North West,UK-born,1
+White,45,Male,High,Yes,South East,UK-born,0
+White,55,Female,Medium,No,Northern Ireland,UK-born,1
+White,47,Male,Medium,No,Wales,UK-born,0
+White,72,Male,High,No,Other,UK-born,0
+Black,25,Male,Medium,No,North West,UK-born,1
+White,44,Female,High,No,Northern Ireland,UK-born,1
+Black,39,Male,Medium,No,Wales,UK-born,0
+Mixed,59,Prefer not to say,High,No,Northern Ireland,UK-born,0
+Asian,49,Female,High,No,Scotland,Migrant,0
+White,31,Male,High,No,South East,UK-born,0
+White,43,Male,Medium,No,South East,UK-born,0
+White,61,Other,Low,No,South East,UK-born,1
+White,75,Male,High,No,Scotland,UK-born,0
+Asian,72,Male,Medium,No,Northern Ireland,UK-born,1
+Asian,28,Female,Low,No,North West,UK-born,0
+White,24,Male,High,No,Scotland,Migrant,1
+White,72,Non-binary,Medium,No,Wales,Migrant,1
+White,62,Female,Medium,No,Northern Ireland,UK-born,1
+Other,47,Female,High,No,Scotland,UK-born,0
+Prefer not to say,19,Female,Medium,No,Scotland,UK-born,0
+Black,52,Male,Medium,No,Other,UK-born,0
+Black,43,Female,Medium,No,Northern Ireland,UK-born,0
+White,42,Female,Low,No,Wales,Migrant,0
+Asian,18,Male,Medium,No,Northern Ireland,UK-born,0
+White,46,Female,Medium,No,Other,Migrant,0
+Black,41,Female,Medium,No,North West,Unknown,0
+White,72,Male,Low,No,Wales,UK-born,1
+White,55,Male,Medium,Yes,Northern Ireland,Migrant,1
+Mixed,18,Female,Medium,No,North West,UK-born,0
+Prefer not to say,42,Male,Medium,Yes,Other,UK-born,1
+Asian,51,Female,Medium,No,South East,UK-born,0
+White,59,Other,Medium,No,South East,UK-born,1
+Asian,61,Male,Low,No,Scotland,UK-born,0
+Asian,22,Female,Low,No,London,Migrant,1
+Prefer not to say,58,Female,Medium,No,London,UK-born,1
+Mixed,29,Male,Unknown,No,Other,UK-born,0
+White,25,Female,Unknown,No,South East,UK-born,1
+White,59,Male,Unknown,No,London,UK-born,1
+Mixed,31,Female,High,No,North West,UK-born,0
+Prefer not to say,37,Female,High,No,Northern Ireland,UK-born,1
+White,64,Male,Medium,Yes,South East,UK-born,0
+Asian,57,Female,Low,No,North West,UK-born,0
+White,26,Male,Medium,No,London,UK-born,0
+White,77,Non-binary,Medium,No,South East,UK-born,0
+Mixed,76,Non-binary,Medium,No,Other,UK-born,0
+Black,22,Female,Medium,No,Northern Ireland,UK-born,1
+White,18,Female,Medium,No,Wales,UK-born,0
+White,28,Male,High,No,Wales,Unknown,1
+Prefer not to say,71,Male,Unknown,Yes,Scotland,UK-born,0
+Asian,21,Male,Medium,No,London,UK-born,1
+Mixed,55,Male,High,No,London,UK-born,0
+White,34,Female,Medium,No,North West,UK-born,1
+Asian,21,Female,Medium,No,Scotland,UK-born,0
+Asian,49,Female,Medium,No,Other,UK-born,0
+Mixed,22,Female,Medium,No,North West,UK-born,0
+White,39,Male,High,No,Other,UK-born,1
+Asian,31,Non-binary,Medium,Yes,Other,UK-born,1
+Black,38,Female,Medium,Yes,Northern Ireland,UK-born,0
+Mixed,35,Female,High,No,South East,UK-born,0
+White,20,Prefer not to say,Low,Yes,Wales,UK-born,0
+White,70,Female,Medium,No,North West,UK-born,1
+White,28,Female,Unknown,No,London,Migrant,1
+White,64,Female,Medium,No,London,UK-born,0
+Black,56,Female,Medium,No,London,UK-born,1
+Other,53,Female,Low,No,South East,UK-born,0
+White,44,Female,Medium,No,Scotland,UK-born,1
+Prefer not to say,55,Male,Medium,Yes,Other,UK-born,0
+White,42,Male,High,No,South East,UK-born,1
+White,59,Female,High,No,North West,UK-born,1
+White,56,Female,Medium,No,North West,UK-born,1
+Prefer not to say,52,Female,Medium,No,London,UK-born,0
+Asian,32,Female,Medium,No,Wales,UK-born,1
+White,76,Male,Low,No,North West,UK-born,1
+White,70,Male,Unknown,No,Other,UK-born,0
+Prefer not to say,74,Female,High,No,Northern Ireland,UK-born,0
+Mixed,65,Female,Medium,No,South East,UK-born,1
+White,38,Prefer not to say,Medium,No,South East,UK-born,0
+White,20,Female,High,Yes,North West,Migrant,0
+Mixed,41,Female,Medium,Yes,London,UK-born,0
+Other,72,Male,Low,Yes,South East,UK-born,0
+Mixed,61,Male,High,No,Northern Ireland,UK-born,1
+Other,22,Female,Medium,No,London,Migrant,0
+Asian,54,Female,Medium,Yes,North West,UK-born,0
+Mixed,50,Female,Medium,No,South East,UK-born,0
+Other,41,Male,Low,Yes,South East,UK-born,0
+Mixed,23,Female,Medium,No,Other,Migrant,1
+Asian,64,Male,Medium,Yes,Northern Ireland,UK-born,1
+Black,70,Male,High,No,South East,UK-born,0
+Black,62,Prefer not to say,High,No,Wales,UK-born,0
+Mixed,24,Female,Medium,Prefer not to say,London,UK-born,1
+White,67,Male,Medium,No,South East,UK-born,0
+White,36,Male,Medium,Yes,London,UK-born,0
+Asian,74,Female,Medium,No,North West,UK-born,1
+Black,38,Male,High,No,Scotland,UK-born,0
+White,23,Other,Medium,No,London,UK-born,1
+Asian,57,Male,High,No,South East,UK-born,0
+White,79,Female,Low,Yes,South East,Migrant,0
+Mixed,20,Prefer not to say,Unknown,No,Scotland,UK-born,0
+White,66,Female,Low,No,South East,UK-born,1
+Mixed,31,Other,High,No,Scotland,UK-born,1
+Asian,78,Male,Medium,No,South East,UK-born,0
+Other,37,Male,Low,No,South East,UK-born,0
+Other,31,Female,Low,No,Northern Ireland,UK-born,0
+Mixed,19,Female,Low,No,South East,Unknown,0
+Asian,42,Female,Medium,No,Other,UK-born,0
+White,21,Female,High,No,South East,Migrant,0
+White,58,Male,High,No,North West,UK-born,0
+White,72,Female,High,No,London,UK-born,0
+Black,65,Female,High,No,Scotland,Migrant,0
+Asian,72,Female,Unknown,No,Wales,UK-born,0
+White,50,Female,Medium,No,Other,UK-born,0
+White,19,Male,Medium,Yes,Northern Ireland,UK-born,0
+Black,40,Male,Medium,No,South East,Unknown,1
+White,61,Female,Low,No,Scotland,UK-born,0
+White,65,Other,High,No,Scotland,UK-born,0
+Asian,38,Male,Low,No,London,UK-born,0
+Asian,72,Male,Medium,No,London,UK-born,1
+Asian,32,Female,Low,No,South East,UK-born,1
+White,68,Female,Low,Yes,Wales,UK-born,0
+Asian,41,Male,Medium,No,South East,Migrant,0
+Asian,37,Male,Unknown,No,Northern Ireland,UK-born,0
+Mixed,73,Male,Medium,No,Scotland,UK-born,0
+Black,55,Female,High,No,North West,Migrant,0
+White,42,Male,Medium,Prefer not to say,North West,Migrant,1
+Asian,39,Female,Low,No,South East,Migrant,1
+Asian,69,Prefer not to say,Unknown,No,Other,UK-born,1
+Asian,68,Female,High,No,London,UK-born,0
+Asian,64,Male,Medium,No,Northern Ireland,UK-born,1
+White,79,Female,Medium,Yes,Scotland,UK-born,1
+White,21,Female,Medium,No,Wales,UK-born,1
+Asian,33,Male,Low,No,Northern Ireland,Unknown,0
+Mixed,60,Female,High,No,London,Migrant,0
+White,24,Male,Medium,No,Scotland,UK-born,1
+White,41,Female,Low,No,Wales,UK-born,0
+Prefer not to say,51,Female,Medium,Yes,Other,UK-born,1
+Black,74,Male,High,No,Wales,UK-born,0
+White,56,Other,Low,No,Other,UK-born,0
+White,72,Female,Low,No,Northern Ireland,UK-born,1
+White,46,Female,Medium,No,Northern Ireland,UK-born,0
+White,61,Male,Medium,Yes,Other,UK-born,0
+Other,43,Male,Medium,No,North West,UK-born,1
+Asian,31,Male,Medium,No,Wales,UK-born,1
+Mixed,64,Male,Low,Yes,London,Migrant,0
+Mixed,37,Female,Low,No,South East,UK-born,0
+Asian,24,Female,High,No,Northern Ireland,UK-born,1
+White,35,Prefer not to say,High,No,Other,UK-born,0
+Asian,60,Female,High,No,London,Migrant,0
+Mixed,27,Male,High,No,Scotland,UK-born,0
+White,63,Male,High,Yes,Wales,UK-born,0
+Other,47,Male,High,No,North West,UK-born,1
+Prefer not to say,20,Female,Medium,Prefer not to say,South East,UK-born,0
+Asian,67,Male,Medium,Yes,London,UK-born,1
+Asian,61,Male,Unknown,No,Other,Migrant,0
+Asian,70,Female,Low,No,South East,UK-born,1
+Asian,18,Female,High,No,South East,UK-born,1
+White,47,Male,Medium,No,Scotland,UK-born,0
+White,62,Male,Medium,No,North West,UK-born,0
+White,19,Female,Medium,No,North West,UK-born,1
+White,32,Other,Medium,No,London,Unknown,1
+White,28,Male,Low,No,Other,UK-born,1
+Prefer not to say,49,Other,High,No,South East,UK-born,0
+Asian,23,Male,Medium,No,London,UK-born,0
+White,23,Non-binary,Low,No,Scotland,UK-born,1
+Black,45,Female,Low,Yes,Wales,UK-born,0
+White,73,Non-binary,High,No,London,UK-born,1
+White,74,Female,Low,No,South East,UK-born,1
+Other,42,Male,High,Prefer not to say,London,UK-born,0
+White,40,Male,Unknown,No,Wales,UK-born,0
+White,29,Female,High,Yes,London,UK-born,0
+White,65,Male,High,No,South East,UK-born,1
+Other,65,Male,High,No,Other,UK-born,0
+Mixed,27,Male,Medium,No,Wales,UK-born,1
+Mixed,34,Male,Medium,No,South East,UK-born,0
+Other,69,Female,Medium,No,Wales,Migrant,1
+White,72,Non-binary,Low,Prefer not to say,North West,UK-born,0
+Black,19,Non-binary,Medium,No,South East,UK-born,1
+Asian,77,Prefer not to say,Unknown,No,North West,UK-born,1
+Prefer not to say,74,Female,High,No,Wales,Unknown,1
+Black,62,Non-binary,High,No,London,UK-born,1
+Black,34,Female,Low,No,North West,UK-born,0
+Black,26,Non-binary,Medium,No,London,UK-born,0
+Asian,64,Male,High,No,Northern Ireland,UK-born,0
+Asian,24,Other,Low,No,Northern Ireland,UK-born,1
+Prefer not to say,30,Male,High,No,Scotland,UK-born,1
+Other,27,Female,Low,No,Other,Unknown,1
+White,39,Female,High,No,South East,UK-born,0
+White,79,Female,Unknown,No,London,UK-born,1
+Asian,45,Female,High,No,Other,Migrant,0
+Black,72,Female,Low,Yes,North West,UK-born,0
+White,67,Female,Low,Yes,North West,UK-born,1
+Asian,59,Female,High,No,London,UK-born,0
+White,77,Male,High,Yes,Scotland,Migrant,0
+White,67,Female,Medium,Yes,Scotland,Unknown,0
+Prefer not to say,31,Female,Medium,No,North West,UK-born,0
+White,36,Female,Medium,No,Other,UK-born,1
+Prefer not to say,71,Male,Medium,No,Wales,Unknown,0
+White,18,Female,Unknown,No,London,Migrant,0
+White,44,Female,Medium,No,North West,UK-born,1
+White,21,Male,High,No,Other,Unknown,1
+Black,73,Male,Low,No,London,UK-born,1
+White,41,Male,High,No,Scotland,UK-born,0
+Black,31,Female,Low,No,South East,UK-born,0
+Asian,54,Male,High,No,South East,UK-born,0
+Black,40,Female,Low,No,London,UK-born,0
+Black,22,Male,Medium,No,Scotland,Migrant,0
+White,37,Other,Low,No,Wales,UK-born,1
+White,39,Female,Medium,No,Wales,UK-born,0
+White,63,Female,Low,No,Other,UK-born,0
+White,57,Female,Unknown,No,Northern Ireland,UK-born,0
+White,61,Male,Low,No,South East,UK-born,0
+White,75,Male,Low,No,South East,UK-born,1
+White,66,Female,High,No,Wales,UK-born,1
+White,52,Non-binary,Medium,No,Wales,UK-born,0
+Other,53,Female,High,No,London,UK-born,1
+Black,22,Male,Medium,No,London,UK-born,1
+Asian,50,Female,Medium,No,North West,Migrant,1
+Asian,74,Female,High,No,Scotland,Migrant,0
+Asian,41,Female,High,Prefer not to say,Northern Ireland,Migrant,0
+Asian,51,Male,Unknown,No,London,UK-born,0
+Mixed,54,Non-binary,Medium,No,Northern Ireland,UK-born,0
+White,42,Male,Medium,No,Scotland,UK-born,0
+White,78,Male,Medium,No,London,UK-born,1
+White,68,Male,Medium,No,Northern Ireland,UK-born,1
+White,54,Male,Low,Yes,Other,UK-born,1
+White,42,Male,High,No,South East,UK-born,0
+White,39,Male,Low,No,London,UK-born,1
+Asian,62,Female,Medium,No,Other,UK-born,1
+White,22,Female,Low,No,London,UK-born,1
+White,25,Female,Low,No,Other,UK-born,0
+White,79,Male,Medium,No,South East,UK-born,0
+White,70,Male,Low,No,North West,UK-born,0
+Mixed,58,Male,Low,Yes,South East,Migrant,1
+Asian,64,Female,High,No,London,Migrant,1
+White,44,Non-binary,Unknown,Yes,South East,Migrant,0
+White,78,Male,High,Yes,North West,UK-born,0
+Asian,52,Female,Medium,No,London,UK-born,1
+White,18,Other,Medium,No,Northern Ireland,UK-born,0
+White,37,Male,Medium,No,Northern Ireland,UK-born,0
+White,24,Male,Low,Yes,Wales,UK-born,0
+White,62,Female,High,Yes,Scotland,Migrant,0
+White,20,Female,Medium,No,North West,UK-born,0
+White,78,Male,Medium,No,Northern Ireland,UK-born,0
+Prefer not to say,59,Male,Low,No,Northern Ireland,UK-born,0
+Other,73,Male,High,No,South East,UK-born,0
+Asian,67,Female,High,No,North West,Migrant,0
+Black,65,Male,High,No,South East,UK-born,0
+Asian,26,Male,Low,Yes,South East,Migrant,0
+White,64,Female,High,Prefer not to say,South East,UK-born,0
+Asian,31,Female,Medium,No,Northern Ireland,Migrant,1
+White,36,Female,Low,No,South East,UK-born,0
+Asian,44,Non-binary,High,Yes,North West,UK-born,0
+White,79,Male,Unknown,No,Scotland,Migrant,1
+White,23,Male,High,No,Wales,Migrant,0
+Black,24,Male,Low,Yes,London,UK-born,1
+Mixed,54,Male,Low,Yes,North West,UK-born,1
+Other,43,Male,Medium,Yes,South East,UK-born,1
+Mixed,30,Female,Medium,No,Northern Ireland,UK-born,0
+Other,54,Other,Medium,No,London,UK-born,1
+White,63,Female,Medium,No,South East,UK-born,1
+Asian,50,Female,Medium,No,South East,UK-born,0
+Black,69,Female,Low,No,London,UK-born,1
+White,50,Male,High,No,South East,Migrant,1
+Prefer not to say,58,Male,Low,No,Wales,UK-born,0
+White,26,Female,High,No,South East,UK-born,0
+Asian,32,Male,Low,No,Wales,UK-born,1
+Mixed,22,Female,High,No,North West,UK-born,1
+White,70,Female,Unknown,Yes,South East,UK-born,1
+Asian,46,Male,Medium,No,South East,UK-born,0
+Black,70,Female,Medium,No,London,Migrant,1
+Asian,24,Female,High,No,South East,Migrant,1
+White,48,Male,Medium,No,Wales,Migrant,1
+Other,71,Female,High,Prefer not to say,Northern Ireland,UK-born,0
+Asian,51,Male,High,No,South East,UK-born,0
+White,28,Male,High,No,Scotland,Unknown,1
+Mixed,59,Female,Unknown,No,London,UK-born,1
+Asian,36,Female,Medium,No,London,UK-born,1
+White,22,Male,Medium,Yes,Other,UK-born,0
+White,40,Male,Low,No,Northern Ireland,UK-born,0
+White,64,Male,Medium,No,London,UK-born,0
+White,19,Male,Medium,Yes,Northern Ireland,UK-born,1
+White,60,Non-binary,Medium,No,London,UK-born,1
+White,21,Female,High,No,Northern Ireland,UK-born,1
+White,34,Female,Medium,No,Other,Unknown,1
+Prefer not to say,72,Female,Unknown,No,London,UK-born,1
+Other,48,Female,Unknown,No,London,UK-born,1
+Black,76,Female,Medium,No,Other,UK-born,0
+Asian,47,Male,High,No,South East,UK-born,0
+Other,19,Female,Medium,Yes,North West,Migrant,0
+White,41,Female,High,No,South East,UK-born,0
+White,27,Female,High,No,Wales,UK-born,0
+Asian,45,Female,High,No,South East,UK-born,0
+Mixed,60,Non-binary,High,Prefer not to say,North West,UK-born,0
+Asian,49,Female,High,No,Northern Ireland,Unknown,0
+Mixed,50,Male,Medium,Yes,Other,UK-born,0
+White,35,Female,High,Prefer not to say,South East,UK-born,0
+White,41,Female,High,No,London,Migrant,0
+Black,54,Male,High,No,Northern Ireland,UK-born,0
+White,47,Male,Medium,No,London,UK-born,1
+White,22,Female,Low,No,Wales,Migrant,1
+Black,76,Female,Medium,No,Scotland,UK-born,1
+White,40,Female,Unknown,No,Scotland,UK-born,1
+White,47,Female,Unknown,No,Other,UK-born,0
+White,21,Male,Medium,No,South East,UK-born,0
+Mixed,58,Male,Low,No,London,UK-born,1
+White,68,Male,High,Yes,Other,UK-born,0
+White,41,Female,High,No,North West,UK-born,1
+Asian,20,Male,Low,Yes,North West,Migrant,0
+White,32,Male,High,No,London,UK-born,1
+Black,73,Male,Medium,Yes,Wales,UK-born,1
+Asian,63,Male,Medium,Prefer not to say,Wales,UK-born,0
+White,18,Male,High,No,London,UK-born,1
+White,27,Female,High,No,South East,UK-born,1
+White,62,Male,Medium,No,London,Migrant,0
+White,43,Male,High,No,Northern Ireland,UK-born,0
+White,72,Female,Low,No,South East,UK-born,1
+White,29,Male,Low,No,Other,UK-born,0
+Asian,18,Female,Medium,No,Scotland,UK-born,0
+White,19,Male,Medium,No,North West,UK-born,0
+White,76,Male,Medium,No,London,UK-born,0
+Prefer not to say,28,Female,Medium,No,London,UK-born,1
+White,29,Male,Medium,No,London,UK-born,1
+Asian,45,Male,Medium,No,London,UK-born,1
+Other,50,Male,Low,No,South East,UK-born,1
+White,59,Male,Unknown,Yes,London,UK-born,0
+Prefer not to say,20,Female,Medium,No,Scotland,UK-born,0
+Asian,58,Male,Medium,No,South East,UK-born,0
+Black,66,Male,Medium,Prefer not to say,Wales,Migrant,0
+Asian,36,Male,High,No,London,Migrant,0
+Asian,35,Female,Unknown,No,South East,UK-born,1
+Black,54,Female,High,No,Wales,Migrant,1
+White,45,Male,High,No,Scotland,Unknown,0
+White,48,Male,Medium,No,London,UK-born,0
+Prefer not to say,24,Male,Low,No,Other,Unknown,0
+White,64,Female,Low,No,Wales,Migrant,1
+White,55,Male,Low,No,Scotland,UK-born,0
+Asian,75,Female,Low,No,South East,Migrant,1
+White,22,Female,Low,No,London,Migrant,1
+Asian,78,Female,Medium,No,South East,UK-born,0
+Black,36,Male,Medium,No,South East,Migrant,0
+Black,30,Male,Low,No,London,UK-born,0
+Asian,56,Male,Low,No,Wales,Migrant,0
+Asian,45,Male,Medium,Yes,North West,UK-born,1
+Black,74,Male,High,No,Northern Ireland,UK-born,0
+White,19,Non-binary,Medium,No,London,Unknown,1
+Asian,23,Non-binary,Medium,No,South East,UK-born,0
+Other,32,Male,Medium,No,South East,UK-born,0
+Asian,45,Male,Medium,No,Northern Ireland,UK-born,1
+White,54,Male,Unknown,Prefer not to say,North West,UK-born,0
+Asian,42,Female,Medium,No,London,UK-born,1
+Black,73,Female,High,No,South East,Migrant,0
+White,49,Female,High,No,Other,UK-born,1
+Black,74,Female,High,No,Scotland,UK-born,0
+White,72,Female,High,Prefer not to say,London,Migrant,1
+Asian,54,Male,Medium,No,London,UK-born,1
+Prefer not to say,53,Male,Medium,No,South East,UK-born,0
+Prefer not to say,47,Female,Low,No,Scotland,Migrant,0
+Asian,62,Female,Low,No,South East,Migrant,0
+White,41,Female,Medium,No,Northern Ireland,Migrant,0
+White,35,Non-binary,Medium,No,Scotland,UK-born,0
+White,18,Female,Medium,Yes,South East,UK-born,1
+White,20,Male,High,No,South East,UK-born,1
+Black,24,Male,Unknown,No,South East,UK-born,0
+Black,50,Male,High,Prefer not to say,South East,UK-born,0
+White,38,Male,Low,Prefer not to say,Scotland,UK-born,0
+Asian,31,Female,Low,No,South East,Unknown,0
+Asian,64,Male,High,No,South East,Migrant,0
+Mixed,65,Other,Medium,Yes,London,UK-born,0
+Mixed,54,Other,Medium,No,South East,UK-born,0
+Mixed,20,Male,High,No,London,UK-born,1
+Asian,76,Male,Medium,Yes,London,UK-born,0
+White,66,Female,High,No,Scotland,UK-born,1
+White,54,Male,Medium,No,London,Unknown,0
+Asian,73,Female,Medium,No,London,UK-born,0
+Asian,42,Female,Medium,No,London,UK-born,1
+Mixed,77,Male,High,No,London,Migrant,1
+White,78,Male,Low,No,Wales,UK-born,1
+Other,71,Female,Medium,No,London,UK-born,0
+White,50,Female,Low,No,Wales,UK-born,1
+White,79,Female,Medium,No,Scotland,UK-born,1
+White,30,Male,Low,No,North West,UK-born,0
+White,70,Female,Medium,No,Other,UK-born,1
+Mixed,67,Female,High,No,Northern Ireland,Unknown,0
+White,50,Female,Medium,No,North West,UK-born,0
+Asian,46,Female,Medium,Yes,London,UK-born,0
+Black,36,Male,High,No,Wales,UK-born,0
+White,76,Male,Medium,Prefer not to say,London,UK-born,0
+White,43,Female,Low,No,South East,UK-born,1
+White,70,Other,Medium,No,North West,UK-born,0
+White,74,Male,Low,No,London,UK-born,0
+White,72,Male,Medium,No,Scotland,UK-born,0
+White,55,Male,High,Yes,South East,UK-born,0
+Prefer not to say,26,Female,Medium,No,South East,UK-born,0
+Asian,63,Male,Unknown,No,Scotland,UK-born,0
+Asian,47,Female,High,No,South East,Unknown,0
+Asian,39,Male,High,No,South East,UK-born,0
+Mixed,60,Male,High,No,London,Migrant,1
+Mixed,21,Male,Low,No,Wales,UK-born,1
+White,24,Female,Medium,No,Wales,UK-born,0
+Black,78,Male,High,Yes,London,Migrant,1
+Asian,35,Male,Low,No,South East,UK-born,0
+Black,67,Female,Medium,No,Other,UK-born,0
+Other,23,Male,Unknown,Yes,Other,UK-born,0
+White,46,Male,Medium,No,Scotland,UK-born,0
+Asian,22,Female,Medium,No,Wales,UK-born,0
+Black,23,Female,High,No,Wales,UK-born,1
+Prefer not to say,51,Male,High,Prefer not to say,South East,UK-born,1
+Asian,51,Male,Low,No,London,UK-born,1
+Black,18,Male,Medium,No,Wales,UK-born,0
+Mixed,35,Non-binary,Low,Yes,London,UK-born,0
+Black,79,Female,Low,No,South East,UK-born,0
+Other,44,Female,Unknown,No,South East,Migrant,0
+White,27,Female,Medium,Prefer not to say,South East,UK-born,1
+Other,56,Prefer not to say,High,No,North West,UK-born,0
+White,19,Other,High,No,North West,Migrant,1
+Asian,36,Male,High,No,North West,UK-born,1
+Asian,44,Male,Unknown,No,London,UK-born,1
+Mixed,78,Female,Low,No,Scotland,UK-born,0
+White,71,Male,Medium,No,Wales,UK-born,1
+White,39,Female,High,No,North West,UK-born,0
+Black,27,Male,Low,No,Northern Ireland,UK-born,0
+Asian,76,Non-binary,Low,No,North West,UK-born,0
+Mixed,74,Female,High,Yes,Scotland,UK-born,0
+Black,61,Female,Low,No,London,Unknown,1
+Mixed,44,Female,High,No,London,UK-born,0
+Mixed,29,Female,High,Prefer not to say,Wales,UK-born,0
+Asian,32,Female,High,Yes,South East,UK-born,0
+White,67,Female,Low,Yes,London,UK-born,1
+White,72,Female,High,Yes,Scotland,UK-born,0
+White,18,Female,Medium,No,London,UK-born,1
+Black,55,Female,High,No,Scotland,Unknown,0
+White,58,Female,Medium,No,Scotland,UK-born,0
+Black,41,Male,High,No,North West,Migrant,1
+Asian,23,Male,Low,No,Scotland,UK-born,0
+Mixed,46,Male,Medium,No,Wales,UK-born,1
+Asian,23,Male,Low,No,London,UK-born,1
+Black,55,Female,Medium,No,Scotland,UK-born,1
+White,65,Male,Medium,No,Scotland,UK-born,1
+White,32,Male,Medium,No,London,Unknown,0
+White,25,Female,High,No,Wales,UK-born,1
+White,46,Female,Low,No,Wales,UK-born,0
+Other,19,Female,High,No,London,UK-born,0
+Black,28,Male,High,No,South East,UK-born,1
+White,26,Female,Medium,No,Other,UK-born,0
+Other,33,Female,High,No,London,UK-born,1
+Black,75,Female,High,No,South East,UK-born,1
+Asian,41,Prefer not to say,Medium,No,Scotland,UK-born,1
+White,51,Female,High,Yes,Other,UK-born,0
+Asian,79,Male,High,No,South East,UK-born,0
+Asian,60,Male,Medium,No,Northern Ireland,Migrant,0
+Black,41,Female,High,No,South East,UK-born,0
+White,66,Male,Medium,No,South East,UK-born,0
+Mixed,55,Male,Medium,No,Other,UK-born,0
+Asian,55,Female,Low,No,Northern Ireland,Unknown,1
+Mixed,42,Female,Low,No,South East,UK-born,0
+White,58,Female,High,No,London,UK-born,1
+White,70,Male,Unknown,No,London,UK-born,1
+Other,50,Male,Low,No,North West,UK-born,0
+Asian,61,Male,Medium,Yes,South East,UK-born,1
+White,79,Female,Medium,No,South East,UK-born,1
+White,60,Male,Low,Yes,North West,Migrant,1
+White,34,Male,Medium,No,Other,UK-born,1
+Mixed,24,Female,Medium,No,London,Migrant,0
+White,76,Male,Medium,No,North West,Unknown,1
+Mixed,44,Prefer not to say,High,No,London,Unknown,0
+White,53,Female,Medium,No,Scotland,UK-born,0
+White,58,Other,High,No,London,UK-born,1
+Asian,36,Female,High,No,Wales,UK-born,0
+Mixed,32,Male,Low,Yes,Northern Ireland,Migrant,0
+Black,23,Male,Medium,No,Other,UK-born,0
+Asian,74,Non-binary,Medium,No,London,UK-born,0
+Asian,53,Male,High,Yes,Other,UK-born,0
+White,22,Male,High,No,North West,Unknown,0
+Asian,70,Female,Medium,No,Scotland,Unknown,0
+White,62,Male,Low,No,London,UK-born,1
+Other,22,Other,Low,No,South East,UK-born,0
+Asian,19,Male,Unknown,No,South East,UK-born,0
+Asian,60,Male,Low,Prefer not to say,North West,UK-born,1
+White,35,Male,Unknown,Yes,London,UK-born,0
+White,49,Male,Medium,No,Scotland,UK-born,0
+Black,64,Female,High,Yes,Scotland,UK-born,1
+White,66,Prefer not to say,Low,No,South East,UK-born,0
+White,79,Female,Unknown,No,Other,UK-born,1
+White,46,Female,Medium,No,London,UK-born,1
+Black,66,Female,High,Yes,South East,UK-born,0
+Mixed,37,Prefer not to say,High,No,South East,UK-born,1
+White,36,Female,Medium,Yes,Scotland,UK-born,1
+Black,69,Male,Medium,No,Northern Ireland,UK-born,0
+White,33,Non-binary,High,No,Scotland,UK-born,1
+Asian,28,Female,Unknown,No,London,Migrant,1
+White,77,Male,Medium,No,Northern Ireland,UK-born,0
+Black,45,Male,Medium,No,South East,Migrant,0
+Black,39,Male,Medium,No,London,UK-born,1
+White,44,Other,Medium,No,North West,UK-born,0
+White,34,Male,Unknown,Prefer not to say,Northern Ireland,UK-born,0
+White,25,Female,High,No,London,UK-born,1
+Black,25,Male,Low,Prefer not to say,Scotland,UK-born,1
+Mixed,40,Male,Medium,Yes,South East,UK-born,1
+Black,49,Male,High,No,Scotland,UK-born,1
+White,61,Male,Medium,No,South East,UK-born,0
+White,32,Female,High,Yes,Other,UK-born,1
+White,44,Female,Low,No,London,UK-born,0
+Asian,76,Female,Low,No,London,UK-born,0
+Asian,21,Female,Low,Prefer not to say,London,UK-born,1
+White,57,Female,Low,No,Wales,UK-born,1
+Black,49,Female,Low,No,London,UK-born,1
+White,74,Female,Medium,No,South East,Migrant,1
+Mixed,64,Female,Unknown,No,South East,UK-born,0
+Mixed,54,Female,High,No,South East,UK-born,0
+Black,71,Female,High,No,Wales,UK-born,0
+White,27,Male,High,No,Other,Unknown,0
+White,73,Male,High,No,Northern Ireland,Migrant,0
+White,70,Female,High,No,Northern Ireland,Migrant,0
+Asian,45,Male,Medium,No,North West,UK-born,0
+White,69,Male,Low,No,Northern Ireland,UK-born,0
+Other,49,Male,Medium,No,Wales,UK-born,0
+Asian,49,Female,Medium,No,South East,UK-born,0
+White,73,Female,Low,No,South East,Migrant,1
+Prefer not to say,79,Non-binary,Unknown,No,North West,UK-born,0
+White,68,Female,Medium,No,Other,Migrant,0
+Other,32,Male,High,Yes,London,UK-born,1
+White,23,Male,Medium,No,Other,UK-born,1
+White,26,Female,Medium,Yes,London,UK-born,0
+Black,55,Male,High,No,North West,UK-born,1
+White,47,Female,High,No,South East,UK-born,0
+Mixed,58,Female,High,No,North West,Migrant,0
+White,57,Male,Low,No,Other,UK-born,1
+White,33,Male,Medium,No,Scotland,Migrant,1
+Prefer not to say,77,Non-binary,Medium,Prefer not to say,South East,Migrant,0
+Mixed,42,Male,Low,No,Scotland,UK-born,1
+White,27,Female,Unknown,No,North West,UK-born,0
+White,47,Male,Medium,No,Other,Migrant,1
+White,26,Female,Medium,No,South East,UK-born,0
+White,57,Male,High,No,Scotland,Migrant,0
+Mixed,74,Female,Medium,No,Northern Ireland,UK-born,1
+Other,63,Prefer not to say,Medium,Yes,Other,UK-born,1
+Black,72,Female,High,No,Wales,Unknown,0
+Prefer not to say,24,Male,High,No,Other,UK-born,0
+White,60,Female,Low,No,North West,UK-born,1
+White,69,Female,High,No,Wales,UK-born,1
+White,65,Male,Unknown,No,London,UK-born,1
+Black,66,Male,High,No,Scotland,UK-born,1
+Mixed,72,Female,Medium,Yes,London,UK-born,1
+White,57,Other,Medium,No,South East,UK-born,1
+Mixed,29,Male,High,No,Scotland,UK-born,0
+Mixed,74,Male,Medium,No,London,UK-born,0
+White,34,Prefer not to say,Medium,No,South East,UK-born,1
+White,42,Male,Unknown,No,London,UK-born,0
+White,64,Female,Unknown,No,Wales,UK-born,1
+Asian,24,Male,Low,No,North West,UK-born,0
+White,72,Other,High,Yes,Northern Ireland,UK-born,0
+Asian,36,Female,High,No,South East,UK-born,0
+Mixed,34,Male,High,No,North West,UK-born,0
+White,49,Male,Low,No,North West,UK-born,0
+Prefer not to say,40,Male,Medium,No,Northern Ireland,UK-born,0
+White,62,Female,High,Yes,South East,Migrant,0
+White,49,Male,Medium,No,London,UK-born,1
+Asian,43,Male,Unknown,Yes,Scotland,UK-born,1
+White,25,Male,Low,Yes,Northern Ireland,Migrant,0
+White,39,Male,Unknown,No,Scotland,UK-born,0
+White,63,Female,Low,No,South East,UK-born,0
+Black,72,Prefer not to say,Low,No,Scotland,Unknown,1
+Other,74,Male,Low,No,Other,Unknown,0
+White,25,Female,Medium,No,Scotland,UK-born,1
+White,63,Male,Medium,No,South East,UK-born,0
+Black,22,Prefer not to say,Low,No,South East,UK-born,0
+Mixed,29,Female,High,No,Other,UK-born,1
+White,44,Female,Medium,No,Northern Ireland,UK-born,0
+White,37,Male,Unknown,Yes,South East,UK-born,1
+White,28,Female,Low,Prefer not to say,South East,UK-born,0
+Other,53,Male,Unknown,No,Northern Ireland,UK-born,0
+White,69,Male,Unknown,No,Other,UK-born,0
+Asian,19,Female,Medium,No,North West,UK-born,0
+White,27,Male,High,No,South East,UK-born,1
+White,59,Female,Low,No,South East,Migrant,1
+White,24,Female,High,Prefer not to say,Wales,Unknown,0
+White,73,Male,High,No,Scotland,Migrant,0
+White,29,Male,High,Yes,Scotland,UK-born,0
+White,72,Male,High,No,London,UK-born,0
+Asian,33,Female,Medium,No,London,Migrant,0
+White,79,Non-binary,Low,No,London,UK-born,0
+White,48,Female,Low,No,Other,UK-born,0
+Black,44,Female,High,Prefer not to say,South East,UK-born,0
+White,49,Male,Low,No,Wales,UK-born,0
+White,59,Female,Low,No,Northern Ireland,UK-born,0
+White,57,Other,High,No,Scotland,Migrant,0
+Other,44,Male,Medium,No,North West,UK-born,0
+White,76,Male,Medium,Yes,London,UK-born,1
+White,42,Male,Medium,No,South East,UK-born,1
+White,57,Female,Low,No,South East,Migrant,1
+White,22,Male,Medium,No,Scotland,Migrant,1
+Asian,21,Female,High,No,Wales,UK-born,0
+Other,70,Female,Medium,No,Wales,UK-born,0
+Black,61,Male,Medium,No,Northern Ireland,UK-born,0
+White,60,Male,Unknown,No,London,UK-born,0
+Asian,32,Female,Medium,No,Scotland,UK-born,1
+Asian,30,Male,Low,No,London,Unknown,0
+White,50,Female,Medium,No,Other,UK-born,0
+White,22,Female,Medium,No,North West,UK-born,1
+White,23,Male,Medium,No,Scotland,UK-born,1
+White,62,Male,Low,No,South East,UK-born,0
+White,42,Male,Low,No,South East,UK-born,1
+White,42,Female,High,Yes,Scotland,UK-born,0
+Mixed,27,Male,High,No,Other,Migrant,1
+White,79,Female,High,No,London,Migrant,1
+White,29,Male,Medium,No,Northern Ireland,UK-born,1
+White,20,Female,Medium,No,South East,UK-born,1
+White,46,Male,Low,Prefer not to say,London,UK-born,0
+White,46,Female,Unknown,No,Wales,UK-born,0
+White,60,Female,Low,No,London,UK-born,0
+Black,41,Female,High,No,Wales,Migrant,1
+Other,41,Male,Unknown,No,North West,UK-born,0
+White,42,Female,High,No,London,Migrant,1
+Mixed,64,Female,Medium,No,London,UK-born,1
+White,66,Female,High,No,Wales,UK-born,1
+White,54,Male,High,No,Northern Ireland,UK-born,1
+White,22,Male,High,No,Scotland,UK-born,1
+Mixed,72,Female,Medium,No,Wales,UK-born,0
+Other,28,Male,High,No,Northern Ireland,UK-born,1
+Black,57,Female,High,Yes,North West,UK-born,0
+Mixed,60,Female,Low,No,London,UK-born,0
+Asian,72,Male,Medium,No,South East,UK-born,1
+Mixed,39,Female,High,No,Other,UK-born,0
+Asian,69,Female,Medium,No,North West,Migrant,0
+Black,32,Female,Medium,No,Other,UK-born,0
+Black,26,Prefer not to say,High,No,Wales,UK-born,0
+Black,67,Male,Unknown,No,Wales,Unknown,1
+White,23,Female,Low,No,London,UK-born,0
+White,43,Female,High,No,South East,Unknown,1
+Asian,23,Female,Medium,No,Wales,UK-born,0
+White,49,Female,Medium,No,Scotland,UK-born,1
+Black,60,Male,Medium,No,Northern Ireland,UK-born,0
+White,37,Female,Low,No,South East,UK-born,0
+Other,78,Male,Medium,No,Wales,Migrant,1
+Black,52,Male,Low,No,London,UK-born,0
+White,60,Male,High,No,South East,UK-born,0
+Asian,79,Male,Medium,No,Scotland,UK-born,0
+White,20,Female,Unknown,No,Other,Migrant,1
+White,35,Female,Low,No,Other,Migrant,1
+Other,52,Female,Medium,No,North West,UK-born,0
+Mixed,69,Male,High,No,Wales,UK-born,1
+White,27,Female,Medium,No,Scotland,UK-born,0
+White,53,Male,Medium,No,Wales,Unknown,0
+Black,47,Male,Medium,No,Wales,UK-born,1
+Mixed,43,Female,High,Yes,North West,Migrant,0
+Black,47,Female,Medium,No,Northern Ireland,UK-born,0
+Asian,48,Female,Low,No,Scotland,UK-born,0
+Prefer not to say,72,Male,Medium,No,London,UK-born,1
+Black,21,Male,Medium,No,Other,UK-born,1
+White,74,Male,Medium,No,South East,UK-born,1
+Asian,41,Female,High,Yes,Other,UK-born,0
+White,18,Male,Low,No,South East,UK-born,1
+Prefer not to say,43,Male,Medium,No,Northern Ireland,UK-born,1
+White,66,Male,High,Yes,Scotland,UK-born,0
+Asian,46,Female,Low,No,South East,UK-born,0
+Asian,55,Female,High,No,Other,Migrant,1
+White,53,Female,High,No,Scotland,UK-born,1
+White,75,Female,Medium,No,Northern Ireland,UK-born,1
+Asian,71,Male,High,No,Wales,UK-born,0
+Other,26,Female,High,Yes,London,Unknown,0
+Black,59,Female,Medium,No,South East,UK-born,0
+Asian,49,Female,Low,Yes,North West,Migrant,0
+White,54,Female,Medium,No,Other,UK-born,0
+Other,57,Other,High,Yes,London,UK-born,0
+White,35,Female,Medium,No,London,UK-born,1
+White,41,Female,High,No,Scotland,UK-born,1
+White,57,Female,Medium,No,Scotland,UK-born,0
+Prefer not to say,35,Female,Medium,No,London,UK-born,0
+Black,56,Male,High,No,Other,UK-born,1
+White,25,Female,Medium,No,London,UK-born,1
+White,56,Female,Unknown,Yes,London,Migrant,1
+Prefer not to say,71,Female,Medium,No,Scotland,UK-born,0
+White,68,Male,Low,No,North West,Migrant,0
+White,28,Male,Medium,No,London,UK-born,1
+Asian,60,Female,Low,Yes,Other,UK-born,1
+White,52,Female,Low,No,London,UK-born,0
+White,41,Male,Low,No,London,UK-born,1
+Other,69,Male,Medium,No,Northern Ireland,Unknown,0
+Black,30,Male,Unknown,No,South East,UK-born,0
+White,48,Male,Unknown,No,Northern Ireland,UK-born,0
+Black,75,Female,Medium,No,London,UK-born,0
+Mixed,73,Male,Medium,No,London,UK-born,0
+White,47,Female,Medium,Yes,South East,UK-born,0
+Asian,46,Male,High,No,Wales,UK-born,1
+White,59,Female,High,No,Scotland,UK-born,1
+Asian,23,Prefer not to say,Medium,No,South East,UK-born,0
+White,20,Male,Medium,No,Scotland,UK-born,1
+Asian,45,Female,Low,No,Scotland,UK-born,1
+Asian,27,Male,Low,No,Scotland,Migrant,1
+White,51,Male,Low,No,Other,UK-born,0
+White,18,Male,Unknown,No,Wales,UK-born,0
+Asian,29,Male,Medium,No,Northern Ireland,UK-born,0
+Other,53,Female,Low,Yes,North West,UK-born,1
+Black,73,Female,Medium,No,Scotland,Migrant,1
+White,69,Female,Medium,No,London,UK-born,0
+White,73,Female,High,No,South East,UK-born,0
+White,78,Male,Medium,No,North West,UK-born,1
+Black,49,Female,High,No,Northern Ireland,UK-born,0
+Prefer not to say,73,Female,High,No,South East,UK-born,0
+White,28,Female,High,No,North West,UK-born,0
+White,18,Male,Low,No,Other,Migrant,0
+Other,78,Female,Medium,Prefer not to say,South East,UK-born,0
+Black,65,Male,Low,Prefer not to say,Scotland,UK-born,0
+Mixed,23,Male,Low,Yes,London,UK-born,1
+White,44,Male,Medium,Yes,North West,UK-born,1
+Asian,32,Female,Medium,No,South East,Migrant,1
+White,27,Female,Low,Yes,London,Unknown,1
+White,41,Female,Medium,No,Scotland,UK-born,1
+White,25,Male,Low,No,South East,UK-born,1
+Other,34,Female,High,No,South East,UK-born,0
+White,41,Male,Medium,Prefer not to say,Northern Ireland,UK-born,0
+Asian,30,Female,High,No,South East,UK-born,0
+Prefer not to say,26,Male,Medium,No,North West,UK-born,0
+White,76,Prefer not to say,Medium,No,Other,Unknown,0
+Mixed,79,Male,Medium,No,London,UK-born,0
+Asian,23,Female,Medium,No,Other,UK-born,1
+White,46,Male,Medium,No,South East,Migrant,0
+White,40,Male,High,No,Wales,Unknown,0
+White,39,Male,Low,No,South East,Migrant,1
+White,38,Male,Medium,No,North West,UK-born,0
+White,34,Female,Unknown,No,North West,UK-born,0
+Black,51,Female,Medium,No,Other,UK-born,0
+White,43,Male,Medium,No,Scotland,UK-born,1
+Asian,67,Male,Medium,No,South East,Migrant,1
+Black,76,Male,Medium,Yes,Scotland,UK-born,1
+Asian,42,Female,High,No,Northern Ireland,UK-born,0
+Asian,65,Female,High,No,South East,UK-born,0
+Asian,55,Female,High,Yes,South East,UK-born,0
+Black,20,Female,High,No,Scotland,UK-born,0
+White,20,Prefer not to say,High,Yes,Other,UK-born,1
+White,31,Male,Medium,No,North West,UK-born,0
+Prefer not to say,59,Prefer not to say,Medium,Yes,Scotland,UK-born,1
+Asian,27,Male,Low,No,London,UK-born,1
+Asian,19,Male,Medium,No,Wales,UK-born,0
+Asian,24,Female,Low,No,South East,UK-born,0
+White,31,Male,High,No,South East,UK-born,1
+Asian,66,Female,Low,No,Wales,UK-born,0
+Mixed,34,Male,Unknown,No,Wales,UK-born,1
+Asian,79,Other,Medium,No,South East,UK-born,0
+White,27,Male,Low,No,Northern Ireland,UK-born,1
+White,52,Non-binary,Unknown,No,Wales,UK-born,1
+White,66,Female,Medium,No,Scotland,Migrant,1
+White,62,Male,High,No,London,UK-born,1
+White,44,Male,Medium,No,Other,UK-born,0
+White,79,Male,High,No,North West,UK-born,0
+Mixed,65,Female,Medium,No,South East,UK-born,0
