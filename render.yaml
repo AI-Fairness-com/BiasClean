@@ -2,9 +2,6 @@ services:
   - type: web
     name: biasclean-api
     env: python
-    plan: free
+    pythonVersion: "3.10.13"
     buildCommand: pip install -r requirements.txt
-    startCommand: python baisclean.py  # Changed from app.py to baisclean.py
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.9.0
+    startCommand: python biasclean.py
