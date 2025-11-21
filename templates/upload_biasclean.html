@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BiasClean - AI Fairness Engine</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <style>
+    * {margin:0;padding:0;box-sizing:border-box;}
+    :root {
+      --primary:#BE9D04;
+      --secondary:#4A463D;
+      --accent:#3498db;
+      --success:#27ae60;
+      --warning:#f39c12;
+      --light:#f8f9fa;
+      --dark:#323130;
+      --gray:#605e5c;
+      --gradient:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    }
+    body{
+      font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+      background:var(--gradient);
+      min-height:100vh;
+      padding:20px;
+      line-height:1.6;
+    }
+    .glass-container{
+      max-width:1200px;margin:0 auto;
+      background:rgba(255,255,255,0.95);
+      backdrop-filter:blur(20px);
+      border-radius:25px;
+      box-shadow:0 25px 50px rgba(0,0,0,0.15);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.2);
+    }
+    .hero-section{
+      background:linear-gradient(135deg,var(--primary),#a08703);
+      color:white;padding:60px 40px;text-align:center;position:relative;
+      overflow:hidden;
+    }
+    .hero-section::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:4px;
+      background:linear-gradient(90deg,var(--secondary),var(--accent),#d4b104);
+    }
+    .hero-pattern {
+      position:absolute;top:0;left:0;right:0;bottom:0;
+      background:radial-gradient(circle at 20% 80%,rgba(255,255,255,0.15) 0%,transparent 50%),
+                radial-gradient(circle at 80% 20%,rgba(255,255,255,0.1) 0%,transparent 50%),
+                radial-gradient(circle at 40% 40%,rgba(255,255,255,0.08) 0%,transparent 50%);
+      opacity:0.5;
+    }
+    .hero-content{position:relative;z-index:2;}
+    .broom-icon{
+      font-size:5em;margin-bottom:15px;display:block;
+      text-shadow:0 4px 12px rgba(0,0,0,0.3);
+      animation:float 4s ease-in-out infinite;
+      filter:drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+    }
+    @keyframes float{
+      0%,100%{transform:translateY(0px) rotate(0deg);}
+      33%{transform:translateY(-12px) rotate(-3deg);}
+      66%{transform:translateY(-6px) rotate(3deg);}
+    }
+    .logo{
+      font-size:3.2em;font-weight:800;margin-bottom:10px;
+      background:linear-gradient(135deg,#fff,#f8f9fa);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      text-shadow:0 2px 10px rgba(0,0,0,0.2);
+      letter-spacing:-0.5px;
+    }
+    .domain-title{
+      font-size:2.1em;font-weight:600;margin-bottom:15px;
+      text-shadow:0 2px 4px rgba(0,0,0,0.3);
+    }
+    .tagline{
+      font-size:1.25em;margin-bottom:25px;font-weight:300;
+      opacity:0.95;max-width:600px;margin-left:auto;margin-right:auto;
+      line-height:1.5;
+    }
+    .metrics-badge{
+      background:rgba(255,255,255,0.2);backdrop-filter:blur(15px);
+      color:white;padding:16px 32px;border-radius:30px;
+      font-size:1.1em;font-weight:600;display:inline-block;
+      border:1px solid rgba(255,255,255,0.3);
+      box-shadow:0 8px 20px rgba(0,0,0,0.15);
+      transition:all 0.3s ease;
+    }
+    .metrics-badge:hover{
+      background:rgba(255,255,255,0.3);transform:translateY(-2px);
+      box-shadow:0 12px 25px rgba(0,0,0,0.2);
+    }
+    .content-section{padding:50px 40px;}
+    .description-card{
+      background:linear-gradient(135deg,#f8f9fa,#e9ecef);
+      padding:40px;border-radius:20px;margin-bottom:50px;
+      border-left:6px solid var(--secondary);
+      box-shadow:0 12px 35px rgba(0,0,0,0.08);
+      position:relative;
+      overflow:hidden;
+    }
+    .description-card::before{
+      content:'';position:absolute;top:0;right:0;
+      width:120px;height:120px;background:linear-gradient(135deg,var(--primary),transparent);
+      border-radius:0 0 0 100px;opacity:0.1;
+    }
+    .description-title{
+      color:var(--dark);font-size:1.6em;margin-bottom:20px;font-weight:600;
+      display:flex;align-items:center;gap:15px;
+    }
+    .description-title i{color:var(--secondary);font-size:1.2em;}
+    .description-text{
+      color:var(--gray);font-size:1.1em;line-height:1.7;
+      max-width:90%;
+    }
+    .upload-card{
+      background:white;border-radius:20px;padding:50px;text-align:center;
+      box-shadow:0 18px 45px rgba(0,0,0,0.12);
+      border:2px dashed var(--primary);transition:all 0.4s ease;
+      position:relative;overflow:hidden;
+    }
+    .upload-card::before{
+      content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+      background:conic-gradient(transparent,transparent,transparent,var(--primary));
+      animation:rotate 4s linear infinite;
+    }
+    .upload-card::after{
+      content:'';position:absolute;inset:4px;background:white;border-radius:16px;
+    }
+    @keyframes rotate{
+      0%{transform:rotate(0deg);}
+      100%{transform:rotate(360deg);}
+    }
+    .upload-content{position:relative;z-index:2;}
+    .upload-icon{
+      font-size:5em;color:var(--primary);margin-bottom:25px;
+      filter:drop-shadow(0 4px 8px rgba(190,157,4,0.3));
+    }
+    .upload-title{
+      color:var(--dark);font-size:1.8em;margin-bottom:15px;font-weight:600;
+    }
+    .upload-subtitle{
+      color:var(--gray);font-size:1.1em;margin-bottom:30px;
+      max-width:500px;margin-left:auto;margin-right:auto;
+    }
+    .domain-selection{margin:30px 0;text-align:center;}
+    .domain-label{
+      display:block;color:var(--dark);font-size:1.1em;
+      font-weight:600;margin-bottom:15px;
+    }
+    .domain-select{
+      background:white;border:2px solid var(--primary);border-radius:15px;
+      padding:16px 25px;font-size:1.1em;color:var(--dark);font-weight:600;
+      cursor:pointer;transition:all 0.3s ease;min-width:300px;
+      box-shadow:0 6px 18px rgba(190,157,4,0.2);
+      appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%234A463D' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 20px center;
+      background-size:16px;
+    }
+    .domain-select:focus{
+      outline:none;border-color:var(--secondary);
+      box-shadow:0 10px 28px rgba(74,70,61,0.3);transform:translateY(-2px);
+    }
+    .domain-info{
+      margin-top:15px;color:var(--gray);font-size:0.95em;
+      font-style:italic;max-width:400px;margin-left:auto;margin-right:auto;
+    }
+    .file-upload-container{
+      display:inline-block;padding:10px;border-radius:50px;
+      transition:all 0.3s ease;
+    }
+    .file-upload-container:hover{
+      transform:translateY(-5px);
+      box-shadow:0 12px 28px rgba(190,157,4,0.35);
+    }
+    .file-input-wrapper{
+      position:relative;display:inline-block;cursor:pointer;
+    }
+    .file-input{
+      opacity:0;position:absolute;left:0;top:0;height:100%;width:100%;
+      cursor:pointer;
+    }
+    .file-input-label{
+      display:inline-flex;align-items:center;justify-content:center;gap:12px;
+      background:linear-gradient(135deg,var(--primary),#a08703);color:white;
+      border-radius:40px;font-size:1.15em;font-weight:800;padding:20px 45px;
+      text-transform:uppercase;letter-spacing:0.5px;transition:all 0.3s ease;
+      box-shadow:0 6px 15px rgba(190,157,4,0.4);
+    }
+    .file-input-label:hover{
+      background:linear-gradient(135deg,#a08703,var(--primary));
+      transform:translateY(-4px);box-shadow:0 10px 22px rgba(190,157,4,0.6);
+    }
+    .file-input-label i{font-size:1.3em;}
+    .file-name{
+      display:block;margin-top:12px;color:var(--success);font-weight:600;
+      font-size:0.95em;
+    }
+    .submit-btn{
+      background:linear-gradient(135deg,var(--secondary),#3a3731);color:white;
+      border:none;padding:22px 65px;font-size:1.25em;font-weight:800;
+      border-radius:40px;cursor:pointer;transition:all 0.3s ease;
+      box-shadow:0 12px 28px rgba(74,70,61,0.4);text-transform:uppercase;
+      letter-spacing:0.8px;position:relative;overflow:hidden;
+    }
+    .submit-btn::before{
+      content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+      transition:left 0.5s;
+    }
+    .submit-btn:hover::before{left:100%;}
+    .submit-btn:hover{
+      transform:translateY(-4px);box-shadow:0 18px 45px rgba(74,70,61,0.6);
+      background:linear-gradient(135deg,#3a3731,var(--secondary));
+    }
+    .submit-btn:disabled{
+      background:var(--gray);cursor:not-allowed;transform:none;box-shadow:none;
+    }
+    .loading-spinner{
+      display:none;margin:20px auto;text-align:center;
+    }
+    .spinner{
+      border:4px solid #f3f3f3;border-top:4px solid var(--primary);
+      border-radius:50%;width:40px;height:40px;animation:spin 2s linear infinite;
+      margin:0 auto 10px;
+    }
+    @keyframes spin{
+      0%{transform:rotate(0deg);}
+      100%{transform:rotate(360deg);}
+    }
+    .results-section{
+      display:none;margin-top:40px;padding:35px;
+      background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:20px;
+      border-left:6px solid var(--success);box-shadow:0 12px 35px rgba(0,0,0,0.08);
+    }
+    .features-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:30px;
+      margin:50px 0;
+    }
+    .feature-card{
+      background:white;padding:45px 30px;border-radius:20px;text-align:center;
+      box-shadow:0 12px 35px rgba(0,0,0,0.08);transition:all 0.4s ease;
+      border-top:5px solid var(--primary);cursor:pointer;position:relative;
+      overflow:hidden;
+    }
+    .feature-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:4px;
+      background:linear-gradient(90deg,var(--primary),var(--accent),var(--secondary));
+      transform:scaleX(0);transition:transform 0.3s ease;
+    }
+    .feature-card:hover::before{transform:scaleX(1);}
+    .feature-card:hover{
+      transform:translateY(-10px);box-shadow:0 25px 50px rgba(0,0,0,0.15);
+    }
+    .feature-icon{
+      font-size:4em;margin-bottom:25px;color:var(--primary);
+      transition:all 0.3s ease;
+    }
+    .feature-card:hover .feature-icon{
+      color:var(--secondary);transform:scale(1.15);
+    }
+    .feature-title{
+      color:var(--dark);font-size:1.5em;margin-bottom:15px;font-weight:700;
+    }
+    .feature-description{
+      color:var(--gray);line-height:1.6;font-size:1.05em;
+    }
+    .feature-card a{
+      text-decoration:none;color:inherit;display:block;width:100%;height:100%;
+    }
+    .legal-section{
+      background:linear-gradient(135deg,#fff3cd,#ffeaa7);border:1px solid var(--warning);
+      border-radius:18px;padding:35px;margin-top:50px;position:relative;
+      border-left:6px solid var(--warning);cursor:pointer;transition:all 0.3s ease;
+      box-shadow:0 8px 25px rgba(0,0,0,0.05);
+    }
+    .legal-section:hover{
+      background:linear-gradient(135deg,#ffeaa7,#fff3cd);transform:translateY(-3px);
+      box-shadow:0 12px 30px rgba(0,0,0,0.1);
+    }
+    .legal-icon{
+      position:absolute;top:-18px;left:30px;background:white;padding:12px;
+      border-radius:50%;box-shadow:0 6px 18px rgba(0,0,0,0.1);color:var(--warning);
+      font-size:1.2em;
+    }
+    .legal-title{
+      color:#856404;font-weight:700;margin-bottom:12px;font-size:1.3em;
+    }
+    .legal-text{
+      color:#856404;line-height:1.6;font-size:1.05em;
+    }
+    .legal-section a{
+      text-decoration:none;color:inherit;display:block;width:100%;height:100%;
+    }
+    @media(max-width:768px){
+      .glass-container{margin:10px;border-radius:20px;}
+      .hero-section,.content-section{padding:30px 20px;}
+      .logo{font-size:2.5em;}
+      .broom-icon{font-size:4em;}
+      .domain-title{font-size:1.8em;}
+      .domain-select{min-width:250px;}
+      .upload-card{padding:30px 20px;}
+      .features-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+<div class="glass-container">
+  <!-- HERO -->
+  <div class="hero-section">
+    <div class="hero-pattern"></div>
+    <div class="hero-content">
+      <div class="broom-icon">🧹</div>
+      <div class="logo">BiasClean</div>
+      <div class="domain-title">AI Fairness Engine</div>
+      <div class="tagline">Sweep away biases from your datasets with evidence-based precision and industry-grade mitigation</div>
+      <div class="metrics-badge">
+        <i class="fas fa-cogs"></i> 7 Domain-Specific Weight Matrices
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content-section">
+    <div class="description-card">
+      <div class="description-title">
+        <i class="fas fa-shield-alt" style="color:#4A463D;"></i>
+        Evidence-Based Bias Mitigation • Industry-Grade SMOTE • Production Ready
+      </div>
+      <div class="description-text">
+        BiasClean v2.0 uses mathematical proof of biases for surgical distribution alignment. 
+        Upload your dataset to detect and mitigate biases across 7 protected features with 
+        industry-grade SMOTE rebalancing that guarantees ≤8% data loss while achieving 
+        meaningful fairness improvements.
+      </div>
+    </div>
+
+    <!-- UPLOAD FORM -->
+    <div class="upload-section">
+      <form id="uploadForm" enctype="multipart/form-data">
+        <div class="upload-card">
+          <div class="upload-content">
+            <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+            <div class="upload-title">Upload Your Dataset</div>
+            <div class="upload-subtitle">Select a CSV file and domain for comprehensive bias analysis and mitigation</div>
+
+            <!-- Domain Selection -->
+            <div class="domain-selection">
+              <label class="domain-label">
+                <i class="fas fa-globe"></i> Select Analysis Domain
+              </label>
+              <select class="domain-select" name="domain" id="domainSelect" required>
+                <option value="">Choose a domain...</option>
+                <option value="justice">⚖️ Justice System</option>
+                <option value="health">🏥 Healthcare</option>
+                <option value="finance">💼 Finance & Banking</option>
+                <option value="education">🎓 Education</option>
+                <option value="hiring">👥 Hiring & Recruitment</option>
+                <option value="business">🏢 Business Operations</option>
+                <option value="governance">🏛️ Governance & Public Policy</option>
+              </select>
+              <div class="domain-info" id="domainInfo">
+                Domain determines feature weights and bias detection priorities
+              </div>
+            </div>
+
+            <!-- File Upload -->
+            <div class="file-upload-container">
+              <div class="file-input-wrapper">
+                <label for="datasetFile" class="file-input-label">
+                  <i class="fas fa-file-csv"></i> Choose CSV File
+                </label>
+                <input type="file" name="file" accept=".csv" required class="file-input" id="datasetFile" />
+              </div>
+              <span class="file-name" id="fileName"></span>
+            </div>
+
+            <br /><br />
+            <small style="color:#4A463D;">Accepted format: CSV only. Remove personal identifiers (names, IDs).</small><br />
+            
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn" id="submitBtn">
+              <i class="fas fa-play-circle"></i> Start BiasClean Audit
+            </button>
+
+            <!-- Loading Spinner -->
+            <div class="loading-spinner" id="loadingSpinner">
+              <div class="spinner"></div>
+              <div>Processing your dataset... This may take a few minutes</div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-section" id="resultsSection">
+      <h2 style="color: var(--success); margin-bottom: 20px;">
+        <i class="fas fa-check-circle"></i> Analysis Complete!
+      </h2>
+      <div id="resultsContent"></div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="features-section">
+      <div class="features-grid">
+        <div class="feature-card">
+          <a href="#">
+            <div class="feature-icon"><i class="fas fa-search-plus"></i></div>
+            <div class="feature-title">Evidence-Based Detection</div>
+            <div class="feature-description">
+              Mathematical proof of biases using chi-square tests and statistical significance 
+              with p-values and effect sizes for each protected feature.
+            </div>
+          </a>
+        </div>
+
+        <div class="feature-card">
+          <a href="#">
+            <div class="feature-icon"><i class="fas fa-industry"></i></div>
+            <div class="feature-title">Industry-Grade SMOTE</div>
+            <div class="feature-description">
+              Production-ready rebalancing with ≤8% data loss guarantee. Intelligent duplication 
+              and controlled undersampling for optimal fairness-data retention balance.
+            </div>
+          </a>
+        </div>
+
+        <div class="feature-card">
+          <a href="#">
+            <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="feature-title">Comprehensive Analytics</div>
+            <div class="feature-description">
+              Professional visualizations, detailed reports, and industry validation metrics. 
+              Wasserstein distance improvements and production readiness scoring.
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISCLAIMER -->
+    <div class="legal-section">
+      <div class="legal-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="legal-content">
+        <div class="legal-title">Technical Implementation</div>
+        <div class="legal-text">
+          BiasClean v2.0 implements domain-specific weight matrices based on UK regulatory frameworks. 
+          Protected features: Ethnicity, Gender, Age, DisabilityStatus, SocioeconomicStatus, Region, MigrationStatus. 
+          Analysis includes statistical significance testing (α=0.05) and effect size calculations.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const fileInput = document.getElementById('datasetFile');
+  const fileName = document.getElementById('fileName');
+  const domainSelect = document.getElementById('domainSelect');
+  const domainInfo = document.getElementById('domainInfo');
+  const uploadForm = document.getElementById('uploadForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const loadingSpinner = document.getElementById('loadingSpinner');
+  const resultsSection = document.getElementById('resultsSection');
+  const resultsContent = document.getElementById('resultsContent');
+
+  // Domain descriptions
+  const domainDescriptions = {
+    'justice': 'Focus: Ethnicity (25%), SocioeconomicStatus (20%), Region (15%). Legal system disparities.',
+    'health': 'Focus: Ethnicity (25%), SocioeconomicStatus (20%), DisabilityStatus (15%). Healthcare access equity.',
+    'finance': 'Focus: SocioeconomicStatus (30%), Region (20%), Ethnicity (20%). Financial inclusion analysis.',
+    'education': 'Focus: SocioeconomicStatus (25%), Ethnicity (20%), Region (15%). Educational opportunity fairness.',
+    'hiring': 'Focus: Ethnicity (25%), Gender (20%), DisabilityStatus (15%). Recruitment and promotion equity.',
+    'business': 'Focus: Ethnicity (25%), Gender (20%), SocioeconomicStatus (15%). Corporate operations fairness.',
+    'governance': 'Focus: Ethnicity (25%), Gender (20%), SocioeconomicStatus (15%). Public policy impact analysis.'
+  };
+
+  // File input handler
+  fileInput.addEventListener('change', function(e){
+    if(e.target.files.length > 0){
+      fileName.textContent = '✅ Selected: ' + e.target.files[0].name;
+      fileName.style.color = '#27ae60';
+    } else {
+      fileName.textContent = '';
+    }
+  });
+
+  // Domain selection handler
+  domainSelect.addEventListener('change', function(e){
+    const selectedDomain = e.target.value;
+    if (selectedDomain && domainDescriptions[selectedDomain]) {
+      domainInfo.textContent = domainDescriptions[selectedDomain];
+      domainInfo.style.color = '#4A463D';
+    } else {
+      domainInfo.textContent = 'Domain determines feature weights and bias detection priorities';
+      domainInfo.style.color = '#605e5c';
+    }
+  });
+
+  // Form submission handler
+  uploadForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('domain', domainSelect.value);
+
+    // Show loading, disable submit
+    submitBtn.disabled = true;
+    loadingSpinner.style.display = 'block';
+    resultsSection.style.display = 'none';
+
+    try {
+      const response = await fetch('/biasclean/biasclean-audit', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Display results
+        displayResults(result);
+        resultsSection.style.display = 'block';
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        alert('Error: ' + (result.error || 'Processing failed'));
+      }
+    } catch (error) {
+      alert('Network error: ' + error.message);
+    } finally {
+      submitBtn.disabled = false;
+      loadingSpinner.style.display = 'none';
+    }
+  });
+
+  function displayResults(data) {
+    const { detection, removal, report_content, files, session_id } = data;
+    
+    let html = `
+      <div style="background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.08);">
+        <h3 style="color: var(--primary); margin-bottom: 15px;">
+          <i class="fas fa-chart-bar"></i> Executive Summary
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+          <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid var(--primary);">
+            <div style="font-size: 1.8em; font-weight: bold; color: var(--primary);">${detection.n_rows}</div>
+            <div style="color: var(--gray);">Records Analyzed</div>
+          </div>
+          <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid var(--success);">
+            <div style="font-size: 1.8em; font-weight: bold; color: var(--success);">${removal.bias_reduction_percent.toFixed(1)}%</div>
+            <div style="color: var(--gray);">Bias Reduction</div>
+          </div>
+          <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid var(--accent);">
+            <div style="font-size: 1.8em; font-weight: bold; color: var(--accent);">${removal.data_retention_percent.toFixed(1)}%</div>
+            <div style="color: var(--gray);">Data Retention</div>
+          </div>
+          <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid ${removal.production_ready ? 'var(--success)' : 'var(--warning)'};">
+            <div style="font-size: 1.8em; font-weight: bold; color: ${removal.production_ready ? 'var(--success)' : 'var(--warning)'};">
+              ${removal.production_ready ? '✅' : '⚠️'}
+            </div>
+            <div style="color: var(--gray);">Production Ready</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.08);">
+        <h3 style="color: var(--primary); margin-bottom: 15px;">
+          <i class="fas fa-download"></i> Download Results
+        </h3>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <a href="/biasclean/download/${session_id}/${files.corrected}" class="download-btn" style="background: var(--success); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);">
+            <i class="fas fa-file-csv"></i> Corrected Dataset
+          </a>
+          <a href="/biasclean/download/${session_id}/${files.report}" class="download-btn" style="background: var(--accent); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);">
+            <i class="fas fa-file-alt"></i> Full Report
+          </a>
+          <a href="/biasclean/download/${session_id}/${files.validation}" class="download-btn" style="background: var(--secondary); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(74, 70, 61, 0.3);">
+            <i class="fas fa-chart-bar"></i> Validation Data
+          </a>
+        </div>
+      </div>
+
+      <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.08);">
+        <h3 style="color: var(--primary); margin-bottom: 15px;">
+          <i class="fas fa-file-alt"></i> Detailed Report
+        </h3>
+        <pre style="background: #f8f9fa; padding: 20px; border-radius: 10px; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9em; line-height: 1.4; border-left: 4px solid var(--primary);">${report_content}</pre>
+      </div>
+    `;
+
+    resultsContent.innerHTML = html;
+  }
+});
+</script>
+</body>
+</html>
