@@ -312,10 +312,10 @@ async function loadResults() {
 }
 
 function updateUI(data) {
-  // Update metrics
-  document.getElementById('biasReduction').textContent = data.removal.bias_reduction_percent.toFixed(1) + '%';
-  document.getElementById('dataRetention').textContent = data.removal.data_retention_percent.toFixed(1) + '%';
-  document.getElementById('significantBiases').textContent = data.detection.significant_biases_detected;
+// Update metrics
+document.getElementById('biasReduction').textContent = data.removal.bias_reduction_percent.toFixed(1) + '%';
+document.getElementById('dataRetention').textContent = data.removal.data_retention_percent.toFixed(1) + '%';
+document.getElementById('significantBiases').textContent = data.removal.significant_biases_found || 0;
   
   // Update production ready status
   const prodCard = document.getElementById('productionReadyCard');
@@ -327,11 +327,11 @@ function updateUI(data) {
   // Update report content
   document.getElementById('reportContent').textContent = data.report_content;
   
-  // Update download links
-  const sessionId = data.session_id;
-  document.getElementById('downloadCorrectedBtn').href = `/download/${sessionId}/corrected.csv`;
-  document.getElementById('downloadReportBtn').href = `/download/${sessionId}/report.txt`;
-  document.getElementById('downloadValidationBtn').href = `/download/${sessionId}/validation.json`;
+// Update download links
+const sessionId = data.session_id;
+document.getElementById('downloadCorrectedBtn').href = `/biasclean/download/${sessionId}/corrected.csv`;
+document.getElementById('downloadReportBtn').href = `/biasclean/download/${sessionId}/report.txt`;
+document.getElementById('downloadValidationBtn').href = `/biasclean/download/${sessionId}/validation.json`;
 }
 
 // Load visualizations
