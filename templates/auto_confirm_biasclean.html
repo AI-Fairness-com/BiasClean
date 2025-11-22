@@ -344,7 +344,7 @@
                 <p>Industry-grade bias mitigation will be applied using {{ domain }} domain weights and statistical evidence</p>
                 <p><em>Evidence-Based Detection • Industry SMOTE • Production Validation • Professional Reporting</em></p>
                 
-                <form action="{{ url_for('run_biasclean_audit') }}" method="post">
+                <form action="https://biasclean.onrender.com/biasclean/run-audit" method="post">
                     <input type="hidden" name="session_id" value="{{ session_id }}">
                     <input type="hidden" name="domain" value="{{ domain }}">
                     <button type="submit" class="run-btn">
