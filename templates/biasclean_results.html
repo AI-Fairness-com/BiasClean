@@ -151,7 +151,7 @@
     <div class="broom-icon">🧹</div>
     <div class="logo">BiasClean</div>
     <div class="results-title">Audit Results Complete</div>
-    <div style="opacity:0.9;">Domain: <strong id="domainDisplay">Health</strong> • Session: <strong id="sessionDisplay">ABC123</strong></div>
+    <div style="opacity:0.9;">Domain: <strong id="domainDisplay">{{ domain|upper }}</strong> • Session: <strong id="sessionDisplay">{{ session_id }}</strong></div>
   </div>
 
   <!-- CONTENT -->
@@ -160,7 +160,7 @@
     <!-- KEY METRICS -->
     <div class="results-grid">
       <div class="result-card success">
-        <div class="metric-value" id="biasReduction">0%</div>
+        <div class="metric-value" id="biasReduction">{{ removal.bias_reduction_percent|round(1) }}%</div>
         <div class="metric-label">Bias Reduction</div>
         <div style="margin-top:10px;font-size:0.9em;color:var(--gray);">
           Overall fairness improvement across all protected features
@@ -168,7 +168,7 @@
       </div>
       
       <div class="result-card info">
-        <div class="metric-value" id="dataRetention">0%</div>
+        <div class="metric-value" id="dataRetention">{{ removal.data_retention_percent|round(1) }}%</div>
         <div class="metric-label">Data Retention</div>
         <div style="margin-top:10px;font-size:0.9em;color:var(--gray);">
           Records preserved after industry-grade SMOTE rebalancing
@@ -176,7 +176,7 @@
       </div>
       
       <div class="result-card">
-        <div class="metric-value" id="significantBiases">0</div>
+        <div class="metric-value" id="significantBiases">{{ removal.significant_biases_found }}</div>
         <div class="metric-label">Significant Biases Found</div>
         <div style="margin-top:10px;font-size:0.9em;color:var(--gray);">
           Statistically significant disparities (p < 0.05)
@@ -184,7 +184,7 @@
       </div>
       
       <div class="result-card warning" id="productionReadyCard">
-        <div class="metric-value">❌</div>
+        <div class="metric-value">{% if removal.production_ready %}✅{% else %}❌{% endif %}</div>
         <div class="metric-label">Production Ready</div>
         <div style="margin-top:10px;font-size:0.9em;color:var(--gray);">
           Meets industry standards for deployment
@@ -194,13 +194,13 @@
 
     <!-- DOWNLOAD ACTIONS -->
     <div class="actions-grid">
-      <a href="#" class="action-btn" id="downloadCorrectedBtn">
+      <a href="/biasclean/download/{{ session_id }}/corrected.csv" class="action-btn" id="downloadCorrectedBtn">
         <i class="fas fa-download"></i> Download Corrected CSV
       </a>
-      <a href="#" class="action-btn" id="downloadReportBtn">
+      <a href="/biasclean/download/{{ session_id }}/report.txt" class="action-btn" id="downloadReportBtn">
         <i class="fas fa-file-alt"></i> Download Full Report
       </a>
-      <a href="#" class="action-btn secondary" id="downloadValidationBtn">
+      <a href="/biasclean/download/{{ session_id }}/validation.json" class="action-btn secondary" id="downloadValidationBtn">
         <i class="fas fa-chart-bar"></i> Download Validation Data
       </a>
       <a href="#" class="action-btn secondary" id="viewVisualizationsBtn">
@@ -214,7 +214,7 @@
         <i class="fas fa-file-alt"></i> Executive Summary
       </h3>
       <div class="report-content" id="reportContent">
-        Loading report content...
+        {{ report_content }}
       </div>
     </div>
 
@@ -238,133 +238,28 @@
 </div>
 
 <script>
-// Parse URL parameters to get session data
-function getUrlParams() {
-  const params = new URLSearchParams(window.location.search);
-  return {
-    session_id: params.get('session_id'),
-    domain: params.get('domain') || 'health'
-  };
-}
-
-// Load results from API
-async function loadResults() {
-  const { session_id, domain } = getUrlParams();
-  
-  if (!session_id) {
-    document.getElementById('reportContent').innerHTML = 
-      '<div style="color: #e74c3c;">Error: No session ID provided</div>';
-    return;
-  }
-
-  try {
-    // Update display
-    document.getElementById('domainDisplay').textContent = domain.charAt(0).toUpperCase() + domain.slice(1);
-    document.getElementById('sessionDisplay').textContent = session_id;
-    
-    // In a real implementation, you would fetch from your API:
-    // const response = await fetch(`/api/results/${session_id}`);
-    // const data = await response.json();
-    
-    // For now, we'll simulate data - replace this with actual API call
-    const mockData = {
-      session_id: session_id,
-      domain: domain,
-      removal: {
-        bias_reduction_percent: 67.5,
-        data_retention_percent: 94.2
-      },
-      detection: {
-        significant_biases_detected: 3
-      },
-      production_ready: true,
-      report_content: `BIASCLEAN V2.0 - COMPREHENSIVE FAIRNESS REPORT\n` +
-        `==========================================================\n\n` +
-        `DOMAIN: ${domain.toUpperCase()}\n` +
-        `TIMESTAMP: ${new Date().toLocaleString()}\n` +
-        `SESSION: ${session_id}\n\n` +
-        `EXECUTIVE SUMMARY:\n` +
-        `-------------------\n` +
-        `✓ Bias Reduction: 67.5%\n` +
-        `✓ Data Retention: 94.2%\n` +
-        `✓ Significant Biases Mitigated: 3\n` +
-        `✓ Production Ready: YES\n\n` +
-        `DETAILED ANALYSIS:\n` +
-        `-------------------\n` +
-        `• Ethnicity distribution aligned within 5% of uniform\n` +
-        `• Gender representation gaps reduced by 72%\n` +
-        `• Socioeconomic status disparities eliminated\n` +
-        `• All statistical tests now pass (p > 0.05)\n\n` +
-        `INDUSTRY VALIDATION:\n` +
-        `-------------------\n` +
-        `✅ Data Retention: 94.2% (Target: ≥92%)\n` +
-        `✅ Fairness Gain: 67.5% (Target: ≥15%)\n` +
-        `✅ Production Ready: YES\n`
-    };
-
-    // Update UI with data
-    updateUI(mockData);
-    
-  } catch (error) {
-    document.getElementById('reportContent').innerHTML = 
-      `<div style="color: #e74c3c;">Error loading results: ${error.message}</div>`;
-  }
-}
-
-function updateUI(data) {
-// Update metrics
-document.getElementById('biasReduction').textContent = data.removal.bias_reduction_percent.toFixed(1) + '%';
-document.getElementById('dataRetention').textContent = data.removal.data_retention_percent.toFixed(1) + '%';
-document.getElementById('significantBiases').textContent = data.removal.significant_biases_found || 0;
-  
-  // Update production ready status
-  const prodCard = document.getElementById('productionReadyCard');
-  if (data.production_ready) {
-    prodCard.querySelector('.metric-value').textContent = '✅';
-    prodCard.querySelector('.metric-label').textContent = 'Production Ready';
-  }
-  
-  // Update report content
-  document.getElementById('reportContent').textContent = data.report_content;
-  
-// Update download links
-const sessionId = data.session_id;
-document.getElementById('downloadCorrectedBtn').href = `/biasclean/download/${sessionId}/corrected.csv`;
-document.getElementById('downloadReportBtn').href = `/biasclean/download/${sessionId}/report.txt`;
-document.getElementById('downloadValidationBtn').href = `/biasclean/download/${sessionId}/validation.json`;
-}
-
-// Load visualizations
-function loadVisualizations(sessionId) {
-  // This would fetch and display visualization images
+// Simple visualization loader
+document.getElementById('viewVisualizationsBtn').addEventListener('click', function(e) {
+  e.preventDefault();
+  const sessionId = '{{ session_id }}';
   const vizGrid = document.getElementById('vizGrid');
   vizGrid.innerHTML = `
     <div class="viz-card">
-      <img src="/visualization/${sessionId}/bias_score_comparison.png" alt="Bias Score Comparison">
-      <div style="margin-top:10px;font-weight:600;">Bias Score Reduction</div>
+      <img src="/biasclean/visualization/${sessionId}/01_comprehensive_dashboard.png" alt="Comprehensive Dashboard">
+      <div style="margin-top:10px;font-weight:600;">Comprehensive Dashboard</div>
     </div>
     <div class="viz-card">
-      <img src="/visualization/${sessionId}/feature_distributions.png" alt="Feature Distributions">
+      <img src="/biasclean/visualization/${sessionId}/02_feature_distributions.png" alt="Feature Distributions">
       <div style="margin-top:10px;font-weight:600;">Feature Distributions</div>
     </div>
     <div class="viz-card">
-      <img src="/visualization/${sessionId}/data_retention.png" alt="Data Retention">
-      <div style="margin-top:10px;font-weight:600;">Data Retention Metrics</div>
+      <img src="/biasclean/visualization/${sessionId}/03_bias_score_comparison.png" alt="Bias Score Comparison">
+      <div style="margin-top:10px;font-weight:600;">Bias Score Comparison</div>
     </div>
   `;
-}
-
-// Event listeners
-document.getElementById('viewVisualizationsBtn').addEventListener('click', function(e) {
-  e.preventDefault();
-  const { session_id } = getUrlParams();
-  loadVisualizations(session_id);
   document.getElementById('visualizationsSection').style.display = 'block';
   this.style.display = 'none';
 });
-
-// Initialize
-document.addEventListener('DOMContentLoaded', loadResults);
 </script>
 </body>
 </html>
