@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify, render_template, send_file
+from flask import Flask, request, jsonify, render_template, send_file, session
 import pandas as pd
 import os
 import uuid
+import secrets
 from datetime import datetime
 from biasclean_pipeline import (
     biasclean_detect,
@@ -12,6 +13,7 @@ from biasclean_pipeline import (
 )
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = secrets.token_hex(16)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['RESULTS_FOLDER'] = 'results'
@@ -62,6 +64,12 @@ def biasclean_audit():
         print(f"🔍 Step 1: Detecting biases for domain: {domain}")
         detect_results = biasclean_detect(input_path, domain)
         
+        # STORE IN SESSION - CRITICAL FIX
+        session['biasclean_session_id'] = session_id
+        session['biasclean_domain'] = domain
+        session['biasclean_filename'] = file.filename
+        session['biasclean_input_path'] = input_path
+        
         # Render auto-confirm page with detected features
         return render_template('auto_confirm_biasclean.html',
                             filename=file.filename,
@@ -77,21 +85,25 @@ def biasclean_audit():
 def run_biasclean_audit():
     """Run full bias audit after confirmation"""
     try:
-        session_id = request.form.get('session_id')
-        domain = request.form.get('domain')
+        # RETRIEVE FROM SESSION - CRITICAL FIX
+        session_id = session.get('biasclean_session_id')
+        domain = session.get('biasclean_domain')
+        filename = session.get('biasclean_filename')
+        input_path = session.get('biasclean_input_path')
         
         if not session_id or not domain:
-            return render_template('upload_biasclean.html', error='Missing session data')
+            return render_template('upload_biasclean.html', error='Session expired. Please upload again.')
         
         upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], session_id)
         results_dir = os.path.join(app.config['RESULTS_FOLDER'], session_id)
         
-        # Find the input file
-        input_files = [f for f in os.listdir(upload_dir) if f.startswith('input_')]
-        if not input_files:
-            return render_template('upload_biasclean.html', error='Uploaded file not found')
-        
-        input_path = os.path.join(upload_dir, input_files[0])
+        # Use the stored input path instead of searching
+        if not input_path or not os.path.exists(input_path):
+            # Fallback: search for input file
+            input_files = [f for f in os.listdir(upload_dir) if f.startswith('input_')]
+            if not input_files:
+                return render_template('upload_biasclean.html', error='Uploaded file not found')
+            input_path = os.path.join(upload_dir, input_files[0])
         
         # Step 2: Remove biases (industry mode)
         print(f"🔄 Step 2: Removing biases using industry mode")
@@ -149,7 +161,7 @@ def run_biasclean_audit():
         return render_template('biasclean_results.html',
                             session_id=session_id,
                             domain=domain,
-                            detection=remove_summary.get('detection_stats', {}),
+                            detection=remove_summary,
                             removal=remove_summary,
                             report_content=report_content,
                             production_ready=remove_summary.get('production_ready', False))
