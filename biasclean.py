@@ -174,18 +174,10 @@ def run_biasclean_audit():
 def download_file(session_id, filename):
     """Download result files with pattern matching for timestamped files"""
     try:
-        print(f"🔍 DEBUG: Download attempt - session: {session_id}, filename: {filename}")
         results_dir = os.path.join(app.config['RESULTS_FOLDER'], session_id)
-        
-        print(f"🔍 DEBUG: Results directory: {results_dir}")
-        print(f"🔍 DEBUG: Directory exists: {os.path.exists(results_dir)}")
         
         if not os.path.exists(results_dir):
             return f"Session not found: {session_id}", 404
-        
-        # List all files in directory for debugging
-        all_files = os.listdir(results_dir)
-        print(f"🔍 DEBUG: All files in directory: {all_files}")
         
         # Pattern matching for timestamped files
         if "corrected" in filename:
@@ -197,23 +189,18 @@ def download_file(session_id, filename):
         else:
             return f"Invalid file type: {filename}", 400
         
-        print(f"🔍 DEBUG: Searching for pattern: {pattern}")
-        
         # Find matching files
         import glob
         matching_files = glob.glob(os.path.join(results_dir, pattern))
-        print(f"🔍 DEBUG: Found {len(matching_files)} matching files: {matching_files}")
         
         if matching_files:
             # Get the most recent file if multiple exist
             latest_file = max(matching_files, key=os.path.getctime)
-            print(f"🔍 DEBUG: Sending file: {latest_file}")
             return send_file(latest_file, as_attachment=True)
         else:
             return f"No {pattern} files found in session {session_id}", 404
             
     except Exception as e:
-        print(f"🔍 DEBUG: Exception: {str(e)}")
         return f"Download error: {str(e)}", 500
 
 if __name__ == '__main__':
