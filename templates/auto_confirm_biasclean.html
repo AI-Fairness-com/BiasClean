@@ -343,14 +343,15 @@
                 <h2><i class="fas fa-rocket"></i> Run Complete BiasClean Audit on {{ filename }}</h2>
                 <p>Industry-grade bias mitigation will be applied using {{ domain }} domain weights and statistical evidence</p>
                 <p><em>Evidence-Based Detection • Industry SMOTE • Production Validation • Professional Reporting</em></p>
-                
-                <form action="/biasclean/run-audit" method="post">
-                    <input type="hidden" name="session_id" value="{{ session_id }}">
+
+		<form action="/biasclean/run-audit" method="post">
+    		    <input type="hidden" name="session_id" value="{{ session_id }}">
                     <input type="hidden" name="domain" value="{{ domain }}">
                     <button type="submit" class="run-btn">
                         <i class="fas fa-play-circle"></i> RUN COMPLETE BIASCLEAN AUDIT
                     </button>
                 </form>
+                
                 
                 <div style="margin-top: 20px; font-size: 0.9em; opacity: 0.9;">
                     <i class="fas fa-info-circle"></i> 
