@@ -35,16 +35,16 @@ def biasclean_audit():
     try:
         # Check if file is provided
         if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
+            return render_template('upload_biasclean.html', error='No file provided')
         
         file = request.files['file']
         if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
+            return render_template('upload_biasclean.html', error='No file selected')
         
         # Get domain from form
         domain = request.form.get('domain', 'health')
         if domain not in DOMAINS:
-            return jsonify({'error': 'Invalid domain selected'}), 400
+            return render_template('upload_biasclean.html', error='Invalid domain selected')
         
         # Generate unique session ID
         session_id = str(uuid.uuid4())
@@ -58,9 +58,40 @@ def biasclean_audit():
         input_path = os.path.join(upload_dir, input_filename)
         file.save(input_path)
         
-        # Step 1: Detect biases
+        # Step 1: Detect biases for auto-confirm
         print(f"🔍 Step 1: Detecting biases for domain: {domain}")
         detect_results = biasclean_detect(input_path, domain)
+        
+        # Render auto-confirm page with detected features
+        return render_template('auto_confirm_biasclean.html',
+                            filename=file.filename,
+                            domain=domain,
+                            session_id=session_id,
+                            detection=detect_results)
+        
+    except Exception as e:
+        print(f"❌ Error in biasclean audit: {str(e)}")
+        return render_template('upload_biasclean.html', error=f'Processing failed: {str(e)}')
+
+@app.route('/biasclean/run-audit', methods=['POST'])
+def run_biasclean_audit():
+    """Run full bias audit after confirmation"""
+    try:
+        session_id = request.form.get('session_id')
+        domain = request.form.get('domain')
+        
+        if not session_id or not domain:
+            return render_template('upload_biasclean.html', error='Missing session data')
+        
+        upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], session_id)
+        results_dir = os.path.join(app.config['RESULTS_FOLDER'], session_id)
+        
+        # Find the input file
+        input_files = [f for f in os.listdir(upload_dir) if f.startswith('input_')]
+        if not input_files:
+            return render_template('upload_biasclean.html', error='Uploaded file not found')
+        
+        input_path = os.path.join(upload_dir, input_files[0])
         
         # Step 2: Remove biases (industry mode)
         print(f"🔄 Step 2: Removing biases using industry mode")
@@ -114,27 +145,18 @@ def biasclean_audit():
         with open(report_path, 'r', encoding='utf-8') as f:
             report_content = f.read()
         
-        # Prepare response
-        response_data = {
-            'session_id': session_id,
-            'domain': domain,
-            'detection': detect_results,
-            'removal': remove_summary,
-            'report_content': report_content,
-            'files': {
-                'input': input_filename,
-                'corrected': corrected_filename,
-                'report': report_filename,
-                'validation': validation_filename
-            },
-            'visualizations': os.listdir(viz_dir) if os.path.exists(viz_dir) else []
-        }
-        
-        return jsonify(response_data)
+        # Render results page
+        return render_template('biasclean_results.html',
+                            session_id=session_id,
+                            domain=domain,
+                            detection=remove_summary.get('detection_stats', {}),
+                            removal=remove_summary,
+                            report_content=report_content,
+                            production_ready=remove_summary.get('production_ready', False))
         
     except Exception as e:
-        print(f"❌ Error in biasclean audit: {str(e)}")
-        return jsonify({'error': f'Processing failed: {str(e)}'}), 500
+        print(f"❌ Error in run_biasclean_audit: {str(e)}")
+        return render_template('upload_biasclean.html', error=f'Audit failed: {str(e)}')
 
 @app.route('/biasclean/download/<session_id>/<filename>')
 def download_file(session_id, filename):
@@ -144,9 +166,9 @@ def download_file(session_id, filename):
         if os.path.exists(file_path):
             return send_file(file_path, as_attachment=True)
         else:
-            return jsonify({'error': 'File not found'}), 404
+            return render_template('biasclean_results.html', error='File not found')
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return render_template('biasclean_results.html', error=str(e))
 
 @app.route('/biasclean/visualization/<session_id>/<viz_filename>')
 def get_visualization(session_id, viz_filename):
