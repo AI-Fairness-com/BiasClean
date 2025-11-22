@@ -170,38 +170,38 @@ def run_biasclean_audit():
         print(f"❌ Error in run_biasclean_audit: {str(e)}")
         return render_template('upload_biasclean.html', error=f'Audit failed: {str(e)}')
 
-@app.route('/biasclean/download/<session_id>/<filename>')
-def download_file(session_id, filename):
-    """Download result files with pattern matching for timestamped files"""
+@app.route('/biasclean/visualization/<session_id>/<viz_filename>')
+def get_visualization(session_id, viz_filename):
+    """Serve visualization images with pattern matching"""
     try:
-        results_dir = os.path.join(app.config['RESULTS_FOLDER'], session_id)
+        viz_dir = os.path.join(app.config['RESULTS_FOLDER'], session_id, 'visualizations')
         
-        if not os.path.exists(results_dir):
-            return f"Session not found: {session_id}", 404
+        if not os.path.exists(viz_dir):
+            return "Visualizations directory not found", 404
         
-        # Pattern matching for timestamped files
-        if "corrected" in filename:
-            pattern = "corrected_*.csv"
-        elif "report" in filename:
-            pattern = "report_*.txt"
-        elif "validation" in filename:
-            pattern = "validation_*.json"
+        # Pattern matching for visualization files
+        if "comprehensive_dashboard" in viz_filename:
+            pattern = "01_comprehensive_dashboard.png"
+        elif "feature_distributions" in viz_filename:
+            pattern = "02_feature_distributions.png"
+        elif "bias_score_comparison" in viz_filename:
+            pattern = "03_bias_score_comparison.png"
+        elif "data_retention" in viz_filename:
+            pattern = "04_data_retention.png"
+        elif "industry_readiness" in viz_filename:
+            pattern = "05_industry_readiness.png"
         else:
-            return f"Invalid file type: {filename}", 400
+            return f"Invalid visualization type: {viz_filename}", 400
         
-        # Find matching files
-        import glob
-        matching_files = glob.glob(os.path.join(results_dir, pattern))
+        viz_path = os.path.join(viz_dir, pattern)
         
-        if matching_files:
-            # Get the most recent file if multiple exist
-            latest_file = max(matching_files, key=os.path.getctime)
-            return send_file(latest_file, as_attachment=True)
+        if os.path.exists(viz_path):
+            return send_file(viz_path)
         else:
-            return f"No {pattern} files found in session {session_id}", 404
+            return f"Visualization {pattern} not found", 404
             
     except Exception as e:
-        return f"Download error: {str(e)}", 500
+        return f"Error: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
