@@ -172,28 +172,36 @@ def run_biasclean_audit():
 
 @app.route('/biasclean/download/<session_id>/<filename>')
 def download_file(session_id, filename):
-    """Download result files"""
+    """Download result files with pattern matching for timestamped files"""
     try:
-        file_path = os.path.join(app.config['RESULTS_FOLDER'], session_id, filename)
-        if os.path.exists(file_path):
-            return send_file(file_path, as_attachment=True)
+        results_dir = os.path.join(app.config['RESULTS_FOLDER'], session_id)
+        
+        if not os.path.exists(results_dir):
+            return f"Session not found: {session_id}", 404
+        
+        # Pattern matching for timestamped files
+        if "corrected" in filename:
+            pattern = "corrected_*.csv"
+        elif "report" in filename:
+            pattern = "report_*.txt"
+        elif "validation" in filename:
+            pattern = "validation_*.json"
         else:
-            # Return simple error instead of rendering template
-            return f"File not found: {filename}", 404
+            return f"Invalid file type: {filename}", 400
+        
+        # Find matching files
+        import glob
+        matching_files = glob.glob(os.path.join(results_dir, pattern))
+        
+        if matching_files:
+            # Get the most recent file if multiple exist
+            latest_file = max(matching_files, key=os.path.getctime)
+            return send_file(latest_file, as_attachment=True)
+        else:
+            return f"No {pattern} files found in session {session_id}", 404
+            
     except Exception as e:
         return f"Download error: {str(e)}", 500
-
-@app.route('/biasclean/visualization/<session_id>/<viz_filename>')
-def get_visualization(session_id, viz_filename):
-    """Serve visualization images"""
-    try:
-        viz_path = os.path.join(app.config['RESULTS_FOLDER'], session_id, 'visualizations', viz_filename)
-        if os.path.exists(viz_path):
-            return send_file(viz_path)
-        else:
-            return "Visualization not found", 404
-    except Exception as e:
-        return f"Error: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
