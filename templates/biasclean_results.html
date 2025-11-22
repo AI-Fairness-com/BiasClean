@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BiasClean - Audit Results</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <style>
+    * {margin:0;padding:0;box-sizing:border-box;}
+    :root {
+      --primary:#BE9D04;
+      --secondary:#4A463D;
+      --accent:#3498db;
+      --success:#27ae60;
+      --warning:#f39c12;
+      --light:#f8f9fa;
+      --dark:#323130;
+      --gray:#605e5c;
+      --gradient:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    }
+    body{
+      font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+      background:var(--gradient);
+      min-height:100vh;
+      padding:20px;
+      line-height:1.6;
+    }
+    .glass-container{
+      max-width:1200px;margin:0 auto;
+      background:rgba(255,255,255,0.95);
+      backdrop-filter:blur(20px);
+      border-radius:25px;
+      box-shadow:0 25px 50px rgba(0,0,0,0.15);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.2);
+    }
+    .hero-section{
+      background:linear-gradient(135deg,var(--primary),#a08703);
+      color:white;padding:40px;text-align:center;position:relative;
+      overflow:hidden;
+    }
+    .hero-section::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:4px;
+      background:linear-gradient(90deg,var(--secondary),var(--accent),#d4b104);
+    }
+    .broom-icon{
+      font-size:4em;margin-bottom:15px;display:block;
+      text-shadow:0 4px 12px rgba(0,0,0,0.3);
+      animation:float 4s ease-in-out infinite;
+    }
+    @keyframes float{
+      0%,100%{transform:translateY(0px) rotate(0deg);}
+      33%{transform:translateY(-12px) rotate(-3deg);}
+      66%{transform:translateY(-6px) rotate(3deg);}
+    }
+    .logo{
+      font-size:2.8em;font-weight:800;margin-bottom:10px;
+      background:linear-gradient(135deg,#fff,#f8f9fa);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .results-title{
+      font-size:1.8em;font-weight:600;margin-bottom:15px;
+      text-shadow:0 2px 4px rgba(0,0,0,0.3);
+    }
+    .content-section{padding:40px;}
+    
+    /* Results Cards */
+    .results-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:25px;
+      margin-bottom:40px;
+    }
+    .result-card{
+      background:white;padding:30px;border-radius:15px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.1);border-left:5px solid var(--primary);
+    }
+    .result-card.success{border-left-color:var(--success);}
+    .result-card.warning{border-left-color:var(--warning);}
+    .result-card.info{border-left-color:var(--accent);}
+    
+    .metric-value{
+      font-size:2.5em;font-weight:800;margin-bottom:10px;
+    }
+    .metric-label{
+      color:var(--gray);font-size:1.1em;font-weight:600;
+    }
+    
+    /* Report Section */
+    .report-section{
+      background:linear-gradient(135deg,#f8f9fa,#e9ecef);
+      padding:35px;border-radius:15px;margin-bottom:30px;
+      border-left:6px solid var(--secondary);
+    }
+    .report-content{
+      background:white;padding:25px;border-radius:10px;
+      max-height:400px;overflow-y:auto;font-family:monospace;
+      font-size:0.9em;line-height:1.5;
+    }
+    
+    /* Action Buttons */
+    .actions-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;
+      margin:30px 0;
+    }
+    .action-btn{
+      background:linear-gradient(135deg,var(--primary),#a08703);
+      color:white;border:none;padding:20px;border-radius:15px;
+      font-size:1.1em;font-weight:600;cursor:pointer;transition:all 0.3s ease;
+      text-decoration:none;display:flex;align-items:center;justify-content:center;gap:10px;
+      box-shadow:0 6px 20px rgba(190,157,4,0.3);
+    }
+    .action-btn:hover{
+      transform:translateY(-3px);box-shadow:0 10px 25px rgba(190,157,4,0.5);
+      background:linear-gradient(135deg,#a08703,var(--primary));
+    }
+    .action-btn.secondary{
+      background:linear-gradient(135deg,var(--secondary),#3a3731);
+      box-shadow:0 6px 20px rgba(74,70,61,0.3);
+    }
+    .action-btn.secondary:hover{
+      box-shadow:0 10px 25px rgba(74,70,61,0.5);
+    }
+    
+    /* Visualizations */
+    .viz-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;
+      margin:30px 0;
+    }
+    .viz-card{
+      background:white;padding:20px;border-radius:15px;text-align:center;
+      box-shadow:0 8px 25px rgba(0,0,0,0.1);
+    }
+    .viz-card img{max-width:100%;height:auto;border-radius:10px;}
+    
+    /* Back to Upload */
+    .back-section{
+      text-align:center;margin-top:40px;padding-top:30px;
+      border-top:2px solid rgba(0,0,0,0.1);
+    }
+    .back-btn{
+      background:var(--gray);color:white;border:none;padding:15px 30px;
+      border-radius:25px;font-size:1.1em;font-weight:600;cursor:pointer;
+      transition:all 0.3s ease;text-decoration:none;display:inline-block;
+    }
+    .back-btn:hover{background:var(--dark);transform:translateY(-2px);}
+  </style>
+</head>
+<body>
+<div class="glass-container">
+  <!-- HERO -->
+  <div class="hero-section">
+    <div class="broom-icon">🧹</div>
+    <div class="logo">BiasClean</div>
+    <div class="results-title">Audit Results Complete</div>
+    <div style="opacity:0.9;">Domain: <strong id="domainDisplay">Health</strong> • Session: <strong id="sessionDisplay">ABC123</strong></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content-section">
+    
+    <!-- KEY METRICS -->
+    <div class="results-grid">
+      <div class="result-card success">
+        <div class="metric-value" id="biasReduction">0%</div>
+        <div class="metric-label">Bias Reduction</div>
+        <div style="margin-top:10px;font-size:0.9em;color:var(--gray);">
+          Overall fairness improvement across all protected features
+        </div>
+      </div>
+      
+      <div class="result-card info">
+        <div class="metric-value" id="dataRetention">0%</div>
+        <div class="metric-label">Data Retention</div>
+        <div style="margin-top:10px;font-size:0.9em;color:var(--gray);">
+          Records preserved after industry-grade SMOTE rebalancing
+        </div>
+      </div>
+      
+      <div class="result-card">
+        <div class="metric-value" id="significantBiases">0</div>
+        <div class="metric-label">Significant Biases Found</div>
+        <div style="margin-top:10px;font-size:0.9em;color:var(--gray);">
+          Statistically significant disparities (p < 0.05)
+        </div>
+      </div>
+      
+      <div class="result-card warning" id="productionReadyCard">
+        <div class="metric-value">❌</div>
+        <div class="metric-label">Production Ready</div>
+        <div style="margin-top:10px;font-size:0.9em;color:var(--gray);">
+          Meets industry standards for deployment
+        </div>
+      </div>
+    </div>
+
+    <!-- DOWNLOAD ACTIONS -->
+    <div class="actions-grid">
+      <a href="#" class="action-btn" id="downloadCorrectedBtn">
+        <i class="fas fa-download"></i> Download Corrected CSV
+      </a>
+      <a href="#" class="action-btn" id="downloadReportBtn">
+        <i class="fas fa-file-alt"></i> Download Full Report
+      </a>
+      <a href="#" class="action-btn secondary" id="downloadValidationBtn">
+        <i class="fas fa-chart-bar"></i> Download Validation Data
+      </a>
+      <a href="#" class="action-btn secondary" id="viewVisualizationsBtn">
+        <i class="fas fa-images"></i> View Visualizations
+      </a>
+    </div>
+
+    <!-- REPORT CONTENT -->
+    <div class="report-section">
+      <h3 style="color:var(--dark);margin-bottom:20px;">
+        <i class="fas fa-file-alt"></i> Executive Summary
+      </h3>
+      <div class="report-content" id="reportContent">
+        Loading report content...
+      </div>
+    </div>
+
+    <!-- VISUALIZATIONS PLACEHOLDER -->
+    <div id="visualizationsSection" style="display:none;">
+      <h3 style="color:var(--dark);margin-bottom:20px;">
+        <i class="fas fa-chart-bar"></i> Bias Mitigation Visualizations
+      </h3>
+      <div class="viz-grid" id="vizGrid">
+        <!-- Visualizations will be loaded here -->
+      </div>
+    </div>
+
+    <!-- BACK TO UPLOAD -->
+    <div class="back-section">
+      <a href="/" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Start New Audit
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+// Parse URL parameters to get session data
+function getUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    session_id: params.get('session_id'),
+    domain: params.get('domain') || 'health'
+  };
+}
+
+// Load results from API
+async function loadResults() {
+  const { session_id, domain } = getUrlParams();
+  
+  if (!session_id) {
+    document.getElementById('reportContent').innerHTML = 
+      '<div style="color: #e74c3c;">Error: No session ID provided</div>';
+    return;
+  }
+
+  try {
+    // Update display
+    document.getElementById('domainDisplay').textContent = domain.charAt(0).toUpperCase() + domain.slice(1);
+    document.getElementById('sessionDisplay').textContent = session_id;
+    
+    // In a real implementation, you would fetch from your API:
+    // const response = await fetch(`/api/results/${session_id}`);
+    // const data = await response.json();
+    
+    // For now, we'll simulate data - replace this with actual API call
+    const mockData = {
+      session_id: session_id,
+      domain: domain,
+      removal: {
+        bias_reduction_percent: 67.5,
+        data_retention_percent: 94.2
+      },
+      detection: {
+        significant_biases_detected: 3
+      },
+      production_ready: true,
+      report_content: `BIASCLEAN V2.0 - COMPREHENSIVE FAIRNESS REPORT\n` +
+        `==========================================================\n\n` +
+        `DOMAIN: ${domain.toUpperCase()}\n` +
+        `TIMESTAMP: ${new Date().toLocaleString()}\n` +
+        `SESSION: ${session_id}\n\n` +
+        `EXECUTIVE SUMMARY:\n` +
+        `-------------------\n` +
+        `✓ Bias Reduction: 67.5%\n` +
+        `✓ Data Retention: 94.2%\n` +
+        `✓ Significant Biases Mitigated: 3\n` +
+        `✓ Production Ready: YES\n\n` +
+        `DETAILED ANALYSIS:\n` +
+        `-------------------\n` +
+        `• Ethnicity distribution aligned within 5% of uniform\n` +
+        `• Gender representation gaps reduced by 72%\n` +
+        `• Socioeconomic status disparities eliminated\n` +
+        `• All statistical tests now pass (p > 0.05)\n\n` +
+        `INDUSTRY VALIDATION:\n` +
+        `-------------------\n` +
+        `✅ Data Retention: 94.2% (Target: ≥92%)\n` +
+        `✅ Fairness Gain: 67.5% (Target: ≥15%)\n` +
+        `✅ Production Ready: YES\n`
+    };
+
+    // Update UI with data
+    updateUI(mockData);
+    
+  } catch (error) {
+    document.getElementById('reportContent').innerHTML = 
+      `<div style="color: #e74c3c;">Error loading results: ${error.message}</div>`;
+  }
+}
+
+function updateUI(data) {
+  // Update metrics
+  document.getElementById('biasReduction').textContent = data.removal.bias_reduction_percent.toFixed(1) + '%';
+  document.getElementById('dataRetention').textContent = data.removal.data_retention_percent.toFixed(1) + '%';
+  document.getElementById('significantBiases').textContent = data.detection.significant_biases_detected;
+  
+  // Update production ready status
+  const prodCard = document.getElementById('productionReadyCard');
+  if (data.production_ready) {
+    prodCard.querySelector('.metric-value').textContent = '✅';
+    prodCard.querySelector('.metric-label').textContent = 'Production Ready';
+  }
+  
+  // Update report content
+  document.getElementById('reportContent').textContent = data.report_content;
+  
+  // Update download links
+  const sessionId = data.session_id;
+  document.getElementById('downloadCorrectedBtn').href = `/download/${sessionId}/corrected.csv`;
+  document.getElementById('downloadReportBtn').href = `/download/${sessionId}/report.txt`;
+  document.getElementById('downloadValidationBtn').href = `/download/${sessionId}/validation.json`;
+}
+
+// Load visualizations
+function loadVisualizations(sessionId) {
+  // This would fetch and display visualization images
+  const vizGrid = document.getElementById('vizGrid');
+  vizGrid.innerHTML = `
+    <div class="viz-card">
+      <img src="/visualization/${sessionId}/bias_score_comparison.png" alt="Bias Score Comparison">
+      <div style="margin-top:10px;font-weight:600;">Bias Score Reduction</div>
+    </div>
+    <div class="viz-card">
+      <img src="/visualization/${sessionId}/feature_distributions.png" alt="Feature Distributions">
+      <div style="margin-top:10px;font-weight:600;">Feature Distributions</div>
+    </div>
+    <div class="viz-card">
+      <img src="/visualization/${sessionId}/data_retention.png" alt="Data Retention">
+      <div style="margin-top:10px;font-weight:600;">Data Retention Metrics</div>
+    </div>
+  `;
+}
+
+// Event listeners
+document.getElementById('viewVisualizationsBtn').addEventListener('click', function(e) {
+  e.preventDefault();
+  const { session_id } = getUrlParams();
+  loadVisualizations(session_id);
+  document.getElementById('visualizationsSection').style.display = 'block';
+  this.style.display = 'none';
+});
+
+// Initialize
+document.addEventListener('DOMContentLoaded', loadResults);
+</script>
+</body>
+</html>
