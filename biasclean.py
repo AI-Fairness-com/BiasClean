@@ -178,9 +178,10 @@ def download_file(session_id, filename):
         if os.path.exists(file_path):
             return send_file(file_path, as_attachment=True)
         else:
-            return render_template('biasclean_results.html', error='File not found')
+            # Return simple error instead of rendering template
+            return f"File not found: {filename}", 404
     except Exception as e:
-        return render_template('biasclean_results.html', error=str(e))
+        return f"Download error: {str(e)}", 500
 
 @app.route('/biasclean/visualization/<session_id>/<viz_filename>')
 def get_visualization(session_id, viz_filename):
@@ -190,9 +191,9 @@ def get_visualization(session_id, viz_filename):
         if os.path.exists(viz_path):
             return send_file(viz_path)
         else:
-            return jsonify({'error': 'Visualization not found'}), 404
+            return "Visualization not found", 404
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return f"Error: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
