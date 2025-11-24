@@ -1,63 +1,127 @@
-# 🧹 BiasClean v2.0
+# 🧹 BiasClean Toolkit
 
-![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey)
-[![GitHub](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
-![Version](https://img.shields.io/badge/version-2.0-blue)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
 ![Python](https://img.shields.io/badge/python-3.7%2B-green)
 
-Open-source toolkit for detecting and mitigating demographic bias in UK datasets.  
-Developed to support the **BiasClean™** fairness pre-processing framework described in:
+**A domain-aware pre-processing toolkit for detecting and mitigating demographic bias in UK datasets before modelling.**
 
+Developed to support the **BiasClean™** fairness pre-processing framework described in the book  
 **_BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits_ (Tavakoli, 2025).**
 
+---
 
-### A domain-aware pre-processing toolkit for detecting and mitigating demographic bias in UK datasets before modelling.
+## 🌍 Overview
 
-BiasClean v2.0 is an evidence-based fairness cleaning engine designed to remove demographic representation bias with the same rigour traditionally applied to dirty or missing data.  
-It provides a transparent, defensible, multi-domain weighting framework aligned with UK structural inequality patterns and regulatory expectations.
+**BiasClean v2.0** is an evidence-based fairness cleaning engine designed to remove demographic representation bias with the same rigour traditionally applied to dirty or missing data. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
+
+The toolkit implements a sophisticated **7×7 matrix** of UK domains and universal fairness features, each weighted using the **SIW-ESW-PLW framework** (Structural Inequality Weight, Evidence Strength Weight, Policy & Legal Relevance Weight) based on official UK statistics and regulatory guidance.
 
 ---
 
-## 🎯 Key Capabilities
+## 🏗️ System Architecture
 
-- **7 UK Domains:** Justice, Health, Finance, Education, Hiring, Business, Governance  
-- **7 Universal Fairness Features:** Ethnicity, SocioeconomicStatus, Region, Age, Gender, DisabilityStatus, MigrationStatus  
-- **Domain-Specific Weights:** Evidence-based 7×7 matrix constructed from ONS, NHS, MoJ, FCA, DfE, EHRC, BEIS sources  
-- **Representation-Ratio Fairness Scoring:** Detects under- and over-representation patterns  
-- **Selective Downsampling:** Controlled bias reduction (typical data loss 8–15%)  
-- **Regulatory-Grade Transparency:** Clear audit trail, justification and evidence base  
-- **Report Generation:** Before/after fairness comparisons for governance and audit
+BiasClean follows a structured, evidence-weighted pipeline for surgical bias mitigation:  
+`Input Dataset` → `Domain & Fairness Feature Detection` → `Evidence-Based Weight Application (SIW-ESW-PLW)` → `Representation-Ratio Fairness Scoring` → `Selective Downsampling & SMOTE Rebalancing` → `Cleaned Dataset & Fairness Audit Report`.
 
----
+<img width="419" height="369" alt="BiasClean Architecture" src="https://github.com/user-attachments/assets/b00ad2bf-e0c9-453e-9d31-9be0fb344f85" />
+
+*(Architecture diagram placeholder - recommend creating a similar diagram to FDK)*
 
 ## 🔍 Why BiasClean Is Different
 
-- **UK-aligned design:** Uses national statistics, regulatory guidance and structural inequality research  
-- **Domain specificity:** Not a generic fairness tool; each domain has its own evidence-weighted feature profile  
-- **Reproducible methodology:** Transparent SIW–ESW–PLW weighting framework  
-- **Audit ready:** Designed for peer review and compliance teams  
-- **No black box steps:** Every weight, feature and fairness measure is visible and explainable  
-- **Robust feature architecture:** Seven fairness features validated in Step 1 & Step 2 technical reports  
+BiasClean is specifically engineered for the UK context, moving beyond generic fairness tools.
+
+| Feature | BiasClean Approach | Generic Fairness Tools |
+|:--|:--|:--|
+| **Regulatory Alignment** | Designed around UK Equality Act, MoJ, NHS, FCA guidelines | Often US-centric or generic |
+| **Methodology** | Transparent SIW-ESW-PLW evidence-weighted framework | Often in-processing "black boxes" |
+| **Domain Specificity** | 7 UK domains with custom evidence matrices | One-size-fits-all |
+| **Output** | Bias-mitigated dataset & full audit trail | Model metrics only |
+| **Transparency** | Every weight and decision is explainable | Opaque adjustments |
+
+## 🧩 Supported Domains & Fairness Features
+
+BiasClean operates on a 7×7 matrix of UK domains and universal fairness features, each weighted with evidence from official national sources.
+
+### Core Domains
+| Domain | Key Evidence Sources |
+|:--|:--|
+| **Justice** | Ministry of Justice (MoJ), HM Inspectorate of Constabulary |
+| **Health** | NHS Digital, Public Health England |
+| **Finance** | Financial Conduct Authority (FCA), Bank of England |
+| **Education** | Department for Education (DfE), Office for Students |
+| **Hiring** | Equality and Human Rights Commission (EHRC) |
+| **Business** | Department for Business, Energy & Industrial Strategy (BEIS) |
+| **Governance** | Office for National Statistics (ONS), Government Equalities Office |
+
+### Universal Fairness Features
+| Feature | Description | Key Data Sources |
+|:--|:--|:--|
+| **Ethnicity** | Racial and ethnic group representation | ONS, EHRC |
+| **SocioeconomicStatus** | Income, education, occupation-based disparities | ONS, Social Mobility Commission |
+| **Region** | Geographic and regional inequality | ONS, NHS |
+| **Age** | Behavioural gradients affecting outcomes | ONS demographic risk profiles |
+| **Gender** | Documented bias across hiring, health and leadership | EHRC, ONS gender pay gap |
+| **DisabilityStatus** | Protected characteristic with consistent disadvantage | Equality Act, NHS, DWP data |
+| **MigrationStatus** | Affects service access and civic participation | ONS, Electoral Commission |
+
+## 🏥 Real-World Use Cases
+
+### Healthcare: Diagnostic AI Access
+**Context**: AI system for prioritizing specialist referrals  
+**Sensitive Attributes**: Ethnicity, SocioeconomicStatus, Region  
+**Fairness Risk**: Lower referral rates for minority ethnic groups and deprived regions, potentially exacerbating health inequalities  
+**BiasClean Solution**: Applies health domain weights (Ethnicity: 0.25, SES: 0.20) to rebalance dataset, ensuring equitable representation before model training.
+
+### Justice: Risk Assessment Training Data
+**Context**: Algorithm predicting recidivism risk using historical data  
+**Sensitive Attributes**: Ethnicity, Age, Region  
+**Fairness Risk**: Over-representation of young minority defendants creating biased training data  
+**BiasClean Solution**: Uses justice domain weights (Ethnicity: 0.25, Age: 0.15, Region: 0.15) to surgically rebalance dataset composition.
+
+### Hiring: Recruitment Pipeline Data
+**Context**: Training data for automated CV screening system  
+**Sensitive Attributes**: Gender, Age, DisabilityStatus  
+**Fairness Risk**: Under-representation of female, older, and disabled applicants in technical roles  
+**BiasClean Solution**: Applies hiring domain weights (Gender: 0.20, DisabilityStatus: 0.15, Age: 0.10) with industry-grade SMOTE rebalancing.
 
 ---
 
-## 📚 Regulatory Alignment
+## ⚙️ Repository Structure
 
-BiasClean supports UK requirements for transparency and fairness:
-
-- Equality Act 2010 (protected characteristics)
-- MoJ disparity monitoring (Race & CJS)
-- NHS health inequality frameworks
-- FCA fairness in lending and financial inclusion expectations
-- DfE attainment inequality frameworks
-- EHRC systemic inequality guidance
-- BEIS business equity and investment disparity studies
-
-These sources collectively inform the domain-specific weighting logic and fairness feature architecture.
-
----
-
-## 📦 Installation
-
-```bash
-pip install biasclean_v2
+```text
+BiasClean/
+│
+├── data/                           # Real datasets for validation
+│   └── real_datasets/              # [To be populated]
+│
+├── demos/                          # Jupyter notebook demonstrations
+│   └── [Notebooks to be added]     # [To be populated]
+│
+├── docs/                           # Comprehensive documentation
+│   ├── installation.md            # Step-by-step installation guide
+│   ├── architecture.md            # System architecture details
+│   ├── domains.md                 # Domain-specific explanations
+│   ├── example_usage.md           # Practical usage examples
+│   └── disclaimer.md              # Legal and ethical guidelines
+│
+├── static/                        # Web interface static files
+├── templates/                     # Web interface templates
+│
+├── tests/                         # Comprehensive test suite
+│   └── [Test files to be added]   # [To be populated]
+│
+├── biased_datasets_samples/       # Example biased datasets
+├── examples/                      # Usage examples
+├── professional_viz/              # Professional visualizations
+│
+├── biasclean.py                   # Main Flask web application
+├── biasclean_cli.py               # Command-line interface
+├── biasclean_pipeline.py          # Core pipeline functions
+├── biasclean_v2.py                # Main BiasClean algorithm
+├── requirements.txt               # Python dependencies
+├── render.yaml                    # Deployment configuration
+├── LICENSE                        # Apache 2.0 License
+├── NOTICE                         # Copyright notices
+└── README.md                      # Project documentation
