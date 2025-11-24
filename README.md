@@ -125,3 +125,68 @@ BiasClean/
 ├── LICENSE                        # Apache 2.0 License
 ├── NOTICE                         # Copyright notices
 └── README.md                      # Project documentation
+🚀 Installation & Usage
+Requirements
+Python 3.7+
+
+pip (Python package manager)
+
+Install Dependencies
+bash
+pip install -r requirements.txt
+Web Interface (Recommended)
+bash
+python biasclean.py
+Then open http://localhost:5000 in your browser.
+
+Command-Line Interface
+bash
+python biasclean_cli.py
+Production Pipeline
+python
+from biasclean_pipeline import biasclean_full_pipeline
+
+results = biasclean_full_pipeline(
+    input_path='your_dataset.csv',
+    domain='health',  # or justice, finance, etc.
+    mode='industry'
+)
+🧪 Testing & Validation
+The toolkit includes comprehensive validation:
+
+Statistical Diagnosis: Chi-square tests for distribution uniformity
+
+Industry Metrics: Data retention ≥92%, meaningful fairness gains >15%
+
+Production Readiness: Dual validation with bias scores and distribution alignment
+
+bash
+# Run production test suite
+python -m pytest tests/
+⚖️ Legal & Ethical Disclaimer
+BiasClean™ is a research and educational toolkit for bias mitigation in datasets. It does not provide legal, regulatory, or compliance advice. Users are responsible for ensuring appropriate dataset preparation and domain-compliant use. Full disclaimer available in docs/disclaimer.md.
+
+📄 License
+Software (BiasClean Toolkit code): Apache License 2.0
+See LICENSE and NOTICE in the repository root.
+
+Book and explanatory text: CC BY-NC-SA 4.0
+The book BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits remains under a Creative Commons licence suitable for educational and non-commercial use.
+
+📚 Citation & Credits
+If you use or reference this toolkit in your research, please cite:
+
+Tavakoli, H. (2025). BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits. London: Apress.
+
+Repository: AI-Fairness-com/BiasClean
+Correspondence: info@ai-fairness.com
+
+BibTeX Citation
+bibtex
+@software{Tavakoli2025BiasClean,
+  author  = {Hamid Tavakoli},
+  title   = {BiasClean Toolkit: Evidence-Based Bias Mitigation for UK Datasets},
+  year    = {2025},
+  url     = {https://github.com/AI-Fairness-com/BiasClean},
+  version = {v2.0.0}
+}
