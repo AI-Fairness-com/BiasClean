@@ -21,7 +21,22 @@ python biasclean.py
 2. Run Jupyter Demo  
 jupyter notebook demos/BiasClean_Demo.ipynb
 
-**Live Production Tool: https://www.ai-fairness.com**
+---
+### COMPAS Validation Results:
+
+*Overall Bias Reduction:* 5.6% (0.3325 → 0.3139)
+
+*Data Retention:* 97.4% (7,214 → 7,029 records)
+
+#### Key Feature Improvements:
+
+**🎯 Gender: 49.5% improvement**
+
+**🎯 Race: 11.4% improvement**
+
+**🎯 Ethnicity: 11.4% improvement**
+
+#### Live Production Tool: https://www.ai-fairness.com
 
 ---
 
