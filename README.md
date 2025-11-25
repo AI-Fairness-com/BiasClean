@@ -11,6 +11,19 @@ Developed to support the **BiasClean™** fairness pre-processing framework desc
 
 ---
 
+## 🎯 Quick Start: COMPAS Demo
+**Reproduce 5.6% bias reduction on real justice data:**
+1. Launch Web Interface
+python biasclean.py
+-Navigate to http://localhost:5000 and upload data/real_datasets/compas.csv
+
+2. Run Jupyter Demo  
+jupyter notebook demos/BiasClean_Demo.ipynb
+
+**Live Production Tool: https://www.ai-fairness.com**
+
+---
+
 ## 🌍 Overview
 
 **BiasClean v2.0** is an evidence-based fairness cleaning engine designed to remove demographic representation bias with the same rigour traditionally applied to dirty or missing data. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
@@ -92,10 +105,10 @@ BiasClean operates on a 7×7 matrix of UK domains and universal fairness feature
 BiasClean/
 │
 ├── data/                           # Real datasets for validation
-│   └── real_datasets/              # [To be populated]
+│   └── real_datasets/              # COMPAS dataset included
 │
 ├── demos/                          # Jupyter notebook demonstrations
-│   └── [Notebooks to be added]     # [To be populated]
+│   └── [Notebooks to be added]     # COMPAS-validated demo
 │
 ├── docs/                           # Comprehensive documentation
 │   ├── installation.md            # Step-by-step installation guide
