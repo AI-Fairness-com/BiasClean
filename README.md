@@ -3,6 +3,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
 ![Python](https://img.shields.io/badge/python-3.7%2B-green)
+![Bias Reduction](https://img.shields.io/badge/Bias%20Reduction-5.6%25-success)
 
 **A domain-aware pre-processing toolkit for detecting and mitigating demographic bias in UK datasets before modelling.**
 
