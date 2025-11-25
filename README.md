@@ -22,11 +22,9 @@ The toolkit implements a sophisticated **7×7 matrix** of UK domains and univers
 ## 🏗️ System Architecture
 
 BiasClean follows a structured, evidence-weighted pipeline for surgical bias mitigation:  
-`Input Dataset` → `Domain & Fairness Feature Detection` → `Evidence-Based Weight Application (SIW-ESW-PLW)` → `Representation-Ratio Fairness Scoring` → `Selective Downsampling & SMOTE Rebalancing` → `Cleaned Dataset & Fairness Audit Report`.
 
-<img width="419" height="369" alt="BiasClean Architecture" src="https://github.com/user-attachments/assets/b00ad2bf-e0c9-453e-9d31-9be0fb344f85" />
+<img width="1112" height="405" alt="Screenshot 2025-11-25 at 08 13 56" src="https://github.com/user-attachments/assets/e00f7153-c937-4cf3-904e-fddc48452ded" />
 
-*(Architecture diagram placeholder - recommend creating a similar diagram to FDK)*
 
 ## 🔍 Why BiasClean Is Different
 
