@@ -28,9 +28,9 @@ BiasClean™ operates on a consistent pattern:
 
 Access our comprehensive Justice domain validation:
 
-```bash
 demos/BiasClean_Demo.ipynb
-🎯 Demo Features:
+
+### 🎯 Demo Features:
 
 Complete bias analysis pipeline on COMPAS dataset
 
@@ -42,7 +42,7 @@ Professional visualizations
 
 Statistical significance testing
 
-🔬 COMPAS Results Achieved:
+### 🔬 COMPAS Results Achieved:
 
 Overall Bias Reduction: 5.6% (0.3325 → 0.3139)
 
@@ -58,22 +58,22 @@ Ethnicity: 11.4% improvement
 
 Age: 1.1% improvement
 
-📊 Real Dataset Integration
+### 📊 Real Dataset Integration
 
-python
-# The COMPAS dataset is automatically loaded in the demo
-# Located at: data/real_datasets/compas.csv
+
+#### The COMPAS dataset is automatically loaded in the demo
+#### Located at: data/real_datasets/compas.csv
 
 from biasclean_v2 import BiasClean
 import pandas as pd
 
-# Load COMPAS data (7,214 real-world records)
+#### Load COMPAS data (7,214 real-world records)
 df = pd.read_csv('data/real_datasets/compas.csv')
 
-# Initialize BiasClean with justice domain
+#### Initialize BiasClean with justice domain
 bc = BiasClean(df, domain='justice')
 
-# Run comprehensive bias analysis and mitigation
+#### Run comprehensive bias analysis and mitigation
 corrected_df, bias_report = bc.clean()
 
 print(f"Bias Reduction: {bias_report['overall_reduction']}%")
@@ -103,8 +103,8 @@ Before/after bias score comparisons
 
 Professional visualization outputs
 
-1️⃣ Web Interface - Complete Workflow
-📁 Uploading Your Dataset
+### 1️⃣ Web Interface - Complete Workflow
+### 📁 Uploading Your Dataset
 Launch the web interface:
 
 bash
@@ -119,7 +119,7 @@ Recommended: Include protected features (gender, age, race, etc.)
 
 Select your domain from the 7 available options
 
-🔍 Automatic Feature Detection
+### 🔍 Automatic Feature Detection
 BiasClean automatically identifies:
 
 Protected demographic features
@@ -130,7 +130,7 @@ Domain-specific risk factors
 
 Data quality issues
 
-⚙️ Running Bias Mitigation
+### ⚙️ Running Bias Mitigation
 Click "Run BiasClean" to execute:
 
 Bias Detection: Statistical analysis of fairness disparities
@@ -139,27 +139,28 @@ Bias Mitigation: Industry SMOTE with multi-objective optimization
 
 Results Generation: Comprehensive bias reduction report
 
-📊 Example Results Output
+### 📊 Example Results Output
 Bias Reduction Report:
 
 text
-🎯 BIAS CLEANING RESULTS
+### 🎯 BIAS CLEANING RESULTS
 • Overall Bias Reduction: 5.6%
 • Data Retention: 97.4%
 • Statistical Significance: p < 0.000000
 
-📈 FEATURE IMPROVEMENTS:
+### 📈 FEATURE IMPROVEMENTS:
 • Gender: 49.5% improvement
 • Race: 11.4% improvement
 • Ethnicity: 11.4% improvement
 • Age: 1.1% improvement
 • Migration Status: 11.4% improvement
 • Disability Status: 1.1% improvement
-2️⃣ Command Line Interface
+### 2️⃣ Command Line Interface
 Basic Usage
 bash
 python biasclean_cli.py --input your_dataset.csv --domain justice
 Advanced Options
+
 bash
 python biasclean_cli.py \
   --input data/real_datasets/compas.csv \
@@ -171,7 +172,7 @@ Python API Integration
 python
 from biasclean_pipeline import biasclean_full_pipeline
 
-# Run complete bias cleaning pipeline
+### Run complete bias cleaning pipeline
 results = biasclean_full_pipeline(
     input_path='your_dataset.csv',
     domain='justice',  # or health, finance, education, etc.
@@ -181,38 +182,38 @@ results = biasclean_full_pipeline(
 
 print(f"Bias reduced: {results['bias_reduction']}%")
 print(f"Final bias score: {results['final_bias_score']}")
-3️⃣ Domain-Specific Examples
-🏥 Health Domain
+### 3️⃣ Domain-Specific Examples
+#### 🏥 Health Domain
 Use Case: Medical diagnostic dataset
 
 python
-# Health domain emphasizes ethnicity and disability status
+**Health domain emphasizes ethnicity and disability status**
 results = biasclean_full_pipeline(
     input_path='medical_data.csv',
     domain='health',
     mode='industry'
 )
-💰 Finance Domain
+### 💰 Finance Domain
 Use Case: Loan application data
 
 python
-# Finance domain emphasizes socioeconomic status and region
+**Finance domain emphasizes socioeconomic status and region**
 results = biasclean_full_pipeline(
     input_path='loan_applications.csv',
     domain='finance', 
     mode='industry'
 )
-🎓 Education Domain
+### 🎓 Education Domain
 Use Case: Student performance data
 
 python
-# Education domain emphasizes ethnicity and socioeconomic status
+**Education domain emphasizes ethnicity and socioeconomic status**
 results = biasclean_full_pipeline(
     input_path='student_records.csv',
     domain='education',
     mode='industry'
 )
-🎯 Key Workflow Takeaways
+### 🎯 Key Workflow Takeaways
 Consistent Interface: Same workflow across all 7 domains
 
 Domain-Aware: Different fairness weights per domain
@@ -227,14 +228,14 @@ Live Production Tool: https://www.ai-fairness.com
 
 ## New Multi-Objective Optimization
 
-# Old approach (sequential - limited to 7.5% reduction)
+### Old approach (sequential - limited to 7.5% reduction)
 cleaner = BiasClean().fit('justice')
 df_fixed = cleaner.transform_industry(df, diagnostics)
 
-# New approach (multi-objective - achieves 16.1% reduction)  
+###  New approach (multi-objective - achieves 16.1% reduction)  
 cleaner = BiasCleanJustice()  # Domain-specialized
 df_fixed = cleaner.multi_objective_optimize(df, diagnostics)
 
-📬 Contact
+### 📬 Contact
 For demonstration datasets, academic usage, or domain-specific questions:
 info@ai-fairness.com
