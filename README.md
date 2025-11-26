@@ -22,7 +22,7 @@ python biasclean.py
 jupyter notebook demos/BiasClean_Demo.ipynb
 
 ---
-### COMPAS Validation Results:
+### COMPAS Validation Results (Local Test):
 
 *Overall Bias Reduction:* 8.8% (0.3325 → 0.3032)
 
