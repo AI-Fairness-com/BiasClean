@@ -38,7 +38,7 @@ jupyter notebook demos/BiasClean_Demo.ipynb
 
 **🎯 Region: -0.6% worse**
 
-**🎯 Socioeconomic Status: -1.3% improvement**
+**🎯 Socioeconomic Status: -1.3% worse**
 
 
 
