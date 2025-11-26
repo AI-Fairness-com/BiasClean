@@ -24,9 +24,9 @@ jupyter notebook demos/BiasClean_Demo.ipynb
 ---
 ### COMPAS Validation Results (Local Test):
 
-*Overall Bias Reduction:* 8.8% (0.3325 → 0.3032)
+*Overall Justice domain Bias Reduction:* 16.1%
 
-*Data Retention:* 97.4% (7,214 → 7,029 records)
+*Justice domain Data Retention:* 99.4%
 
 #### Key Feature Improvements:
 
