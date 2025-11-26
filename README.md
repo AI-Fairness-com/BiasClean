@@ -13,7 +13,7 @@ Developed to support the **BiasClean™** fairness pre-processing framework desc
 ---
 
 ## 🎯 Quick Start: COMPAS Demo
-**Reproduce 5.6% bias reduction on real justice data:**
+**Reproduce 8.8% bias reduction on real justice data:**
 1. Launch Web Interface
 python biasclean.py
 - Navigate to http://www.https://ai-fairness.com/ and upload data/real_datasets/compas.csv
@@ -24,17 +24,27 @@ jupyter notebook demos/BiasClean_Demo.ipynb
 ---
 ### COMPAS Validation Results:
 
-*Overall Bias Reduction:* 5.6% (0.3325 → 0.3139)
+*Overall Bias Reduction:* 8.8% (0.3325 → 0.3032)
 
 *Data Retention:* 97.4% (7,214 → 7,029 records)
 
 #### Key Feature Improvements:
 
-**🎯 Gender: 49.5% improvement**
+**🎯 Gender: 60.1% improvement**
 
-**🎯 Race: 11.4% improvement**
+**🎯 Ethnicity: 17.3% improvement**
 
-**🎯 Ethnicity: 11.4% improvement**
+**🎯 Migrant Status: 17.3% improvement**
+
+**🎯 Age: 2.4% improvement**
+
+**🎯 Disability Status: 2.4% improvement**
+
+**🎯 Socioeconomic Status: 0.6% improvement**
+
+**🎯 Region: -2.4% worse**
+
+
 
 #### Live Production Tool: https://www.ai-fairness.com
 
