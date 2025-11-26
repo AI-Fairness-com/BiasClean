@@ -225,6 +225,16 @@ Validated: COMPAS dataset demonstrates real-world effectiveness
 
 Live Production Tool: https://www.ai-fairness.com
 
+## New Multi-Objective Optimization
+
+# Old approach (sequential - limited to 7.5% reduction)
+cleaner = BiasClean().fit('justice')
+df_fixed = cleaner.transform_industry(df, diagnostics)
+
+# New approach (multi-objective - achieves 16.1% reduction)  
+cleaner = BiasCleanJustice()  # Domain-specialized
+df_fixed = cleaner.multi_objective_optimize(df, diagnostics)
+
 📬 Contact
 For demonstration datasets, academic usage, or domain-specific questions:
 info@ai-fairness.com
