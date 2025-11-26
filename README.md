@@ -30,19 +30,15 @@ jupyter notebook demos/BiasClean_Demo.ipynb
 
 #### Key Feature Improvements:
 
-**🎯 Gender: 60.1% improvement**
+**🎯 Ethnicity: 37.7% improvement**
 
-**🎯 Ethnicity: 17.3% improvement**
+**🎯 Age: 25.7% improvement**
 
-**🎯 Migrant Status: 17.3% improvement**
+**🎯 Gender: 6.5% improvement**
 
-**🎯 Age: 2.4% improvement**
+**🎯 Region: -0.6% worse**
 
-**🎯 Disability Status: 2.4% improvement**
-
-**🎯 Socioeconomic Status: 0.6% improvement**
-
-**🎯 Region: -2.4% worse**
+**🎯 Socioeconomic Status: -1.3% improvement**
 
 
 
