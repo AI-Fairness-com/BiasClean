@@ -3,7 +3,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
 ![Python](https://img.shields.io/badge/python-3.7%2B-green)
-![Bias Reduction](https://img.shields.io/badge/Bias%20Reduction-5.6%25-success)
+![Bias Reduction](https://img.shields.io/badge/Bias%20Reduction-28.1%25-success)
 
 **A domain-aware pre-processing toolkit for detecting and mitigating demographic bias in UK datasets before modelling.**
 
@@ -68,9 +68,7 @@ Each domain follows **UK 2025 Domain-Specific Weight Prioritization**:
 
 ## 🌍 Overview
 
-## 🌍 Overview
-
-**BiasClean v2.0** is an evidence-based fairness cleaning engine designed to remove demographic representation bias with the same rigour traditionally applied to dirty or missing data. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
+**BiasClean v2.1** is an evidence-based fairness cleaning engine designed to remove demographic representation bias with the same rigour traditionally applied to dirty or missing data. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
 
 The toolkit implements a sophisticated **7×7 matrix** of UK domains and universal fairness features, each weighted using the **SIW-ESW-PLW framework** (Structural Inequality Weight, Evidence Strength Weight, Policy & Legal Relevance Weight) based on official UK statistics and regulatory guidance.
 
@@ -180,6 +178,8 @@ BiasClean/
 ├── LICENSE                        # Apache 2.0 License
 ├── NOTICE                         # Copyright notices
 └── README.md                      # Project documentation
+؛
+
 🚀 Installation & Usage
 Requirements
 Python 3.7+
@@ -211,7 +211,7 @@ The toolkit includes comprehensive validation:
 
 Statistical Diagnosis: Chi-square tests for distribution uniformity
 
-Industry Metrics: Data retention ≥92%, meaningful fairness gains >15%
+Industry Metrics: Data retention ≥95%, meaningful fairness gains >10%
 
 Production Readiness: Dual validation with bias scores and distribution alignment
 
