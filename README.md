@@ -41,6 +41,33 @@ jupyter notebook demos/BiasClean_Demo.ipynb
 
 ---
 
+## 🚀 What's New in v2.1: Universal 7-Domain Pipeline
+
+### ✅ 7 Domains Supported
+- **Justice** - Criminal justice bias detection (COMPAS-validated)
+- **Health** - Healthcare bias analysis
+- **Finance** - Financial services fairness
+- **Hiring** - Employment & recruitment bias
+- **Education** - Educational access & attainment bias
+- **Business** - Business funding & investment bias
+- **Governance** - Political representation & selection bias
+
+### ✅ Weight-Prioritized Mitigation
+Each domain follows **UK 2025 Domain-Specific Weight Prioritization**:
+- **Justice**: Ethnicity (0.25) > SocioeconomicStatus (0.20) > Region/Age (0.15)
+- **Health**: Ethnicity (0.25) > SocioeconomicStatus (0.20) > DisabilityStatus/Gender (0.15)
+- **Business**: Ethnicity (0.25) > Gender (0.20) > Region/SES (0.15) > Age/Disability (0.10)
+
+### ✅ New Features
+- **7-domain configuration system** with domain-specific weight matrices
+- **Hierarchical 3-tier mapping** (Universal → Domain → Jurisdiction)
+- **Auto-approval system** with confidence thresholds
+- **Interactive Colab interface** with sample dataset generators
+
+---
+
+## 🌍 Overview
+
 ## 🌍 Overview
 
 **BiasClean v2.0** is an evidence-based fairness cleaning engine designed to remove demographic representation bias with the same rigour traditionally applied to dirty or missing data. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
@@ -216,5 +243,5 @@ bibtex
   title   = {BiasClean Toolkit: Evidence-Based Bias Mitigation for UK Datasets},
   year    = {2025},
   url     = {https://github.com/AI-Fairness-com/BiasClean},
-  version = {v2.0.0}
+  version = {v2.1.0}
 }
