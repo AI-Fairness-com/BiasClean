@@ -42,7 +42,7 @@ jupyter notebook demos/BiasClean_Demo.ipynb
 
 ---
 
-## 🚀 What's New in v2.3: Universal 7-Domain Pipeline
+### 🚀 What's New in v2.3: Universal 7-Domain Pipeline
 
 ### ✅ 7 Domains Supported
 - **Justice** - Criminal justice bias detection (COMPAS-validated)
