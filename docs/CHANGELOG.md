@@ -284,4 +284,4 @@ This project follows Semantic Versioning (semver.org):
 ---
 
 *BiasClean Toolkit - Professional Grade Bias Mitigation*  
-*Breakthrough Release: v2.4.0 with Weight-Prioritized Optimization & Multi-Disciplinary Validation*
+*Breakthrough Release: v2.3.0 with Weight-Prioritized Optimization & Multi-Disciplinary Validation*
