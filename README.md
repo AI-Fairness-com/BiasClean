@@ -4,6 +4,7 @@
 [![GitHub Repository](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
 ![Python](https://img.shields.io/badge/python-3.7%2B-green)
 ![Bias Reduction](https://img.shields.io/badge/Bias%20Reduction-28.1%25-success)
+![Version](https://img.shields.io/badge/Version-2.3.0-blue)
 
 **A domain-aware pre-processing toolkit for detecting and mitigating demographic bias in UK datasets before modelling.**
 
@@ -41,7 +42,7 @@ jupyter notebook demos/BiasClean_Demo.ipynb
 
 ---
 
-## 🚀 What's New in v2.1: Universal 7-Domain Pipeline
+## 🚀 What's New in v2.3: Universal 7-Domain Pipeline
 
 ### ✅ 7 Domains Supported
 - **Justice** - Criminal justice bias detection (COMPAS-validated)
@@ -68,7 +69,7 @@ Each domain follows **UK 2025 Domain-Specific Weight Prioritization**:
 
 ## 🌍 Overview
 
-**BiasClean v2.1** is an evidence-based fairness cleaning engine designed to remove demographic representation bias with the same rigour traditionally applied to dirty or missing data. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
+**BiasClean v2.3** is an evidence-based fairness cleaning engine designed to remove demographic representation bias with the same rigour traditionally applied to dirty or missing data. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
 
 The toolkit implements a sophisticated **7×7 matrix** of UK domains and universal fairness features, each weighted using the **SIW-ESW-PLW framework** (Structural Inequality Weight, Evidence Strength Weight, Policy & Legal Relevance Weight) based on official UK statistics and regulatory guidance.
 
@@ -243,5 +244,5 @@ bibtex
   title   = {BiasClean Toolkit: Evidence-Based Bias Mitigation for UK Datasets},
   year    = {2025},
   url     = {https://github.com/AI-Fairness-com/BiasClean},
-  version = {v2.1.0}
+  version = {v2.3.0}
 }
