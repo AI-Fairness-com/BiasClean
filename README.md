@@ -178,9 +178,9 @@ BiasClean/
 ├── LICENSE                        # Apache 2.0 License
 ├── NOTICE                         # Copyright notices
 └── README.md                      # Project documentation
-؛
+```
 
-🚀 Installation & Usage
+### 🚀 Installation & Usage
 Requirements
 Python 3.7+
 
@@ -216,19 +216,19 @@ Industry Metrics: Data retention ≥95%, meaningful fairness gains >10%
 Production Readiness: Dual validation with bias scores and distribution alignment
 
 bash
-# Run production test suite
+#### Run production test suite
 python -m pytest tests/
 ⚖️ Legal & Ethical Disclaimer
 BiasClean™ is a research and educational toolkit for bias mitigation in datasets. It does not provide legal, regulatory, or compliance advice. Users are responsible for ensuring appropriate dataset preparation and domain-compliant use. Full disclaimer available in docs/disclaimer.md.
 
-📄 License
+#### 📄 License
 Software (BiasClean Toolkit code): Apache License 2.0
 See LICENSE and NOTICE in the repository root.
 
 Book and explanatory text: CC BY-NC-SA 4.0
 The book BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits remains under a Creative Commons licence suitable for educational and non-commercial use.
 
-📚 Citation & Credits
+#### 📚 Citation & Credits
 If you use or reference this toolkit in your research, please cite:
 
 Tavakoli, H. (2025). BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits. London: Apress.
@@ -236,7 +236,7 @@ Tavakoli, H. (2025). BiasClean: Evidence-Weighted Pre-Processing for UK Fairness
 Repository: AI-Fairness-com/BiasClean
 Correspondence: info@ai-fairness.com
 
-BibTeX Citation
+#### BibTeX Citation
 bibtex
 @software{Tavakoli2025BiasClean,
   author  = {Hamid Tavakoli},
