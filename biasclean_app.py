@@ -1,7 +1,7 @@
 """
 Flask Web Wrapper for Universal BiasClean Pipeline - biasclean_app.py
 Production Deployment for Render.com
-Fixed: Returns complete pipeline results for frontend display
+Fixed: Disables local file saving to work on Render's filesystem
 """
 
 import os
@@ -24,7 +24,6 @@ from biasclean_7 import UniversalBiasClean, DOMAIN_CONFIGS
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
-app.config['RESULTS_FOLDER'] = 'biasclean_results'
 
 # ============================================================================
 # ROUTES
@@ -38,7 +37,7 @@ def index():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    """Process CSV file and run bias analysis - RETURNS COMPLETE RESULTS"""
+    """Process CSV file and run bias analysis"""
     try:
         # Validate file upload
         if 'file' not in request.files:
@@ -92,8 +91,11 @@ def analyze():
                 'details': str(e)
             }), 400
 
-        # Initialize pipeline
+        # Initialize pipeline - WITH FIX
         pipeline = UniversalBiasClean(domain=domain)
+        
+        # CRITICAL FIX: Disable local file saving on Render
+        os.environ['BIASCLEAN_DISABLE_SAVE'] = '1'
 
         # Process dataset
         results = pipeline.process_dataset(
@@ -107,30 +109,16 @@ def analyze():
         session_id = datetime.now().strftime('%Y%m%d_%H%M%S')
         
         if corrected_df is not None:
-            # Create results directory
-            results_dir = os.path.join(app.config['UPLOAD_FOLDER'], session_id)
-            os.makedirs(results_dir, exist_ok=True)
-            
-            # Save corrected dataset
+            # Save corrected dataset to temp location
             corrected_filename = f"biasclean_corrected_{session_id}.csv"
-            corrected_path = os.path.join(results_dir, corrected_filename)
+            corrected_path = os.path.join(app.config['UPLOAD_FOLDER'], corrected_filename)
             corrected_df.to_csv(corrected_path, index=False)
-            download_url = f"/download/{session_id}/{corrected_filename}"
-            
-            # Save pipeline results
-            results_filename = f"pipeline_results_{session_id}.json"
-            results_path = os.path.join(results_dir, results_filename)
-            with open(results_path, 'w') as f:
-                json.dump({
-                    'diagnostics': results.get('diagnostics', {}),
-                    'validation': results.get('validation', {}),
-                    'mappings': results.get('mappings', {})
-                }, f, default=str)
+            download_url = f"/download/{corrected_filename}"
         else:
             download_url = None
             corrected_filename = None
 
-        # Extract ALL metrics for response
+        # Extract key metrics
         diagnostics = results.get('diagnostics', {})
         validation = results.get('validation', {})
         feature_tests = diagnostics.get('feature_tests', {})
@@ -139,85 +127,37 @@ def analyze():
         final_bias = diagnostics.get('final_bias_score', initial_bias)
         improvement = ((initial_bias - final_bias) / initial_bias * 100) if initial_bias > 0 else 0
 
-        # Get biased features with details
+        # Get biased features
         biased_features = []
-        bias_details = []
         for feature, test in feature_tests.items():
             if test.get('significant_bias', False):
                 biased_features.append(feature)
-                bias_details.append({
-                    'feature': feature,
-                    'p_value': test.get('p_value', 1.0),
-                    'weight': DOMAIN_CONFIGS[domain]['weights'].get(feature, 0.05)
-                })
-
-        # Calculate fairness improvements
-        fairness_improvements = validation.get('fairness_improvement', {})
-        improvement_details = []
-        for feature, imp_value in fairness_improvements.items():
-            improvement_details.append({
-                'feature': feature,
-                'improvement_percent': imp_value,
-                'weight': DOMAIN_CONFIGS[domain]['weights'].get(feature, 0.05)
-            })
 
         # Clean up uploaded file
         os.unlink(temp_file.name)
 
-        # RETURN COMPLETE RESULTS FOR FRONTEND
+        # Return results
         return jsonify({
             'success': True,
             'domain': domain,
-            'domain_name': DOMAIN_CONFIGS[domain]['report_labels']['domain'],
             'records_processed': len(df),
             'columns_analyzed': len(df.columns),
-            
-            # Bias metrics
             'initial_bias': round(initial_bias, 4),
             'final_bias': round(final_bias, 4),
             'improvement': round(improvement, 1),
             'significant_biases': len(biased_features),
             'biased_features': biased_features,
-            'bias_details': bias_details,
-            
-            # Data integrity
             'data_retention': round(validation.get('data_integrity', {}).get('retention_rate', 100), 1),
-            'records_before': validation.get('data_integrity', {}).get('records_before', len(df)),
-            'records_after': validation.get('data_integrity', {}).get('records_after', len(corrected_df) if corrected_df is not None else len(df)),
-            
-            # Fairness improvements
-            'fairness_improvements': improvement_details,
-            
-            # Files for download
             'download_url': download_url,
             'session_id': session_id,
             'files': {
-                'corrected': corrected_filename,
-                'report': f'biasclean_report_{session_id}.html',
-                'validation': f'validation_{session_id}.json'
+                'corrected': corrected_filename if corrected_filename else 'biasclean_corrected.csv'
             },
-            
-            # Additional info
-            'target_column': results.get('target_column', 'auto-detected'),
-            'features_analyzed': list(results.get('feature_map', {}).keys()),
-            'timestamp': datetime.now().isoformat(),
-            
-            # For frontend display
-            'detection': {
-                'n_rows': len(df),
-                'n_columns': len(df.columns),
-                'significant_biases': len(biased_features)
-            },
-            'removal': {
-                'bias_reduction_percent': round(improvement, 1),
-                'data_retention_percent': round(validation.get('data_integrity', {}).get('retention_rate', 100), 1),
-                'production_ready': improvement > 5  # More than 5% improvement
-            },
-            'report_content': f'Bias analysis complete. {len(biased_features)} significant biases found and mitigated.'
+            'timestamp': datetime.now().isoformat()
         })
 
     except Exception as e:
-        # Clean up temp files if they exist
+        # Clean up temp files
         if 'temp_file' in locals() and os.path.exists(temp_file.name):
             os.unlink(temp_file.name)
             
@@ -228,11 +168,11 @@ def analyze():
         }), 500
 
 
-@app.route('/download/<session_id>/<filename>', methods=['GET'])
-def download(session_id, filename):
-    """Serve files for download from session directory"""
+@app.route('/download/<filename>', methods=['GET'])
+def download(filename):
+    """Serve corrected dataset for download"""
     try:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], session_id, filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
         if not os.path.exists(file_path):
             return jsonify({
@@ -241,27 +181,16 @@ def download(session_id, filename):
             }), 404
 
         # Security check
-        if not filename.lower().endswith(('.csv', '.json', '.html')):
+        if not filename.lower().endswith('.csv'):
             return jsonify({
                 'error': 'Invalid file type'
             }), 400
 
-        # Determine content type
-        if filename.lower().endswith('.csv'):
-            mimetype = 'text/csv'
-            download_name = f"biasclean_corrected_{session_id}.csv"
-        elif filename.lower().endswith('.json'):
-            mimetype = 'application/json'
-            download_name = f"biasclean_results_{session_id}.json"
-        else:
-            mimetype = 'text/html'
-            download_name = f"biasclean_report_{session_id}.html"
-
         return send_file(
             file_path,
             as_attachment=True,
-            download_name=download_name,
-            mimetype=mimetype
+            download_name=f"biasclean_corrected_{datetime.now().strftime('%Y%m%d')}.csv",
+            mimetype='text/csv'
         )
 
     except Exception as e:
@@ -282,52 +211,22 @@ def health():
     })
 
 
-# ============================================================================
-# SCHEDULED CLEANUP
-# ============================================================================
-
 def cleanup_old_files(max_age_hours=1):
     """Remove old uploaded files"""
     try:
         now = datetime.now().timestamp()
-        upload_dir = app.config['UPLOAD_FOLDER']
-        
-        if not os.path.exists(upload_dir):
-            return
-            
-        for item in os.listdir(upload_dir):
-            item_path = os.path.join(upload_dir, item)
-            
-            # Check if it's a file or directory
-            if os.path.isdir(item_path) and item.startswith('202'):
-                # Session directory
-                dir_age = now - os.path.getmtime(item_path)
-                if dir_age > (max_age_hours * 3600):
-                    import shutil
-                    shutil.rmtree(item_path)
-                    print(f"Cleaned up session directory: {item}")
-            elif os.path.isfile(item_path) and item.startswith('biasclean_'):
-                # Individual file
-                file_age = now - os.path.getmtime(item_path)
+        for filename in os.listdir(app.config['UPLOAD_FOLDER']):
+            if filename.startswith('biasclean_'):
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file_age = now - os.path.getmtime(filepath)
                 if file_age > (max_age_hours * 3600):
-                    os.unlink(item_path)
-                    print(f"Cleaned up file: {item}")
-                    
-    except Exception as e:
-        print(f"Cleanup error: {e}")
+                    os.unlink(filepath)
+    except Exception:
+        pass
 
-
-# ============================================================================
-# MAIN ENTRY POINT
-# ============================================================================
 
 if __name__ == '__main__':
-    # Create upload directory if it doesn't exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-    # Run cleanup on startup
     cleanup_old_files()
-
-    # Start Flask server
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
