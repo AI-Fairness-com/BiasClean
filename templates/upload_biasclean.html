@@ -1050,7 +1050,7 @@ document.addEventListener('DOMContentLoaded', function(){
       
       // Create promise for XHR
       const uploadPromise = new Promise((resolve, reject) => {
-        xhr.open('POST', 'https://biasclean.onrender.com/biasclean/biasclean-audit');
+        xhr.open('POST', 'https://biasclean.onrender.com/analyze');
         xhr.setRequestHeader('Accept', 'application/json');
         
         xhr.onload = function() {
