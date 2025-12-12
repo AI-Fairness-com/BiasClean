@@ -21,7 +21,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 import pandas as pd
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_file
 
 # Import your pipeline (adjusted for deployment)
 # Note: We're removing Colab/UI dependencies while keeping core logic
@@ -92,7 +92,21 @@ def analyze():
         corrected_path = os.path.join(app.config['UPLOAD_FOLDER'], corrected_filename)
         corrected_df.to_csv(corrected_path, index=False)
         
-        # 6. Return EXACT structure frontend wants
+        # 6. Create minimal report file
+        report_filename = f"report_{session_id}.txt"
+        report_path = os.path.join(app.config['UPLOAD_FOLDER'], report_filename)
+        
+        with open(report_path, 'w') as f:
+            f.write(f"BiasClean Analysis Report\n")
+            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Domain: {domain}\n")
+            f.write(f"Original rows: {len(df)}\n")
+            f.write(f"Cleaned rows: {len(corrected_df)}\n")
+            f.write(f"Bias reduction: {improvement:.1f}%\n")
+            f.write(f"Data retention: {validation.get('data_integrity', {}).get('retention_rate', 100):.1f}%\n")
+            f.write(f"Significant biases found: {sig_biases}\n")
+        
+        # 7. Return EXACT structure frontend wants
         response = {
             'detection': {
                 'n_rows': len(df),
@@ -106,7 +120,7 @@ def analyze():
             },
             'files': {
                 'corrected': corrected_filename,  # Just filename, no path
-                'report': f'report_{session_id}.html',
+                'report': report_filename,
                 'validation': f'validation_{session_id}.json'
             },
             'session_id': session_id,
@@ -123,27 +137,19 @@ def analyze():
         }), 500
 
 
-@app.route('/biasclean/download/<session_id>/<filename>', methods=['GET'])
-def download(session_id, filename):
-    """EXACT endpoint frontend calls: /biasclean/download/session_id/filename"""
+@app.route('/download/<filename>', methods=['GET'])
+def download(filename):
+    """Simple download endpoint that matches HTML expectations"""
     try:
-        # Frontend sends: /biasclean/download/20251212151500/corrected_20251212151500.csv
-        # We stored as: corrected_20251212151500.csv
-        
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
         if not os.path.exists(file_path):
-            # Try alternative naming
-            alt_path = os.path.join(app.config['UPLOAD_FOLDER'], f"corrected_{session_id}.csv")
-            if os.path.exists(alt_path):
-                file_path = alt_path
-            else:
-                return jsonify({'error': 'File expired'}), 404
+            return jsonify({'error': 'File not found'}), 404
         
         return send_file(
             file_path,
             as_attachment=True,
-            download_name=f"biasclean_corrected_{session_id}.csv"
+            download_name=filename
         )
         
     except Exception as e:
