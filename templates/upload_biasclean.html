@@ -904,16 +904,35 @@ document.addEventListener('DOMContentLoaded', function(){
   uploadForm.addEventListener('submit', async function(e){
     e.preventDefault();
     
-    // Validate
+    // DEBUG: Confirm handler is firing
+    console.log('[DEBUG] Submit handler triggered.');
+    
+    // Validate - with explicit debugging
+    if (!fileInput || !fileInput.files) {
+      console.error('[ERROR] fileInput is null or undefined:', fileInput);
+      showMessage('error', '❌ Form configuration error. Please refresh the page.');
+      return;
+    }
+    
     if (!fileInput.files.length) {
+      console.log('[DEBUG] No file selected.');
       showMessage('error', '❌ Please select a CSV file first');
       return;
     }
     
+    if (!domainSelect || !domainSelect.value) {
+      console.error('[ERROR] domainSelect is null or undefined:', domainSelect);
+      showMessage('error', '❌ Form configuration error. Please refresh the page.');
+      return;
+    }
+    
     if (!domainSelect.value) {
+      console.log('[DEBUG] No domain selected.');
       showMessage('error', '❌ Please select a domain');
       return;
     }
+    
+    console.log('[DEBUG] Validation passed. Preparing upload...');
     
     // Prepare form data
     const formData = new FormData();
