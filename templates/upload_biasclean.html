@@ -19,7 +19,6 @@
       --dark:#323130;
       --gray:#605e5c;
 
-      /* Softer, more professional background */
       --gradient:radial-gradient(circle at top left,#243447 0%,#151824 40%,#05060a 100%);
     }
 
@@ -61,7 +60,6 @@
       background:linear-gradient(90deg,var(--secondary),var(--accent),#d4b104);
     }
 
-    /* NEW: sweeping light reflection over hero */
     .hero-section::after{
       content:'';
       position:absolute;
@@ -84,7 +82,6 @@
       0%{transform:translateX(0) skewX(-20deg);}
       100%{transform:translateX(260%) skewX(-20deg);}
     }
-    /* END NEW */
 
     .hero-pattern {
       position:absolute;
@@ -501,6 +498,84 @@
       animation: slideIn 0.6s ease-out;
     }
 
+    /* RESULTS METRICS */
+    .results-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin: 25px 0;
+    }
+    
+    .metric-card {
+      background: white;
+      padding: 25px 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      text-align: center;
+      transition: transform 0.3s ease;
+      border-top: 4px solid var(--primary);
+    }
+    
+    .metric-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    }
+    
+    .metric-value {
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    
+    .metric-label {
+      color: var(--gray);
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .download-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--primary), #a88702);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgba(190,157,4,0.35);
+      text-decoration: none;
+    }
+    
+    .download-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(190,157,4,0.5);
+      background: linear-gradient(135deg, #a88702, var(--primary));
+    }
+    
+    .download-btn.secondary {
+      background: linear-gradient(135deg, var(--secondary), #3a3731);
+      box-shadow: 0 8px 20px rgba(74,70,61,0.35);
+    }
+    
+    .download-btn.secondary:hover {
+      background: linear-gradient(135deg, #3a3731, var(--secondary));
+      box-shadow: 0 12px 28px rgba(74,70,61,0.5);
+    }
+
     /* FEATURES GRID */
     .features-section{margin-top:44px;}
     .features-grid{
@@ -648,6 +723,8 @@
       }
       .domain-select{min-width:240px;}
       .features-grid{grid-template-columns:1fr;}
+      .results-metrics{grid-template-columns:1fr;}
+      .download-buttons{flex-direction:column;}
     }
 
     @media(max-width:480px){
@@ -661,6 +738,8 @@
         width:100%;
         padding:16px 20px;
       }
+      .metric-card{padding:20px 15px;}
+      .metric-value{font-size:2.2rem;}
     }
   </style>
 </head>
@@ -760,7 +839,7 @@
 
     <!-- Results Section -->
     <div class="results-section" id="resultsSection">
-      <h2 style="color: var(--success); margin-bottom: 20px;">
+      <h2 style="color: var(--success); margin-bottom: 20px; text-align: center;">
         <i class="fas fa-check-circle"></i> Analysis Complete!
       </h2>
       <div id="resultsContent"></div>
@@ -958,7 +1037,6 @@ document.addEventListener('DOMContentLoaded', function(){
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
     formData.append('domain', domainSelect.value);
-    formData.append('threshold', '0.80');
     
     // Show loading state
     submitBtn.disabled = true;
@@ -966,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', function(){
     loadingSpinner.style.display = 'block';
     
     try {
-      // Send to server - Using relative URL for deployment compatibility
+      // Send to server - matches Flask app endpoint
       const response = await fetch('/analyze', {
         method: 'POST',
         body: formData
@@ -974,50 +1052,79 @@ document.addEventListener('DOMContentLoaded', function(){
       
       const data = await response.json();
       
-      if (response.ok && data.success) {
-        showMessage('success', `✅ Analysis complete! ${data.improvement.toFixed(1)}% bias reduction achieved.`);
+      if (response.ok && !data.error) {
+        // MATCHES YOUR FLASK APP RESPONSE FORMAT
+        const detection = data.detection || {};
+        const removal = data.removal || {};
+        const files = data.files || {};
         
-        // Display results
+        // Calculate bias reduction percentage (your Flask app returns this)
+        const biasReduction = removal.bias_reduction_percent || 0;
+        const dataRetention = removal.data_retention_percent || 100;
+        const significantBiases = detection.significant_biases || 0;
+        const sessionId = data.session_id || Date.now();
+        
+        showMessage('success', `✅ Analysis complete! ${biasReduction}% bias reduction achieved.`);
+        
+        // Display results - MATCHES YOUR FLASK APP OUTPUT
         resultsContent.innerHTML = `
-          <div style="background: linear-gradient(135deg, #d4edda, #c3e6cb); padding: 25px; border-radius: 15px; margin: 20px 0; border-left: 6px solid var(--success);">
-            <h3 style="color: #155724; margin-bottom: 15px;"><i class="fas fa-chart-line"></i> Results Summary</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px;">
-              <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-                <div style="font-size: 2.5rem; font-weight: 800; color: var(--success);">${data.improvement.toFixed(1)}%</div>
-                <div style="color: var(--dark); font-weight: 600;">Bias Reduction</div>
+          <div style="text-align: center;">
+            <h3 style="color: var(--dark); margin-bottom: 25px; font-size: 1.4rem;">
+              <i class="fas fa-chart-bar"></i> Bias Analysis Results
+            </h3>
+            
+            <div class="results-metrics">
+              <div class="metric-card">
+                <div class="metric-value" style="color: var(--success);">${biasReduction}%</div>
+                <div class="metric-label">Bias Reduction</div>
               </div>
-              <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-                <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">${data.data_loss.toFixed(1)}%</div>
-                <div style="color: var(--dark); font-weight: 600;">Data Loss</div>
+              
+              <div class="metric-card">
+                <div class="metric-value" style="color: var(--primary);">${dataRetention}%</div>
+                <div class="metric-label">Data Retention</div>
               </div>
-              <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-                <div style="font-size: 2.5rem; font-weight: 800; color: var(--accent);">${data.protected_features}</div>
-                <div style="color: var(--dark); font-weight: 600;">Protected Features</div>
+              
+              <div class="metric-card">
+                <div class="metric-value" style="color: var(--accent);">${significantBiases}</div>
+                <div class="metric-label">Significant Biases Found</div>
+              </div>
+              
+              <div class="metric-card">
+                <div class="metric-value" style="color: var(--secondary);">${detection.n_columns || 0}</div>
+                <div class="metric-label">Features Analyzed</div>
               </div>
             </div>
             
-            <div style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-              <h4 style="color: var(--dark); margin-bottom: 15px;"><i class="fas fa-download"></i> Download Results</h4>
-              <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                <button onclick="downloadFile('${data.cleaned_file}', 'cleaned_dataset')" style="background: var(--success); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                  <i class="fas fa-file-csv"></i> Download Cleaned Dataset
-                </button>
-                <button onclick="downloadFile('${data.report_file}', 'bias_report')" style="background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                  <i class="fas fa-file-pdf"></i> Download Full Report
-                </button>
-              </div>
+            <div style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 4px solid var(--primary);">
+              <p style="margin: 0; color: var(--dark);">
+                <i class="fas fa-info-circle"></i> ${data.report_content || 'Dataset analyzed successfully using weight-prioritized bias mitigation.'}
+              </p>
             </div>
             
-            <div style="margin-top: 25px; color: var(--gray); font-size: 0.9rem;">
-              <i class="fas fa-info-circle"></i> The cleaned dataset has been rebalanced using industry-grade SMOTE to reduce biases while preserving data integrity.
+            <div class="download-buttons">
+              <button onclick="downloadFile('${files.corrected || ''}', '${sessionId}')" class="download-btn">
+                <i class="fas fa-file-csv"></i> Download Cleaned Dataset
+              </button>
+              
+              <button onclick="downloadReport('${files.report || ''}', '${sessionId}')" class="download-btn secondary">
+                <i class="fas fa-file-alt"></i> Download Analysis Report
+              </button>
             </div>
+            
+            ${removal.production_ready ? 
+              `<div style="background: linear-gradient(135deg, #d4edda, #c3e6cb); padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px solid #c3e6cb;">
+                <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                <strong style="color: #155724;"> Production Ready:</strong> Dataset passes industry fairness standards
+              </div>` 
+              : ''}
           </div>
         `;
         
         resultsSection.style.display = 'block';
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
         
       } else {
-        showMessage('error', data.error || '❌ Analysis failed. Please try again.');
+        showMessage('error', data.error || data.details || '❌ Analysis failed. Please try again.');
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -1030,14 +1137,23 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   });
   
-  // Download helper function
-  window.downloadFile = function(url, filename) {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Download functions - MATCHES YOUR FLASK APP ROUTES
+  window.downloadFile = function(filename, sessionId) {
+    if (!filename) {
+      showMessage('error', 'No file available for download');
+      return;
+    }
+    // Matches your Flask route: /biasclean/download/session_id/filename
+    window.open(`/biasclean/download/${sessionId}/${filename}`, '_blank');
+  };
+  
+  window.downloadReport = function(filename, sessionId) {
+    if (!filename) {
+      showMessage('warning', 'Report generation in progress...');
+      return;
+    }
+    // Matches your Flask route: /biasclean/download/session_id/filename
+    window.open(`/biasclean/download/${sessionId}/${filename}`, '_blank');
   };
 });
 </script>
