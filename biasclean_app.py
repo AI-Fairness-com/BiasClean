@@ -82,7 +82,7 @@ app = Flask(__name__,
 # CRITICAL FIX: Enable CORS for all routes and origins
 CORS(app, resources={
     r"/*": {
-        "origins": "*",
+        "origins": ["https://ai-fairness.com", "*"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "expose_headers": ["Content-Disposition"],
@@ -101,7 +101,7 @@ app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 @app.after_request
 def after_request(response):
     """Add CORS headers to every response"""
-    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Origin', 'https://ai-fairness.com')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
     response.headers.add('Access-Control-Expose-Headers', 'Content-Disposition')
@@ -123,7 +123,7 @@ def analyze():
     # Handle preflight OPTIONS request
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', 'https://ai-fairness.com')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
         response.headers.add('Access-Control-Allow-Methods', 'POST')
         return response, 200
@@ -251,7 +251,6 @@ def analyze():
             'error': 'Server error',
             'details': str(e)[:100]
         }), 500
-
 
 @app.route('/download/<filename>', methods=['GET', 'OPTIONS'])
 def download(filename):
