@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Flask Web Wrapper for Universal BiasClean Pipeline - biasclean_app.py
-Production Deployment for Render.com
+Production Deployment for Render.com with CORS Support
 Author: CS Principal Engineer with 28 years Python experience
-FIXED: Added NumPy type conversion for JSON serialization
+FIXED: Added CORS headers for cross-origin requests
 """
 
 import os
@@ -22,6 +22,7 @@ matplotlib.use('Agg')  # Non-GUI backend for server deployment
 import pandas as pd
 import numpy as np
 from flask import Flask, request, jsonify, render_template, send_file
+from flask_cors import CORS
 
 # ============================================================================
 # MONKEY PATCH: Disable file saving in biasclean_7 pipeline
@@ -78,8 +79,33 @@ app = Flask(__name__,
            template_folder='templates',
            static_folder='static')
 
+# CRITICAL FIX: Enable CORS for all routes and origins
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Disposition"],
+        "supports_credentials": False,
+        "max_age": 3600
+    }
+})
+
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
+
+# ============================================================================
+# CORS HEADERS MIDDLEWARE (Additional layer for compatibility)
+# ============================================================================
+
+@app.after_request
+def after_request(response):
+    """Add CORS headers to every response"""
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    response.headers.add('Access-Control-Expose-Headers', 'Content-Disposition')
+    return response
 
 # ============================================================================
 # ROUTES
@@ -90,9 +116,18 @@ def index():
     """Serve the main interface"""
     return render_template('upload_biasclean.html')
 
-@app.route('/analyze', methods=['POST'])
+@app.route('/analyze', methods=['POST', 'OPTIONS'])
 def analyze():
     """Process CSV - Returns EXACT structure frontend expects"""
+    
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response, 200
+    
     try:
         # 1. Validate
         if 'file' not in request.files:
@@ -218,9 +253,17 @@ def analyze():
         }), 500
 
 
-@app.route('/download/<filename>', methods=['GET'])
+@app.route('/download/<filename>', methods=['GET', 'OPTIONS'])
 def download(filename):
     """Simple download - filename only (no session_id in URL)"""
+    
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response, 200
+    
     try:
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
@@ -241,7 +284,13 @@ def download(filename):
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'healthy', 'service': 'BiasClean'})
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy', 
+        'service': 'BiasClean',
+        'cors_enabled': True,
+        'version': '2.0'
+    })
 
 
 if __name__ == '__main__':
