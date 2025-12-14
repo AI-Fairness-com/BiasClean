@@ -1,0 +1,8 @@
+BiasClean Analysis Report
+Generated: 2025-12-14 09:51:22
+Domain: justice
+Original rows: 7214
+Cleaned rows: 7313
+Bias reduction: 28.1%
+Data retention: 101.4%
+Significant biases found: 3
