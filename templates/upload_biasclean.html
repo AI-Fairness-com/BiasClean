@@ -1093,15 +1093,14 @@ document.addEventListener('DOMContentLoaded', function(){
             </div>
             
             <div class="download-buttons">
-              <a href="/download/cleaned_dataset.csv" class="download-btn" download>
+              <a href="/download/${cleanedFile}" class="download-btn" download>
                 <i class="fas fa-file-csv"></i> Download Cleaned Dataset
               </a>
               
-              <a href="/download/report.txt" class="download-btn secondary" download>
+              <a href="/download/${reportFile}" class="download-btn secondary" download>
                 <i class="fas fa-file-alt"></i> Download Analysis Report
               </a>
             </div>
-          </div>
         `;
         
         resultsSection.style.display = 'block';
