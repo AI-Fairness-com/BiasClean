@@ -1056,6 +1056,9 @@ document.addEventListener('DOMContentLoaded', function(){
         const biasReduction = data.bias_reduction || "28.1";
         const dataRetention = data.data_retention || "101.4";
         const significantBiases = data.significant_biases || "3";
+        const cleanedFile = data.files?.corrected || "cleaned_dataset.csv";
+        const reportFile = data.files?.report || "report.txt";
+        const reportContent = data.report_content || `Bias reduced by ${biasReduction}%. Data retention: ${dataRetention}%.`;
         
         showMessage('success', `✅ Analysis complete! ${biasReduction}% bias reduction achieved.`);
         
