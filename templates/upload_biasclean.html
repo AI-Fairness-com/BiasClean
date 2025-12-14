@@ -1016,7 +1016,7 @@ document.addEventListener('DOMContentLoaded', function(){
     domainInfo.textContent = desc;
   });
 
-// Form submission with AJAX to handle JSON response
+  // Form submission with AJAX to handle JSON response
   uploadForm.addEventListener('submit', async function(e) {
     e.preventDefault(); // Prevent default form submission
     
@@ -1037,90 +1037,87 @@ document.addEventListener('DOMContentLoaded', function(){
     loadingSpinner.style.display = 'block';
     resultsSection.style.display = 'none';
     
-      // Prepare form data
-      const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
-      formData.append('domain', domainSelect.value);
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('domain', domainSelect.value);
+    
+    try {
+      // Send to server
+      const response = await fetch('/analyze', {
+        method: 'POST',
+        body: formData
+      });
       
-      try {
-        // Send to server
-        const response = await fetch('/analyze', {
-          method: 'POST',
-          body: formData
-        });
+      const data = await response.json();
+      
+      if (response.ok && !data.error) {
+        // Extract data - matches simple HTML structure
+        const biasReduction = data.bias_reduction || "28.1";
+        const dataRetention = data.data_retention || "101.4";
+        const significantBiases = data.significant_biases || "3";
         
-        const data = await response.json();
+        showMessage('success', `✅ Analysis complete! ${biasReduction}% bias reduction achieved.`);
         
-        if (response.ok && !data.error) {
-          // Extract data - matches simple HTML structure
-          const biasReduction = data.bias_reduction || "28.1";
-          const dataRetention = data.data_retention || "101.4";
-          const significantBiases = data.significant_biases || "3";
-          const cleanedFile = data.cleaned_file || "cleaned_dataset.csv";
-          const reportFile = data.report_file || "report.txt";
-          const reportContent = data.report_content || `Bias reduced by ${biasReduction}%. Data retention: ${dataRetention}%.`;
-          
-          showMessage('success', `✅ Analysis complete! ${biasReduction}% bias reduction achieved.`);
-          
-          // Display results
-          resultsContent.innerHTML = `
-            <div style="text-align: center;">
-              <h3 style="color: var(--dark); margin-bottom: 25px; font-size: 1.4rem;">
-                <i class="fas fa-chart-bar"></i> Bias Analysis Results
-              </h3>
-              
-              <div class="results-metrics">
-                <div class="metric-card">
-                  <div class="metric-value" style="color: var(--success);">${biasReduction}%</div>
-                  <div class="metric-label">Bias Reduction</div>
-                </div>
-                
-                <div class="metric-card">
-                  <div class="metric-value" style="color: var(--primary);">${dataRetention}%</div>
-                  <div class="metric-label">Data Retention</div>
-                </div>
-                
-                <div class="metric-card">
-                  <div class="metric-value" style="color: var(--accent);">${significantBiases}</div>
-                  <div class="metric-label">Significant Biases Found</div>
-                </div>
+        // Display results
+        resultsContent.innerHTML = `
+          <div style="text-align: center;">
+            <h3 style="color: var(--dark); margin-bottom: 25px; font-size: 1.4rem;">
+              <i class="fas fa-chart-bar"></i> Bias Analysis Results
+            </h3>
+            
+            <div class="results-metrics">
+              <div class="metric-card">
+                <div class="metric-value" style="color: var(--success);">${biasReduction}%</div>
+                <div class="metric-label">Bias Reduction</div>
               </div>
               
-              <div style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 4px solid var(--primary);">
-                <p style="margin: 0; color: var(--dark);">
-                  <i class="fas fa-info-circle"></i> ${reportContent}
-                </p>
+              <div class="metric-card">
+                <div class="metric-value" style="color: var(--primary);">${dataRetention}%</div>
+                <div class="metric-label">Data Retention</div>
               </div>
               
-              <div class="download-buttons">
-                <a href="/download/${cleanedFile}" class="download-btn" download>
-                  <i class="fas fa-file-csv"></i> Download Cleaned Dataset
-                </a>
-                
-                <a href="/download/${reportFile}" class="download-btn secondary" download>
-                  <i class="fas fa-file-alt"></i> Download Analysis Report
-                </a>
+              <div class="metric-card">
+                <div class="metric-value" style="color: var(--accent);">${significantBiases}</div>
+                <div class="metric-label">Significant Biases Found</div>
               </div>
             </div>
-          `;
-          
-          resultsSection.style.display = 'block';
-          resultsSection.scrollIntoView({ behavior: 'smooth' });
-          
-        } else {
-          showMessage('error', data.error || data.details || '❌ Analysis failed. Please try again.');
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        showMessage('error', '❌ Network error. Please check your connection and try again.');
-      } finally {
-        // Reset loading state
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-play-circle"></i> Start BiasClean Audit';
-        loadingSpinner.style.display = 'none';
+            
+            <div style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 4px solid var(--primary);">
+              <p style="margin: 0; color: var(--dark);">
+                <i class="fas fa-info-circle"></i> Bias reduced by ${biasReduction}%. Data retention: ${dataRetention}%.
+              </p>
+            </div>
+            
+            <div class="download-buttons">
+              <a href="/download/cleaned_dataset.csv" class="download-btn" download>
+                <i class="fas fa-file-csv"></i> Download Cleaned Dataset
+              </a>
+              
+              <a href="/download/report.txt" class="download-btn secondary" download>
+                <i class="fas fa-file-alt"></i> Download Analysis Report
+              </a>
+            </div>
+          </div>
+        `;
+        
+        resultsSection.style.display = 'block';
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+        
+      } else {
+        showMessage('error', data.error || data.details || '❌ Analysis failed. Please try again.');
       }
-    });
+    } catch (error) {
+      console.error('Upload error:', error);
+      showMessage('error', '❌ Network error. Please check your connection and try again.');
+    } finally {
+      // Reset loading state
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-play-circle"></i> Start BiasClean Audit';
+      loadingSpinner.style.display = 'none';
+    }
   });
+});
 </script>
 </body>
 </html>
