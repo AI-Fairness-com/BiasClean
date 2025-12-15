@@ -1053,9 +1053,9 @@ document.addEventListener('DOMContentLoaded', function(){
       
       if (response.ok && !data.error) {
         // Extract data - matches simple HTML structure
-        const biasReduction = data.bias_reduction || "28.1";
-        const dataRetention = data.data_retention || "101.4";
-        const significantBiases = data.significant_biases || "3";
+        const biasReduction = (data.removal && data.removal.bias_reduction_percent) || "0";
+        const dataRetention = (data.removal && data.removal.data_retention_percent) || "100";
+        const significantBiases = (data.detection && data.detection.significant_biases) || "0";
         const cleanedFile = data.files?.corrected || "cleaned_dataset.csv";
         const reportFile = data.files?.report || "report.txt";
         const reportContent = data.report_content || `Bias reduced by ${biasReduction}%. Data retention: ${dataRetention}%.`;
