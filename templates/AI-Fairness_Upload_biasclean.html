@@ -1054,10 +1054,10 @@ document.addEventListener('DOMContentLoaded', function(){
       if (response.ok && !data.error) {
         // FIXED: Extract ACTUAL values from API response (no fallbacks)
         const biasReduction = data.bias_reduction || data.removal?.bias_reduction_percent;
-	const dataRetention = data.data_retention || data.removal?.data_retention_percent;
-	const significantBiases = data.significant_biases || data.detection?.significant_biases;
-	const cleanedFile = data.files?.corrected || "cleaned_dataset.csv";
-	const reportFile = data.files?.report || "report.txt";
+		const dataRetention = data.data_retention || data.removal?.data_retention_percent;
+		const significantBiases = data.significant_biases || data.detection?.significant_biases;
+		const cleanedFile = data.files?.corrected || "cleaned_dataset.csv";
+		const reportFile = data.files?.report || "report.txt";
         const reportContent = data.report_content || `Bias reduced by ${biasReduction}%. Data retention: ${dataRetention}%.`;
         
         showMessage('success', `✅ Analysis complete! ${biasReduction}% bias reduction achieved.`);
