@@ -5,7 +5,7 @@
 All notable changes to the BiasClean Toolkit will be documented in this file. The project adheres to Semantic Versioning (semver.org).
 
 ---
-## [2.4.0] - 2025-12-17
+## [2.4.1] - 2025-12-17
 
 ### 📊 Enhanced Visualization & Reporting
 
