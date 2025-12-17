@@ -294,14 +294,14 @@ This project follows Semantic Versioning (semver.org):
 
 ## 🔜 Upcoming Releases
 
-### [2.4.1] Real-World Dataset Validation
+### [2.5.0] Real-World Dataset Validation
 - 🏥 **Healthcare domain** validation with NHS/clinical datasets
 - 💰 **Finance domain** validation with UK bank loan data
 - 🎓 **Education domain** validation with university admissions
 - 🏢 **Industry partnerships** for hiring/business dataset access
 - 🏛️ **Governance domain** validation with electoral data
 
-### [2.5.0] Enterprise Deployment
+### [2.6.0] Enterprise Deployment
 - 🏢 **Docker containerization** for cloud deployment
 - 🔌 **REST API** for integration with existing systems
 - 📋 **Batch processing pipeline** for large-scale datasets
