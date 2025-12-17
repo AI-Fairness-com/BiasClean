@@ -5,6 +5,38 @@
 All notable changes to the BiasClean Toolkit will be documented in this file. The project adheres to Semantic Versioning (semver.org).
 
 ---
+## [2.4.0] - 2025-12-17
+
+### 📊 Enhanced Visualization & Reporting
+
+**Professional Report Generation** - Flask-based pipeline producing publication-ready HTML and PDF reports with comprehensive statistical visualizations and evidence-based validation metrics.
+
+### ✨ New Features
+
+**Advanced Reporting System**
+- 📄 **Dual-format output**: Professional HTML and PDF report generation
+- 📊 **Statistical dashboards**: Executive summary with key metrics (bias reduction %, data retention, significant biases)
+- 📈 **Visual analytics**: Disparity comparison charts, fairness improvement graphs, data integrity visualizations
+- 🎨 **Professional styling**: Clean, branded interface with BiasClean v2.4 identity
+- 📋 **Comprehensive logging**: 218-line execution pipeline with phase-by-phase tracking
+- ⚡ **Session management**: Unique session IDs with timestamped report generation
+
+**Technical Implementation**
+- 🌐 **Flask web pipeline** with automated report compilation
+- 📊 **Weight-prioritized tables**: Feature-level breakdown with domain weights and p-values
+- 🔍 **Detailed bias mitigation logs**: SMOTE synthesis tracking, sample removal/addition counts
+- 📈 **Interactive visualizations**: PNG exports for disparity_comparison, fairness_improvements, data_integrity
+- 💾 **Artifact management**: Organized output directory (biasclean_results/) with all deliverables
+
+### 📊 Report Features Validated
+
+**COMPAS Justice Domain Demonstration**
+- ✅ **Executive Summary**: 28.1% bias reduction, 101.4% retention, 3 significant biases
+- ✅ **Statistical Analysis**: P-value validation tables with significance indicators
+- ✅ **Mitigation Actions**: Feature-specific rebalancing with SMOTE synthesis details
+- ✅ **Pipeline Execution**: Complete 10-phase workflow documentation
+
+---
 ## [2.3.0] - 2025-12-11
 
 ### 🚀 Universal 7-Domain Pipeline Launch
@@ -262,18 +294,12 @@ This project follows Semantic Versioning (semver.org):
 
 ## 🔜 Upcoming Releases
 
-### [2.4.0] Real-World Dataset Validation
+### [2.4.1] Real-World Dataset Validation
 - 🏥 **Healthcare domain** validation with NHS/clinical datasets
 - 💰 **Finance domain** validation with UK bank loan data
 - 🎓 **Education domain** validation with university admissions
 - 🏢 **Industry partnerships** for hiring/business dataset access
 - 🏛️ **Governance domain** validation with electoral data
-
-### [2.4.1] Enhanced Visualization & Reporting
-- 📈 **Interactive dashboard** with real-time optimization tracking
-- 📊 **Comparative analysis tools** across multiple mitigation strategies
-- 🎨 **Professional report templates** for academic publication
-- 🔍 **Drill-down analytics** for feature-level inspection
 
 ### [2.5.0] Enterprise Deployment
 - 🏢 **Docker containerization** for cloud deployment
