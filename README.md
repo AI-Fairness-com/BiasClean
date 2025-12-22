@@ -17,7 +17,7 @@ Developed to support the **BiasClean™** fairness pre-processing framework desc
 **Reproduce 28.1% bias reduction on real justice data:**
 1. Launch Web Interface
 python biasclean.py
-- Navigate to http://www.https://ai-fairness.com/ and upload data/real_datasets/compas.csv
+- Navigate to https://ai-fairness.com/ and upload data/real_datasets/compas.csv
 
 2. Run Jupyter Demo  
 jupyter notebook demos/BiasClean_Demo.ipynb
