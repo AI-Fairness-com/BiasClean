@@ -154,40 +154,45 @@ BiasClean operates on a 7×7 matrix of UK domains and universal fairness feature
 
 ## ⚙️ Repository Structure
 
+**Repository Structure:**
+
+''' text
 BiasClean/
 │
-├── data/                           # Real datasets for validation
-│   └── real_datasets/              # COMPAS dataset included
+├── data/ # Real datasets for validation
+│ └── real_datasets/ # COMPAS dataset included
 │
-├── demos/                          # Jupyter notebook demonstrations
-│   └── BiasClean_v2.5_Demo.ipynb   # SVM-integrated fairness demo
+├── demos/ # Jupyter notebook demonstrations
+│ └── BiasClean_v2.5_Demo.ipynb # SVM-integrated fairness demo
 │
-├── docs/                           # Comprehensive documentation
-│   ├── installation.md            # Step-by-step installation guide
-│   ├── architecture.md            # System architecture details
-│   ├── domains.md                 # Domain-specific explanations
-│   ├── example_usage.md           # Practical usage examples
-│   └── disclaimer.md              # Legal and ethical guidelines
+├── docs/ # Comprehensive documentation
+│ ├── installation.md # Step-by-step installation guide
+│ ├── architecture.md # System architecture details
+│ ├── domains.md # Domain-specific explanations
+│ ├── example_usage.md # Practical usage examples
+│ └── disclaimer.md # Legal and ethical guidelines
 │
-├── static/                        # Web interface static files
-├── templates/                     # Web interface templates
+├── static/ # Web interface static files
+├── templates/ # Web interface templates
 │
-├── tests/                         # Comprehensive test suite
-│   └── test_biasclean_v2_5.py    # SVM-integrated pipeline tests
+├── tests/ # Comprehensive test suite
+│ └── test_biasclean_v2_5.py # SVM-integrated pipeline tests
 │
-├── biased_datasets_samples/       # Example biased datasets
-├── examples/                      # Usage examples
-├── professional_viz/              # Professional visualizations
+├── biased_datasets_samples/ # Example biased datasets
+├── examples/ # Usage examples
+├── professional_viz/ # Professional visualizations
 │
-├── biasclean.py                   # Main Flask web application
-├── biasclean_cli.py               # Command-line interface
-├── biasclean_pipeline.py          # Core pipeline functions
-├── biasclean_v2_5.py              # BiasClean v2.5 with SVM integration
-├── requirements.txt               # Python dependencies
-├── render.yaml                    # Deployment configuration
-├── LICENSE                        # Apache 2.0 License
-├── NOTICE                         # Copyright notices
-└── README.md                      # Project documentation
+├── biasclean.py # Main Flask web application
+├── biasclean_cli.py # Command-line interface
+├── biasclean_pipeline.py # Core pipeline functions
+├── biasclean_v2_5.py # BiasClean v2.5 with SVM integration
+├── requirements.txt # Python dependencies
+├── render.yaml # Deployment configuration
+├── LICENSE # Apache 2.0 License
+├── NOTICE # Copyright notices
+└── README.md # Project documentation
+
+''' text
 
 ### 🚀 Installation & Usage
 Requirements
