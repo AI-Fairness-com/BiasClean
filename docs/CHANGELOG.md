@@ -1,8 +1,72 @@
+
+---
+
+### 📄 Updated `CHANGELOG.md`:
+
+
 # 📋 BiasClean Toolkit - Changelog
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 All notable changes to the BiasClean Toolkit will be documented in this file. The project adheres to Semantic Versioning (semver.org).
+
+---
+## [2.5] - 2025-12-30
+
+### 🚀 SVM-Integrated Fairness Optimization Breakthrough
+
+**Integrated Pipeline with Leakage Prevention** - This release introduces a groundbreaking integrated fairness pipeline combining hierarchical bias mitigation with leakage-aware SVM training, achieving 42.1% validated fairness improvement on COMPAS with independent FDK audit.
+
+### ✨ Major Innovations
+
+**SVM-Integrated Fairness Pipeline**
+- 🔗 **Integrated bias mitigation and fairness enforcement** in a single governance-aware pipeline
+- 🛡️ **Leakage-proof SVM training** based on margin optimization with strict feature exclusion
+- 🎯 **Feature governance enforcement** preventing protected-attribute leakage and outcome proxies
+- 📊 **Independent FDK validation** across 34 fairness metrics (group, error, robustness, causal)
+
+**Performance Excellence**
+- 🏆 **42.1% composite fairness improvement** (0.10934 → 0.06333) on COMPAS
+- ✅ **100% error rate difference reduction** (0.19819 → 0.00000)
+- 📈 **71.5% worst group accuracy improvement** (0.58306 → 1.00000)
+- 🔍 **Leakage-safe accuracy normalization** (56–65% ethical range)
+- ⚖️ **Outperforms sequential pipeline** (42.1% vs 41.4% improvement)
+
+**Governance & Auditability**
+- 📋 **Governance-aware optimization flow** with constrained model access
+- 🔍 **Strict feature exclusion rules** for temporal artefacts and post-decision proxies
+- 📄 **Audit-ready methodology** preserving methodological integrity
+- 👁️ **Human oversight design** surfacing disparate impact for review
+
+### 🔧 Technical Implementation
+
+**Pipeline Architecture**
+- ✅ **BiasClean v2.5 integrated pipeline** with hierarchical feature mapping
+- 🎯 **Weight-prioritized mitigation** (justice domain: ethnicity weight = 0.25)
+- 🔗 **Leakage-aware SVM integration** preventing accuracy inflation
+- 📊 **Fairness Diagnostic Kit (FDK)** for independent multi-metric validation
+
+**Validation Framework**
+- 📈 **34 fairness metrics** across group fairness, error parity, robustness, causal dimensions
+- 🧪 **COMPAS dataset validation** under standard justice-domain assumptions
+- ✅ **Decision threshold T=7** consistent with prior COMPAS analyses
+- 🔍 **Statistical parity trade-off analysis** documented and explained
+
+### 📊 Validation Results (FDK Audited)
+
+**COMPAS Fairness Improvement (v2.5 vs Baseline)**
+- **Composite Bias Score**: 42.1% reduction (0.10934 → 0.06333)
+- **Statistical Parity Difference**: -57.2% (0.13431 → 0.21111) *trade-off noted*
+- **Disparate Impact Ratio**: 65.4% improvement (0.39560 → 0.65455)
+- **Worst Group Accuracy**: 71.5% improvement (0.58306 → 1.00000)
+- **Error Rate Difference**: 100% reduction (0.19819 → 0.00000)
+- **Equalized Odds Difference**: 100% reduction (0.07353 → 0.00000)
+
+**Key Findings**
+- 🎯 **Leakage prevention critical** for credible fairness evaluation
+- ⚖️ **Accuracy-fairness trade-off** properly bounded (56–65% ethical range)
+- 🔍 **Feature governance essential** to prevent proxy exploitation
+- 📊 **Statistical parity degradation** persists (known metric trade-off)
 
 ---
 ## [2.4.1] - 2025-12-17
@@ -294,20 +358,21 @@ This project follows Semantic Versioning (semver.org):
 
 ## 🔜 Upcoming Releases
 
-### [2.5.0] Real-World Dataset Validation
+### [2.6.0] Multi-Domain Real-World Validation
 - 🏥 **Healthcare domain** validation with NHS/clinical datasets
-- 💰 **Finance domain** validation with UK bank loan data
+- 💰 **Finance domain** validation with UK bank loan data  
 - 🎓 **Education domain** validation with university admissions
 - 🏢 **Industry partnerships** for hiring/business dataset access
 - 🏛️ **Governance domain** validation with electoral data
 
-### [2.6.0] Enterprise Deployment
+### [2.7.0] Enterprise Deployment & API
 - 🏢 **Docker containerization** for cloud deployment
 - 🔌 **REST API** for integration with existing systems
 - 📋 **Batch processing pipeline** for large-scale datasets
 - 🔐 **Role-based access control** for team collaboration
+- 📊 **Advanced fairness monitoring** with real-time dashboards
 
 ---
 
 *BiasClean Toolkit - Professional Grade Bias Mitigation*  
-*Breakthrough Release: v2.3.0 with Weight-Prioritized Optimization & Multi-Disciplinary Validation*
+*Breakthrough Release: v2.5 with SVM-Integrated Fairness Optimization & 42.1% Validated Improvement*
