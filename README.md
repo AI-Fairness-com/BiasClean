@@ -154,7 +154,6 @@ BiasClean operates on a 7×7 matrix of UK domains and universal fairness feature
 
 ## ⚙️ Repository Structure
 
-```text
 BiasClean/
 │
 ├── data/                           # Real datasets for validation
@@ -189,7 +188,6 @@ BiasClean/
 ├── LICENSE                        # Apache 2.0 License
 ├── NOTICE                         # Copyright notices
 └── README.md                      # Project documentation
-```text
 
 ### 🚀 Installation & Usage
 Requirements
