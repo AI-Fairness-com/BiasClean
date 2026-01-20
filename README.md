@@ -1,10 +1,10 @@
 # 🧹 BiasClean Toolkit
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
 ![Python](https://img.shields.io/badge/python-3.7%2B-green)
 ![Bias Reduction](https://img.shields.io/badge/Bias%20Reduction-42.1%25-success)
-![Version](https://img.shields.io/badge/Version-2.5-blue)
+![Version](https://img.shields.io/badge/Version-2.6-blue)
+![Hiring Validation](https://img.shields.io/badge/Hiring%20Validated-36.7%25%20Improvement-brightgreen)
 
 **A domain-aware pre-processing toolkit for detecting and mitigating demographic bias in UK datasets before modelling.**
 
@@ -13,14 +13,14 @@ Developed to support the **BiasClean™** fairness pre-processing framework desc
 
 ---
 
-## 🎯 Quick Start: COMPAS Demo
+## 🎯 Quick Start: COMPAS (Justice) & OpenIntro (Hiring)
 **Reproduce 42.1% bias reduction on real justice data with SVM-integrated optimization:**
 1. Launch Web Interface
 python biasclean.py
 - Navigate to https://ai-fairness.com/ and upload data/real_datasets/compas.csv
 
 2. Run Jupyter Demo  
-jupyter notebook demos/BiasClean_v2.5_Demo.ipynb
+jupyter notebook demos/BiasClean_v2.6_Demo.ipynb
 
 ---
 ### COMPAS Validation Results (v2.5):
@@ -33,6 +33,20 @@ jupyter notebook demos/BiasClean_v2.5_Demo.ipynb
 - **Worst Group Accuracy:** 71.5% improvement  
 - **Error Rate Difference:** 100% reduction  
 - **Statistical Parity Difference:** -57.2% (trade-off noted)
+
+#### Live Production Tool: https://www.ai-fairness.com
+
+---
+### HIRING Validation Results (v2.6):
+*Hiring Domain Bias Reduction:* **36.7%** (0.2128 → 0.1348)
+*Data Retention: **100.0%** (4,870 records preserved)
+*SVM Accuracy: **74.5%** validation, **79.5%** full dataset
+
+#### v2.6 Enhanced Monitoring Insights:
+- **Ethnicity Improvement:** 93.8% (critical for hiring fairness)
+- **Compensatory Pattern Detected:** Ratio 1.53 (Ethnicity gains offset Gender deterioration)
+- **Trade-off Analysis: Ethnicity ↔ Gender correlation:** -1.000
+- **Stage Attribution:** SVM contributes 100% of weighted improvement
 
 #### Live Production Tool: https://www.ai-fairness.com
 
