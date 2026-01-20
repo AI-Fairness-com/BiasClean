@@ -14,7 +14,7 @@ Developed to support the **BiasClean™** fairness pre-processing framework desc
 ---
 
 ## 🎯 Quick Start: COMPAS (Justice) & OpenIntro (Hiring)
-**Reproduce 42.1% bias reduction on real justice data with SVM-integrated optimization:**
+**Reproduce 42.1% bias reduction on justice data or 36.7% on hiring data with enhanced monitoring:**
 1. Launch Web Interface
 python biasclean.py
 - Navigate to https://ai-fairness.com/ and upload data/real_datasets/compas.csv
@@ -37,34 +37,35 @@ jupyter notebook demos/BiasClean_v2.6_Demo.ipynb
 #### Live Production Tool: https://www.ai-fairness.com
 
 ---
+
 ### HIRING Validation Results (v2.6):
-*Hiring Domain Bias Reduction:* **36.7%** (0.2128 → 0.1348)
-*Data Retention: **100.0%** (4,870 records preserved)
-*SVM Accuracy: **74.5%** validation, **79.5%** full dataset
+*Hiring Domain Bias Reduction:* **36.7%** (0.2128 → 0.1348)  
+*Data Retention:* **100.0%** (4,870 records preserved)  
+*SVM Accuracy:* **74.5%** validation, **79.5%** full dataset
 
 #### v2.6 Enhanced Monitoring Insights:
 - **Ethnicity Improvement:** 93.8% (critical for hiring fairness)
 - **Compensatory Pattern Detected:** Ratio 1.53 (Ethnicity gains offset Gender deterioration)
-- **Trade-off Analysis: Ethnicity ↔ Gender correlation:** -1.000
+- **Trade-off Analysis:** Ethnicity ↔ Gender correlation: -1.000
 - **Stage Attribution:** SVM contributes 100% of weighted improvement
 
 #### Live Production Tool: https://www.ai-fairness.com
 
 ---
 
-### 🚀 What's New in v2.5: SVM-Integrated Fairness Optimization
+### 🚀 What's New in v2.6: Enhanced Monitoring & Trade-off Analysis
 
-### ✅ SVM with Leakage Prevention
-- **Integrated bias mitigation and fairness enforcement** in a single pipeline
-- **Leakage-aware SVM training** based on margin optimization
-- **Feature governance** to prevent protected-attribute leakage
-- **Audit-ready optimization flow** with full transparency
+### ✅ Enhanced Monitoring System
+- **StageScoreTracker with progression monitoring** tracking bias score through pipeline stages
+- **Trade-off analysis** revealing feature interaction relationships
+- **Compensatory pattern detection** identifying net vs. gross improvement dynamics
+- **Weight-adjusted attribution** showing stage-specific contributions with domain weights
 
 ### ✅ 7 Domains Supported
 - **Justice** - Criminal justice bias detection (COMPAS-validated)
 - **Health** - Healthcare bias analysis
 - **Finance** - Financial services fairness
-- **Hiring** - Employment & recruitment bias
+- **Hiring** - Employment & recruitment bias (v2.6 validated)
 - **Education** - Educational access & attainment bias
 - **Business** - Business funding & investment bias
 - **Governance** - Political representation & selection bias
@@ -75,12 +76,12 @@ Each domain follows **UK 2025 Domain-Specific Weight Prioritization**:
 - **Health**: Ethnicity (0.25) > SocioeconomicStatus (0.20) > DisabilityStatus/Gender (0.15)
 - **Business**: Ethnicity (0.25) > Gender (0.20) > Region/SES (0.15) > Age/Disability (0.10)
 
-### ✅ New Features in v2.5
-- **Integrated fairness pipeline** combining hierarchical bias mitigation with leakage-aware SVM
-- **Strict feature exclusion rules** preventing temporal leakage and outcome proxies
-- **Independent FDK validation** across 34 fairness metrics
-- **Governance-aware optimization** ensuring auditability and oversight
-- **Professional report generation** with fairness dashboards and bias logs
+### ✅ New Features in v2.6
+- **Enhanced monitoring system** with bias score progression tracking through stages
+- **Trade-off analysis** revealing feature interaction relationships (e.g., Ethnicity ↔ Gender correlation: -1.000)
+- **Compensatory pattern detection** identifying when gains mask deteriorations in other features
+- **Weight-adjusted attribution calculations** showing stage contributions adjusted for domain importance
+- **Backward compatibility maintained** with v2.5 pipeline architecture
 
 ### ✅ Professional Report Generation
 - **Dual-format outputs** - HTML and PDF publication-ready reports
@@ -93,7 +94,7 @@ Each domain follows **UK 2025 Domain-Specific Weight Prioritization**:
 
 ## 🌍 Overview
 
-**BiasClean v2.5** is an evidence-based fairness cleaning engine with integrated SVM optimization, designed to remove demographic representation bias with rigorous feature governance and leakage prevention. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
+**BiasClean v2.6** is an evidence-based fairness cleaning engine with integrated SVM optimization, designed to remove demographic representation bias with rigorous feature governance and leakage prevention. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
 
 The toolkit implements a sophisticated **7×7 matrix** of UK domains and universal fairness features, each weighted using the **SIW-ESW-PLW framework** (Structural Inequality Weight, Evidence Strength Weight, Policy & Legal Relevance Weight) based on official UK statistics and regulatory guidance.
 
@@ -158,11 +159,11 @@ BiasClean operates on a 7×7 matrix of UK domains and universal fairness feature
 **Fairness Risk**: Over-representation of young minority defendants creating biased training data  
 **BiasClean Solution**: Uses justice domain weights (Ethnicity: 0.25, Age: 0.15, Region: 0.15) to surgically rebalance dataset composition.
 
-### Hiring: Recruitment Pipeline Data
-**Context**: Training data for automated CV screening system  
+### Hiring: Resume Screening Fairness (v2.6 Validated)
+**Context**: Training data for automated CV screening system (4,870 OpenIntro resume records) 
 **Sensitive Attributes**: Gender, Age, DisabilityStatus  
 **Fairness Risk**: Under-representation of female, older, and disabled applicants in technical roles  
-**BiasClean Solution**: Applies hiring domain weights (Gender: 0.20, DisabilityStatus: 0.15, Age: 0.10) with industry-grade SMOTE rebalancing.
+**BiasClean v2.6 Solution**: Applies hiring domain weights (Ethnicity: 0.25, Gender: 0.20) achieving 36.7% bias reduction with enhanced monitoring revealing compensatory patterns and trade-off analysis.
 
 ---
 
@@ -197,7 +198,7 @@ BiasClean/
 ├── biasclean.py                   # Main Flask web application
 ├── biasclean_cli.py               # Command-line interface
 ├── biasclean_pipeline.py          # Core pipeline functions
-├── biasclean_v2_5.py                # Main BiasClean algorithm
+├── biasclean_v2_6.py # Main BiasClean v2.6 algorithm
 ├── requirements.txt               # Python dependencies
 ├── render.yaml                    # Deployment configuration
 ├── LICENSE                        # Apache 2.0 License
@@ -224,10 +225,12 @@ bash
 python biasclean_cli.py
 Production Pipeline
 python
-from biasclean_v2_5 import biasclean_integrated_pipeline
+from biasclean_v2_6 import biasclean_integrated_pipeline
 
 results = biasclean_integrated_pipeline(
 input_path='your_dataset.csv',
+enhanced_monitoring=True,  
+trade_off_analysis=True    
 domain='justice', # or health, finance, etc.
 mode='industry',
 enable_svm=True
@@ -259,6 +262,9 @@ If you use or reference this toolkit in your research, please cite:
 
 Tavakoli, H. (2025). BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits. London: Apress.
 
+For v2.6 enhanced monitoring with hiring validation:
+Tavakoli, H. (2026). Enhanced Monitoring & Trade-off Analysis: BiasClean v2.6 With 36.7% Validated Fairness Improvement on Hiring Data.
+
 For v2.5 SVM-integrated fairness optimization:
 Tavakoli, H. (2025). SVM-Integrated Fairness Optimization: BiasClean v2.5 With 42.1% Validated Fairness Improvement on COMPAS.
 
@@ -267,11 +273,11 @@ Correspondence: info@ai-fairness.com
 
 #### BibTeX Citation
 bibtex
-@software{Tavakoli2025BiasCleanv25,
+@software{Tavakoli2026BiasCleanv26,
   author  = {Hamid Tavakoli},
-  title   = {BiasClean Toolkit v2.5: SVM-Integrated Fairness Optimization for UK Datasets},
-  year    = {2025},
+  title   = {BiasClean Toolkit v2.6: Enhanced Monitoring with Trade-off Analysis for UK Datasets},
+  year    = {2026},
   url     = {https://github.com/AI-Fairness-com/BiasClean},
-  version = {v2.5},
-  note    = {42.1\% validated fairness improvement on COMPAS with leakage-aware SVM}
+  version = {v2.6},
+  note    = {36.7\% bias reduction with compensatory pattern detection on hiring data}
 }
