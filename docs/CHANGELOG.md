@@ -5,6 +5,50 @@
 All notable changes to the BiasClean Toolkit will be documented in this file. The project adheres to Semantic Versioning (semver.org).
 
 ---
+## [2.7] - 2026-01-22
+
+### 🚀 Enhanced Monitoring & Attribution System
+
+**Feature-Level Bias Tracking with Statistical Confidence** - This release introduces comprehensive feature-level bias tracking across deployment stages with statistical confidence intervals and deployment decision scoring.
+
+### ✨ New Features
+
+**Enhanced Monitoring & Attribution**
+- 🔍 **Feature-level bias tracking** across A/B/C deployment stages
+- 📊 **Group outcome rates** per protected group per stage
+- 📈 **Bootstrap statistical confidence intervals** for all metrics
+- 🎯 **Sampling attribution tracking** with sample origin tracing
+- ⚖️ **Deployment decision engine** with multi-criteria scoring
+- 💾 **6 enhanced export files** in `/v27_exports/` directory
+
+**Technical Improvements**
+- 🔧 **Fixed weight-prioritized rebalancing** implementation
+- 🧹 **Deduplicated class definitions** for cleaner architecture
+- 📐 **Fixed statistical confidence calculator** execution order
+- ✅ **Added missing helper methods** for enhanced functionality
+- 🔄 **Updated all version references** to v2.7
+
+### 📊 System Enhancements
+
+**Stage-Aware Monitoring**
+- 📈 **Three-stage progression tracking**: A (baseline) → B (intervention) → C (deployment)
+- 🔍 **Group-specific outcome analysis** for each protected attribute
+- 📊 **Statistical significance validation** with confidence bounds
+- 🎯 **Sample provenance tracking** from origin through transformations
+
+**Deployment Decision Support**
+- ⚖️ **Multi-criteria scoring engine** for go/no-go decisions
+- 📈 **Threshold-based evaluation** across fairness, performance, and compliance
+- 🔄 **Dynamic weight adjustment** based on domain requirements
+- 📋 **Audit-ready decision documentation** with rationale tracking
+
+**Export & Reporting**
+- 💾 **Enhanced export system** with 6 comprehensive file types
+- 📄 **Stage-comparison reports** showing progression across A/B/C
+- 📊 **Statistical confidence visualizations** with interval displays
+- 🔍 **Attribution analysis** showing source of improvements/deteriorations
+
+---
 ## [2.6] - 2026-01-20
 
 ### 🚀 Enhanced Monitoring & Trade-off Analysis Breakthrough
@@ -189,7 +233,7 @@ All notable changes to the BiasClean Toolkit will be documented in this file. Th
 
 ## 🔜 Upcoming Releases
 
-### [2.7.0] Multi-Domain Real-World Validation Expansion
+### [2.8.0] Multi-Domain Real-World Validation Expansion
 - 🏥 **Healthcare domain** validation with NHS/clinical datasets
 - 💰 **Finance domain** validation with UK bank loan data  
 - 🎓 **Education domain** validation with university admissions
@@ -206,4 +250,4 @@ All notable changes to the BiasClean Toolkit will be documented in this file. Th
 ---
 
 *BiasClean Toolkit - Professional Grade Bias Mitigation*  
-*Enhanced Release: v2.6 with Hiring Domain Validation & Compensatory Pattern Analysis*
+*Enhanced Release: v2.7 with Feature-Level Monitoring & Statistical Attribution*
