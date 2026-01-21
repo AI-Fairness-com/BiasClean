@@ -1,15 +1,15 @@
-# 🧹 BiasClean Toolkit
+# 🧹 BiasClean Toolkit v2.7
 
 [![GitHub Repository](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
 ![Python](https://img.shields.io/badge/python-3.7%2B-green)
 ![Bias Reduction](https://img.shields.io/badge/Bias%20Reduction-42.1%25-success)
-![Version](https://img.shields.io/badge/Version-2.6-blue)
+![Version](https://img.shields.io/badge/Version-2.7-blue)
 ![Hiring Validation](https://img.shields.io/badge/Hiring%20Validated-36.7%25%20Improvement-brightgreen)
 
 **A domain-aware pre-processing toolkit for detecting and mitigating demographic bias in UK datasets before modelling.**
 
 Developed to support the **BiasClean™** fairness pre-processing framework described in the book  
-**_BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits_ (Tavakoli, 2025).**
+**_BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits_ (Tavakoli, 2026).**
 
 ---
 
@@ -20,10 +20,10 @@ python biasclean.py
 - Navigate to https://ai-fairness.com/ and upload data/real_datasets/compas.csv
 
 2. Run Jupyter Demo  
-jupyter notebook demos/BiasClean_v2.6_Demo.ipynb
+jupyter notebook demos/BiasClean_v2.7_Demo.ipynb
 
 ---
-### COMPAS Validation Results (v2.5):
+### COMPAS Validation Results (v2.7):
 
 *Overall Justice domain Bias Reduction:* **42.1%** (0.10934 → 0.06333)  
 *Data Retention:* **Optimized for fairness** (accuracy normalized to 56–65% range)
@@ -38,7 +38,7 @@ jupyter notebook demos/BiasClean_v2.6_Demo.ipynb
 
 ---
 
-### HIRING Validation Results (v2.6):
+### HIRING Validation Results (v2.7):
 *Hiring Domain Bias Reduction:* **36.7%** (0.2128 → 0.1348)  
 *Data Retention:* **100.0%** (4,870 records preserved)  
 *SVM Accuracy:* **74.5%** validation, **79.5%** full dataset
@@ -53,7 +53,25 @@ jupyter notebook demos/BiasClean_v2.6_Demo.ipynb
 
 ---
 
-### 🚀 What's New in v2.6: Enhanced Monitoring & Trade-off Analysis
+### 🔍 What's Enhanced in v2.7: Feature-Level Monitoring & Statistical Attribution
+
+#### ✅ Feature-Level Bias Tracking
+- **Multi-stage progression monitoring** across A/B/C deployment stages
+- **Group outcome rate analysis** per protected group per stage
+- **Bootstrap statistical confidence intervals** for all fairness metrics
+- **Sampling attribution tracking** with origin-to-transformation tracing
+
+#### ✅ Enhanced Export System
+- **6 comprehensive export files** in `/v27_exports/` directory
+- **Stage-comparison reports** showing bias progression
+- **Statistical confidence visualizations** with interval displays
+- **Audit-ready decision documentation** with rationale tracking
+
+#### ✅ Deployment Decision Engine
+- **Multi-criteria scoring engine** for go/no-go deployment decisions
+- **Threshold-based evaluation** across fairness, performance, and compliance
+- **Dynamic weight adjustment** based on domain requirements
+- **Attribution analysis** showing source of improvements/deteriorations
 
 ### ✅ Enhanced Monitoring System
 - **StageScoreTracker with progression monitoring** tracking bias score through pipeline stages
@@ -94,7 +112,7 @@ Each domain follows **UK 2025 Domain-Specific Weight Prioritization**:
 
 ## 🌍 Overview
 
-**BiasClean v2.6** is an evidence-based fairness cleaning engine with integrated SVM optimization, designed to remove demographic representation bias with rigorous feature governance and leakage prevention. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
+**BiasClean v2.7** is an evidence-based fairness cleaning engine with integrated SVM optimization, designed to remove demographic representation bias with rigorous feature governance and leakage prevention. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
 
 The toolkit implements a sophisticated **7×7 matrix** of UK domains and universal fairness features, each weighted using the **SIW-ESW-PLW framework** (Structural Inequality Weight, Evidence Strength Weight, Policy & Legal Relevance Weight) based on official UK statistics and regulatory guidance.
 
@@ -198,7 +216,7 @@ BiasClean/
 ├── biasclean.py                   # Main Flask web application
 ├── biasclean_cli.py               # Command-line interface
 ├── biasclean_pipeline.py          # Core pipeline functions
-├── biasclean_v2_6.py # Main BiasClean v2.6 algorithm
+├── biasclean_v2_7.py              # Main BiasClean v2.6 algorithm
 ├── requirements.txt               # Python dependencies
 ├── render.yaml                    # Deployment configuration
 ├── LICENSE                        # Apache 2.0 License
@@ -262,8 +280,8 @@ If you use or reference this toolkit in your research, please cite:
 
 Tavakoli, H. (2025). BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits. London: Apress.
 
-For v2.6 enhanced monitoring with hiring validation:
-Tavakoli, H. (2026). Enhanced Monitoring & Trade-off Analysis: BiasClean v2.6 With 36.7% Validated Fairness Improvement on Hiring Data.
+For v2.7 enhanced monitoring with hiring validation:
+Tavakoli, H. (2026). Enhanced Monitoring & Trade-off Analysis: BiasClean v2.7 With 36.7% Validated Fairness Improvement on Hiring Data.
 
 For v2.5 SVM-integrated fairness optimization:
 Tavakoli, H. (2025). SVM-Integrated Fairness Optimization: BiasClean v2.5 With 42.1% Validated Fairness Improvement on COMPAS.
@@ -273,11 +291,11 @@ Correspondence: info@ai-fairness.com
 
 #### BibTeX Citation
 bibtex
-@software{Tavakoli2026BiasCleanv26,
+@software{Tavakoli2026BiasCleanv27,
   author  = {Hamid Tavakoli},
-  title   = {BiasClean Toolkit v2.6: Enhanced Monitoring with Trade-off Analysis for UK Datasets},
+  title   = {BiasClean Toolkit v2.7: Enhanced Monitoring & Attribution with Feature-Level Tracking for UK Datasets},
   year    = {2026},
   url     = {https://github.com/AI-Fairness-com/BiasClean},
-  version = {v2.6},
-  note    = {36.7\% bias reduction with compensatory pattern detection on hiring data}
+  version = {v2.7},
+  note    = {Feature-level bias tracking with statistical confidence intervals and deployment decision scoring}
 }
