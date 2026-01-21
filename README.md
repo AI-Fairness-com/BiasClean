@@ -43,7 +43,7 @@ jupyter notebook demos/BiasClean_v2.7_Demo.ipynb
 *Data Retention:* **100.0%** (4,870 records preserved)  
 *SVM Accuracy:* **74.5%** validation, **79.5%** full dataset
 
-#### v2.6 Enhanced Monitoring Insights:
+#### v2.7 Enhanced Monitoring Insights:
 - **Ethnicity Improvement:** 93.8% (critical for hiring fairness)
 - **Compensatory Pattern Detected:** Ratio 1.53 (Ethnicity gains offset Gender deterioration)
 - **Trade-off Analysis:** Ethnicity ↔ Gender correlation: -1.000
@@ -83,7 +83,7 @@ jupyter notebook demos/BiasClean_v2.7_Demo.ipynb
 - **Justice** - Criminal justice bias detection (COMPAS-validated)
 - **Health** - Healthcare bias analysis
 - **Finance** - Financial services fairness
-- **Hiring** - Employment & recruitment bias (v2.6 validated)
+- **Hiring** - Employment & recruitment bias (v2.7 validated)
 - **Education** - Educational access & attainment bias
 - **Business** - Business funding & investment bias
 - **Governance** - Political representation & selection bias
@@ -94,7 +94,7 @@ Each domain follows **UK 2025 Domain-Specific Weight Prioritization**:
 - **Health**: Ethnicity (0.25) > SocioeconomicStatus (0.20) > DisabilityStatus/Gender (0.15)
 - **Business**: Ethnicity (0.25) > Gender (0.20) > Region/SES (0.15) > Age/Disability (0.10)
 
-### ✅ New Features in v2.6
+### ✅ Enhanced Features from v2.6
 - **Enhanced monitoring system** with bias score progression tracking through stages
 - **Trade-off analysis** revealing feature interaction relationships (e.g., Ethnicity ↔ Gender correlation: -1.000)
 - **Compensatory pattern detection** identifying when gains mask deteriorations in other features
@@ -216,7 +216,7 @@ BiasClean/
 ├── biasclean.py                   # Main Flask web application
 ├── biasclean_cli.py               # Command-line interface
 ├── biasclean_pipeline.py          # Core pipeline functions
-├── biasclean_v2_7.py              # Main BiasClean v2.6 algorithm
+├── biasclean_v2_7.py              # Main BiasClean v2.7 algorithm
 ├── requirements.txt               # Python dependencies
 ├── render.yaml                    # Deployment configuration
 ├── LICENSE                        # Apache 2.0 License
@@ -278,10 +278,10 @@ The book BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits rema
 #### 📚 Citation & Credits
 If you use or reference this toolkit in your research, please cite:
 
-Tavakoli, H. (2025). BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits. London: Apress.
+Tavakoli, H. (2026). BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits. London: Apress.
 
-For v2.7 enhanced monitoring with hiring validation:
-Tavakoli, H. (2026). Enhanced Monitoring & Trade-off Analysis: BiasClean v2.7 With 36.7% Validated Fairness Improvement on Hiring Data.
+For v2.7 enhanced monitoring & attribution:
+Tavakoli, H. (2026). Enhanced Monitoring & Attribution: BiasClean v2.7 With Feature-Level Bias Tracking and Statistical Confidence Intervals.
 
 For v2.5 SVM-integrated fairness optimization:
 Tavakoli, H. (2025). SVM-Integrated Fairness Optimization: BiasClean v2.5 With 42.1% Validated Fairness Improvement on COMPAS.
