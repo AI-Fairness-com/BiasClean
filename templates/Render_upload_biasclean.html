@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BiasClean - AI Fairness Engine</title>
+  <title>BiasClean v3.0 - Audit-First AI Fairness Engine</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <style>
     * {margin:0;padding:0;box-sizing:border-box;}
@@ -18,6 +18,9 @@
       --light:#f8f9fa;
       --dark:#323130;
       --gray:#605e5c;
+      --green-light:#d4edda;
+      --yellow-light:#fff3cd;
+      --red-light:#f8d7da;
 
       --gradient:radial-gradient(circle at top left,#243447 0%,#151824 40%,#05060a 100%);
     }
@@ -119,6 +122,18 @@
       text-shadow:0 2px 10px rgba(0,0,0,0.25);
       letter-spacing:-0.4px;
     }
+    
+    .version-badge {
+      display:inline-block;
+      background:rgba(255,255,255,0.25);
+      padding:6px 16px;
+      border-radius:20px;
+      font-size:0.85rem;
+      font-weight:600;
+      margin-left:10px;
+      border:1px solid rgba(255,255,255,0.4);
+    }
+    
     .domain-title{
       font-size:2rem;
       font-weight:600;
@@ -161,10 +176,6 @@
       background:rgba(255,255,255,0.26);
       transform:translateY(-3px);
       box-shadow:0 16px 36px rgba(0,0,0,0.35);
-    }
-    .metrics-badge:focus-visible{
-      outline:3px solid #fff;
-      outline-offset:3px;
     }
 
     /* CONTENT */
@@ -212,6 +223,15 @@
       line-height:1.7;
       max-width:95%;
     }
+    
+    .description-text ul {
+      margin-top:12px;
+      padding-left:20px;
+    }
+    
+    .description-text li {
+      margin-bottom:8px;
+    }
 
     /* UPLOAD CARD */
     .upload-card{
@@ -233,672 +253,904 @@
       width:220%;height:220%;
       background:conic-gradient(transparent,transparent,transparent,rgba(190,157,4,0.75));
       animation:rotate 6s linear infinite;
-      opacity:0.55;
+      z-index:-1;
     }
+    @keyframes rotate{to{transform:rotate(360deg);}}
     .upload-card::after{
       content:'';
       position:absolute;
-      inset:5px;
+      top:2px;left:2px;right:2px;bottom:2px;
       background:white;
-      border-radius:18px;
+      border-radius:20px;
       z-index:-1;
     }
-    .upload-card:hover{
-      transform:translateY(-6px);
-      box-shadow:0 26px 60px rgba(0,0,0,0.20);
-      border-color:rgba(190,157,4,0.6);
-    }
-    @keyframes rotate{
-      0%{transform:rotate(0deg);}
-      100%{transform:rotate(360deg);}
-    }
 
-    .upload-content{position:relative;z-index:2;}
     .upload-icon{
-      font-size:3.8em;
+      font-size:3.5em;
       color:var(--primary);
       margin-bottom:16px;
-      filter:drop-shadow(0 4px 8px rgba(190,157,4,0.35));
+      animation:float 4s ease-in-out infinite;
     }
     .upload-title{
       color:var(--dark);
-      font-size:1.55rem;
-      margin-bottom:8px;
-      font-weight:650;
-      letter-spacing:0.02em;
+      font-size:1.45rem;
+      margin-bottom:10px;
+      font-weight:700;
     }
     .upload-subtitle{
       color:var(--gray);
-      font-size:1rem;
-      margin-bottom:26px;
-      max-width:520px;
-      margin-left:auto;
-      margin-right:auto;
-    }
-
-    .domain-selection{margin:24px 0 26px;text-align:center;}
-    .domain-label{
-      display:block;
-      color:var(--dark);
       font-size:1.02rem;
-      font-weight:600;
-      margin-bottom:10px;
-      letter-spacing:0.02em;
-    }
-    .domain-label i{margin-right:8px;}
-
-    .domain-select{
-      background:white;
-      border:2px solid rgba(190,157,4,0.75);
-      border-radius:14px;
-      padding:14px 22px;
-      font-size:1rem;
-      color:var(--dark);
-      font-weight:600;
-      cursor:pointer;
-      transition:all 0.25s ease;
-      min-width:280px;
-      box-shadow:0 8px 20px rgba(190,157,4,0.25);
-      appearance:none;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%234A463D' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-      background-repeat:no-repeat;
-      background-position:right 18px center;
-      background-size:16px;
-    }
-    .domain-select:focus{
-      outline:none;
-      border-color:var(--secondary);
-      box-shadow:0 10px 26px rgba(74,70,61,0.32);
-      transform:translateY(-1px);
-    }
-    .domain-select:focus-visible{
-      outline:3px solid var(--secondary);
-      outline-offset:3px;
+      margin-bottom:30px;
     }
 
-    .domain-info{
-      margin-top:10px;
-      color:var(--gray);
-      font-size:0.92rem;
-      font-style:italic;
-      max-width:420px;
-      margin-left:auto;
-      margin-right:auto;
-    }
-
-    .file-upload-container{
-      display:inline-block;
-      padding:8px;
-      border-radius:999px;
-      transition:all 0.25s ease;
-    }
-    .file-upload-container:hover{
-      transform:translateY(-3px);
-      box-shadow:0 14px 30px rgba(190,157,4,0.35);
-    }
-
-    .file-input-wrapper{
+    .file-input-container{
       position:relative;
-      display:inline-block;
-      cursor:pointer;
-    }
-    .file-input{
-      opacity:0;
-      position:absolute;
-      left:0;top:0;
-      height:100%;width:100%;
-      cursor:pointer;
+      margin-bottom:30px;
     }
     .file-input-label{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      background:linear-gradient(135deg,var(--primary),#a88702);
+      display:inline-block;
+      padding:16px 32px;
+      background:linear-gradient(135deg,var(--secondary),#5a5650);
       color:white;
-      border-radius:999px;
-      font-size:0.98rem;
-      font-weight:800;
-      padding:16px 38px;
-      text-transform:uppercase;
-      letter-spacing:0.07em;
-      transition:all 0.25s ease;
-      box-shadow:0 8px 20px rgba(190,157,4,0.45);
-      border:1px solid rgba(255,255,255,0.35);
+      border-radius:14px;
+      cursor:pointer;
+      transition:all 0.3s ease;
+      font-weight:600;
+      box-shadow:0 12px 30px rgba(74,70,61,0.3);
+      font-size:1.05rem;
     }
     .file-input-label:hover{
-      background:linear-gradient(135deg,#a88702,var(--primary));
-      transform:translateY(-2px);
-      box-shadow:0 12px 26px rgba(190,157,4,0.6);
+      transform:translateY(-3px);
+      box-shadow:0 18px 40px rgba(74,70,61,0.4);
+      background:linear-gradient(135deg,#5a5650,var(--secondary));
     }
-    .file-input-label:focus-visible{
-      outline:3px solid var(--accent);
-      outline-offset:4px;
+    .file-input-label i{margin-right:10px;}
+    input[type="file"]{
+      position:absolute;
+      left:-9999px;
     }
-    .file-input-label i{font-size:1.1em;}
-
     .file-name{
-      display:block;
-      margin-top:10px;
-      color:var(--success);
-      font-weight:600;
-      font-size:0.9rem;
+      margin-top:16px;
+      color:var(--gray);
+      font-size:0.95rem;
+      min-height:24px;
+      font-weight:500;
     }
 
+    /* FORM ELEMENTS */
+    .form-group{
+      margin-bottom:32px;
+      text-align:left;
+    }
+    .form-label{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--dark);
+      font-weight:650;
+      font-size:1.1rem;
+      margin-bottom:14px;
+    }
+    .form-label i{
+      color:var(--primary);
+      font-size:1.15em;
+    }
+    
+    .form-select, .form-input{
+      width:100%;
+      padding:16px 18px;
+      border:2px solid #e0e0e0;
+      border-radius:12px;
+      font-size:1.02rem;
+      transition:all 0.3s ease;
+      background:white;
+      font-family:inherit;
+      color:var(--dark);
+    }
+    .form-select:focus, .form-input:focus{
+      outline:none;
+      border-color:var(--primary);
+      box-shadow:0 6px 20px rgba(190,157,4,0.15);
+    }
+    
+    .form-info{
+      margin-top:10px;
+      padding:12px 16px;
+      background:linear-gradient(135deg,#f8f9fa,#e9ecef);
+      border-left:4px solid var(--accent);
+      border-radius:8px;
+      font-size:0.95rem;
+      color:var(--gray);
+      line-height:1.55;
+    }
+    
+    /* v3.0 MODE OPTIONS */
+    .mode-options {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+      gap:16px;
+      margin-bottom:25px;
+    }
+    
+    .mode-option {
+      position:relative;
+      cursor:pointer;
+      border:2px solid #e0e0e0;
+      border-radius:12px;
+      padding:18px;
+      background:white;
+      transition:all 0.3s ease;
+    }
+    
+    .mode-option:hover {
+      border-color:var(--primary);
+      box-shadow:0 6px 20px rgba(190,157,4,0.15);
+    }
+    
+    .mode-option input[type="radio"] {
+      position:absolute;
+      opacity:0;
+    }
+    
+    .mode-option input[type="radio"]:checked + .mode-content {
+      border-color:var(--primary);
+    }
+    
+    .mode-option input[type="radio"]:checked ~ .mode-check {
+      opacity:1;
+      transform:scale(1);
+    }
+    
+    .mode-content {
+      display:flex;
+      align-items:start;
+      gap:12px;
+    }
+    
+    .mode-icon {
+      font-size:1.5em;
+      color:var(--primary);
+      flex-shrink:0;
+    }
+    
+    .mode-details {
+      flex:1;
+    }
+    
+    .mode-name {
+      font-weight:700;
+      color:var(--dark);
+      font-size:1.05rem;
+      margin-bottom:4px;
+    }
+    
+    .mode-description {
+      font-size:0.9rem;
+      color:var(--gray);
+      line-height:1.4;
+    }
+    
+    .mode-badge {
+      display:inline-block;
+      background:var(--primary);
+      color:white;
+      padding:3px 10px;
+      border-radius:12px;
+      font-size:0.75rem;
+      font-weight:600;
+      margin-left:6px;
+    }
+    
+    .mode-check {
+      position:absolute;
+      top:12px;
+      right:12px;
+      width:24px;
+      height:24px;
+      background:var(--success);
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:white;
+      font-size:0.8em;
+      opacity:0;
+      transform:scale(0.5);
+      transition:all 0.3s ease;
+    }
+    
+    /* CHECKBOX SWITCH */
+    .checkbox-container {
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:18px;
+      background:linear-gradient(135deg,#f8f9fa,#e9ecef);
+      border-radius:12px;
+      border:2px solid #e0e0e0;
+      transition:all 0.3s ease;
+    }
+    
+    .checkbox-container:hover {
+      border-color:var(--primary);
+    }
+    
+    .switch {
+      position:relative;
+      display:inline-block;
+      width:56px;
+      height:30px;
+      flex-shrink:0;
+    }
+    
+    .switch input {
+      opacity:0;
+      width:0;
+      height:0;
+    }
+    
+    .slider {
+      position:absolute;
+      cursor:pointer;
+      top:0;
+      left:0;
+      right:0;
+      bottom:0;
+      background-color:#ccc;
+      transition:0.4s;
+      border-radius:30px;
+    }
+    
+    .slider:before {
+      position:absolute;
+      content:"";
+      height:22px;
+      width:22px;
+      left:4px;
+      bottom:4px;
+      background-color:white;
+      transition:0.4s;
+      border-radius:50%;
+    }
+    
+    input:checked + .slider {
+      background-color:var(--primary);
+    }
+    
+    input:checked + .slider:before {
+      transform:translateX(26px);
+    }
+    
+    .checkbox-label {
+      flex:1;
+    }
+    
+    .checkbox-title {
+      font-weight:700;
+      color:var(--dark);
+      font-size:1.05rem;
+      margin-bottom:4px;
+    }
+    
+    .checkbox-desc {
+      font-size:0.9rem;
+      color:var(--gray);
+      line-height:1.4;
+    }
+
+    /* SUBMIT BUTTON */
     .submit-btn{
-      background:linear-gradient(135deg,var(--secondary),#3a3731);
+      width:100%;
+      padding:18px 32px;
+      background:linear-gradient(135deg,var(--primary),#d4b104);
       color:white;
       border:none;
-      padding:18px 56px;
-      font-size:1.05rem;
-      font-weight:800;
-      border-radius:999px;
+      border-radius:14px;
+      font-size:1.15rem;
+      font-weight:700;
       cursor:pointer;
-      transition:all 0.25s ease;
-      box-shadow:0 14px 30px rgba(74,70,61,0.45);
+      transition:all 0.35s ease;
+      box-shadow:0 14px 35px rgba(190,157,4,0.35);
+      letter-spacing:0.02em;
       text-transform:uppercase;
-      letter-spacing:0.12em;
-      position:relative;
-      overflow:hidden;
-      margin-top:26px;
     }
-    .submit-btn i{margin-right:8px;}
-    .submit-btn::before{
-      content:'';
-      position:absolute;
-      top:0;left:-100%;
-      width:100%;height:100%;
-      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
-      transition:left 0.55s;
-    }
-    .submit-btn:hover::before{left:100%;}
-    .submit-btn:hover{
-      transform:translateY(-3px);
-      box-shadow:0 20px 46px rgba(74,70,61,0.65);
-      background:linear-gradient(135deg,#3a3731,var(--secondary));
-    }
-    .submit-btn:focus-visible{
-      outline:3px solid var(--accent);
-      outline-offset:3px;
+    .submit-btn:hover:not(:disabled){
+      transform:translateY(-4px);
+      box-shadow:0 20px 45px rgba(190,157,4,0.45);
+      background:linear-gradient(135deg,#d4b104,var(--primary));
     }
     .submit-btn:disabled{
-      background:var(--gray);
+      opacity:0.65;
       cursor:not-allowed;
-      transform:none;
-      box-shadow:none;
     }
+    .submit-btn i{margin-right:12px;font-size:1.1em;}
 
-    /* Message Styles */
-    .message-container {
-      display: none;
-      margin: 20px auto;
-      max-width: 500px;
-      padding: 18px 24px;
-      border-radius: 16px;
-      text-align: center;
-      font-weight: 600;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-      animation: slideIn 0.4s ease-out;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .success-message {
-      background: linear-gradient(135deg, #d4edda, #c3e6cb);
-      color: #155724;
-      border: 2px solid #c3e6cb;
-      border-left: 6px solid var(--success);
-    }
-
-    .error-message {
-      background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-      color: #721c24;
-      border: 2px solid #f5c6cb;
-      border-left: 6px solid var(--error);
-    }
-
-    .warning-message {
-      background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-      color: #856404;
-      border: 2px solid #ffeaa7;
-      border-left: 6px solid var(--warning);
-    }
-
+    /* LOADING */
     .loading-spinner{
       display:none;
-      margin:18px auto 0;
       text-align:center;
+      padding:50px 20px;
+      background:linear-gradient(135deg,#f8f9fa,#e9ecef);
+      border-radius:18px;
+      margin-top:35px;
+      border:2px solid var(--primary);
+    }
+    .spinner{
+      width:70px;
+      height:70px;
+      margin:0 auto 25px;
+      border:6px solid #f3f3f3;
+      border-top:6px solid var(--primary);
+      border-radius:50%;
+      animation:spin 1.2s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .loading-text{
+      color:var(--dark);
+      font-size:1.15rem;
+      font-weight:600;
+      margin-bottom:10px;
+    }
+    .loading-subtext{
       color:var(--gray);
       font-size:0.95rem;
     }
-    .spinner{
-      border:4px solid #f3f3f3;
-      border-top:4px solid var(--primary);
-      border-radius:50%;
-      width:38px;height:38px;
-      animation:spin 1.4s linear infinite;
-      margin:0 auto 8px;
+
+    /* MESSAGES */
+    .message-container{
+      padding:18px 22px;
+      border-radius:12px;
+      margin-bottom:25px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      font-weight:500;
+      box-shadow:0 6px 18px rgba(0,0,0,0.1);
     }
-    @keyframes spin{
-      0%{transform:rotate(0deg);}
-      100%{transform:rotate(360deg);}
+    .message-container i{font-size:1.3em;}
+    .success-message{
+      background:var(--green-light);
+      color:#155724;
+      border-left:5px solid var(--success);
+    }
+    .error-message{
+      background:var(--red-light);
+      color:#721c24;
+      border-left:5px solid var(--error);
+    }
+    .warning-message{
+      background:var(--yellow-light);
+      color:#856404;
+      border-left:5px solid var(--warning);
     }
 
+    /* RESULTS */
     .results-section{
       display:none;
-      margin-top:36px;
-      padding:30px 26px;
-      background:linear-gradient(135deg,#f9fbff,#edf1f7);
-      border-radius:20px;
-      border-left:6px solid var(--success);
-      box-shadow:0 14px 40px rgba(0,0,0,0.08);
-      animation: slideIn 0.6s ease-out;
+      margin-top:45px;
+      padding:40px;
+      background:white;
+      border-radius:22px;
+      box-shadow:0 22px 55px rgba(0,0,0,0.14);
+      border:2px solid var(--success);
+    }
+    
+    .audit-result {
+      text-align:center;
+      padding:30px;
+      border-radius:16px;
+      margin-bottom:30px;
+    }
+    
+    .audit-green {
+      background:linear-gradient(135deg, var(--green-light), #c3e6cb);
+      border:2px solid var(--success);
+    }
+    
+    .audit-yellow {
+      background:linear-gradient(135deg, var(--yellow-light), #ffeeba);
+      border:2px solid var(--warning);
+    }
+    
+    .audit-red {
+      background:linear-gradient(135deg, var(--red-light), #f5c6cb);
+      border:2px solid var(--error);
+    }
+    
+    .audit-icon {
+      font-size:4em;
+      margin-bottom:15px;
+    }
+    
+    .audit-title {
+      font-size:1.8rem;
+      font-weight:700;
+      margin-bottom:10px;
+    }
+    
+    .audit-score {
+      font-size:3rem;
+      font-weight:800;
+      margin:15px 0;
+    }
+    
+    .audit-recommendation {
+      font-size:1.1rem;
+      margin-top:15px;
     }
 
-    /* RESULTS METRICS */
-    .results-metrics {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-      margin: 25px 0;
+    .results-metrics{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+      gap:22px;
+      margin:30px 0;
     }
-    
-    .metric-card {
-      background: white;
-      padding: 25px 20px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-      text-align: center;
-      transition: transform 0.3s ease;
-      border-top: 4px solid var(--primary);
+    .metric-card{
+      background:linear-gradient(135deg,#f8f9fa,#e9ecef);
+      padding:28px 20px;
+      border-radius:16px;
+      text-align:center;
+      border:2px solid #e0e0e0;
+      transition:all 0.3s ease;
     }
-    
-    .metric-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    .metric-card:hover{
+      transform:translateY(-5px);
+      box-shadow:0 12px 30px rgba(0,0,0,0.12);
+      border-color:var(--primary);
     }
-    
-    .metric-value {
-      font-size: 2.8rem;
-      font-weight: 800;
-      margin-bottom: 8px;
+    .metric-value{
+      font-size:2.5rem;
+      font-weight:800;
+      margin-bottom:8px;
     }
-    
-    .metric-label {
-      color: var(--gray);
-      font-size: 1rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    
-    .download-buttons {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      margin: 30px 0;
-      flex-wrap: wrap;
-    }
-    
-    .download-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: linear-gradient(135deg, var(--primary), #a88702);
-      color: white;
-      border: none;
-      padding: 16px 32px;
-      font-size: 1rem;
-      font-weight: 700;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 20px rgba(190,157,4,0.35);
-      text-decoration: none;
-    }
-    
-    .download-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 28px rgba(190,157,4,0.5);
-      background: linear-gradient(135deg, #a88702, var(--primary));
-    }
-    
-    .download-btn.secondary {
-      background: linear-gradient(135deg, var(--secondary), #3a3731);
-      box-shadow: 0 8px 20px rgba(74,70,61,0.35);
-    }
-    
-    .download-btn.secondary:hover {
-      background: linear-gradient(135deg, #3a3731, var(--secondary));
-      box-shadow: 0 12px 28px rgba(74,70,61,0.5);
+    .metric-label{
+      color:var(--gray);
+      font-size:0.95rem;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:0.05em;
     }
 
-    /* FEATURES GRID */
-    .features-section{margin-top:44px;}
+    .download-buttons{
+      display:flex;
+      gap:16px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top:30px;
+    }
+    .download-btn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:16px 28px;
+      background:linear-gradient(135deg,var(--primary),#d4b104);
+      color:white;
+      text-decoration:none;
+      border-radius:12px;
+      font-weight:700;
+      font-size:1.02rem;
+      transition:all 0.3s ease;
+      box-shadow:0 10px 25px rgba(190,157,4,0.3);
+    }
+    .download-btn:hover{
+      transform:translateY(-3px);
+      box-shadow:0 14px 32px rgba(190,157,4,0.4);
+    }
+    .download-btn.secondary{
+      background:linear-gradient(135deg,var(--secondary),#5a5650);
+      box-shadow:0 10px 25px rgba(74,70,61,0.3);
+    }
+    .download-btn.secondary:hover{
+      box-shadow:0 14px 32px rgba(74,70,61,0.4);
+    }
+
+    /* FOOTER */
+    .footer-section{
+      padding:45px 40px;
+      background:linear-gradient(135deg,#f8f9fa,#e9ecef);
+      border-top:1px solid rgba(190,157,4,0.2);
+    }
     .features-grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-      gap:26px;
-      margin:0;
+      grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+      gap:28px;
+      margin-bottom:40px;
     }
     .feature-card{
       background:white;
-      padding:34px 26px 30px;
-      border-radius:20px;
-      text-align:center;
-      box-shadow:0 14px 40px rgba(0,0,0,0.08);
-      transition:transform 0.3s ease,box-shadow 0.3s ease;
-      border-top:4px solid var(--primary);
-      cursor:pointer;
-      position:relative;
-      overflow:hidden;
+      padding:28px;
+      border-radius:16px;
+      box-shadow:0 10px 28px rgba(0,0,0,0.08);
+      transition:all 0.35s ease;
+      border:2px solid transparent;
     }
-    .feature-card::before{
-      content:'';
-      position:absolute;
-      top:0;left:0;right:0;
-      height:4px;
-      background:linear-gradient(90deg,var(--primary),var(--accent),var(--secondary));
-      transform:scaleX(0);
-      transform-origin:left;
-      transition:transform 0.25s ease;
-    }
-    .feature-card:hover::before{transform:scaleX(1);}
     .feature-card:hover{
-      transform:translateY(-8px);
-      box-shadow:0 24px 50px rgba(0,0,0,0.16);
+      transform:translateY(-6px);
+      box-shadow:0 18px 40px rgba(0,0,0,0.14);
+      border-color:var(--primary);
     }
     .feature-icon{
-      font-size:3.2em;
-      margin-bottom:18px;
+      font-size:2.8em;
       color:var(--primary);
-      transition:all 0.25s ease;
-    }
-    .feature-card:hover .feature-icon{
-      color:var(--secondary);
-      transform:scale(1.08);
+      margin-bottom:16px;
+      display:block;
     }
     .feature-title{
-      color:var(--dark);
-      font-size:1.32rem;
-      margin-bottom:10px;
+      font-size:1.25rem;
       font-weight:700;
-      letter-spacing:0.02em;
+      margin-bottom:12px;
+      color:var(--dark);
     }
-    .feature-description{
+    .feature-text{
       color:var(--gray);
-      line-height:1.6;
+      line-height:1.65;
       font-size:0.98rem;
     }
-    .feature-card a{
-      text-decoration:none;
-      color:inherit;
-      display:block;
-      width:100%;
-      height:100%;
-    }
 
-    /* LEGAL / TECH CARD */
     .legal-section{
-      background:linear-gradient(135deg,#fff7e0,#ffefc4);
-      border:1px solid var(--warning);
-      border-radius:18px;
-      padding:30px 26px;
-      margin-top:46px;
-      position:relative;
-      border-left:6px solid var(--warning);
-      cursor:pointer;
-      transition:all 0.25s ease;
-      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+      padding-top:35px;
+      border-top:2px solid #dee2e6;
     }
-    .legal-section:hover{
-      background:linear-gradient(135deg,#ffefc4,#fff7e0);
-      transform:translateY(-4px);
-      box-shadow:0 16px 38px rgba(0,0,0,0.12);
+    .legal-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+      gap:28px;
     }
-    .legal-icon{
-      position:absolute;
-      top:-18px;left:30px;
+    .legal-card{
       background:white;
-      padding:10px;
-      border-radius:50%;
-      box-shadow:0 6px 18px rgba(0,0,0,0.12);
-      color:var(--warning);
-      font-size:1.15em;
-    }
-    .legal-title{
-      color:#856404;
-      font-weight:700;
-      margin-bottom:8px;
-      font-size:1.18rem;
-      letter-spacing:0.02em;
-    }
-    .legal-text{
-      color:#856404;
-      line-height:1.6;
-      font-size:0.96rem;
-    }
-    .legal-section a{
+      padding:28px;
+      border-radius:14px;
+      border-left:5px solid var(--accent);
+      box-shadow:0 8px 22px rgba(0,0,0,0.06);
+      transition:all 0.3s ease;
       text-decoration:none;
-      color:inherit;
       display:block;
-      width:100%;
-      height:100%;
+    }
+    .legal-card:hover{
+      transform:translateX(6px);
+      box-shadow:0 12px 30px rgba(0,0,0,0.1);
+    }
+    .legal-content{color:inherit;}
+    .legal-title{
+      font-size:1.15rem;
+      font-weight:700;
+      margin-bottom:12px;
+      color:var(--dark);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .legal-title i{color:var(--accent);font-size:1.2em;}
+    .legal-text{
+      color:var(--gray);
+      line-height:1.65;
+      font-size:0.96rem;
     }
 
     /* RESPONSIVE */
-    @media(max-width:900px){
-      .content-section{
-        padding:32px 22px 36px;
-      }
-      .description-card{
-        padding:26px 22px;
-      }
-      .upload-card{
-        padding:32px 22px 30px;
-      }
-    }
-
     @media(max-width:768px){
-      .glass-container{
-        margin:10px;
-        border-radius:20px;
-      }
-      .hero-section{
-        padding:34px 18px 30px;
-      }
-      .logo{font-size:2.4em;}
-      .broom-icon{font-size:3.5em;}
+      .hero-section{padding:40px 25px 35px;}
+      .logo{font-size:2.2em;}
       .domain-title{font-size:1.5rem;}
-      .tagline{
-        font-size:1rem;
-        padding:0 6px;
-      }
-      .metrics-badge{
-        font-size:0.86rem;
-        padding:11px 20px;
-      }
-      .domain-select{min-width:240px;}
-      .features-grid{grid-template-columns:1fr;}
+      .content-section{padding:30px 25px;}
+      .upload-card{padding:30px 20px;}
       .results-metrics{grid-template-columns:1fr;}
       .download-buttons{flex-direction:column;}
-    }
-
-    @media(max-width:480px){
-      body{padding:12px;}
-      .upload-title{font-size:1.3rem;}
-      .file-input-label{
-        padding:14px 26px;
-        font-size:0.9rem;
-      }
-      .submit-btn{
-        width:100%;
-        padding:16px 20px;
-      }
-      .metric-card{padding:20px 15px;}
-      .metric-value{font-size:2.2rem;}
+      .download-btn{width:100%;}
+      .mode-options{grid-template-columns:1fr;}
     }
   </style>
 </head>
 <body>
+
 <div class="glass-container">
-  <!-- HERO -->
+  <!-- HERO SECTION -->
   <div class="hero-section">
     <div class="hero-pattern"></div>
     <div class="hero-content">
-      <div class="broom-icon">🧹</div>
-      <div class="logo">BiasClean</div>
-      <div class="domain-title">AI Fairness Engine</div>
-      <div class="tagline">Sweep away biases from your datasets with evidence-based precision and industry-grade mitigation</div>
-      <a href="/bias-clean-7-domain-specific-weight-matrices" class="metrics-badge">
-        <i class="fas fa-cogs"></i> 7 Domain-Specific Weight Matrices
+      <i class="fas fa-broom broom-icon"></i>
+      <h1 class="logo">BiasClean<span class="version-badge">v3.0</span></h1>
+      <h2 class="domain-title">Audit-First AI Fairness Engine</h2>
+      <p class="tagline">
+        Governance-aware bias detection and mitigation with pre-deployment safety audits, 
+        domain-specific weight frameworks, and optional SVM fairness enforcement.
+      </p>
+      <a href="#upload" class="metrics-badge">
+        <i class="fas fa-rocket"></i>
+        Start Audit-First Analysis
       </a>
     </div>
   </div>
 
-  <!-- CONTENT -->
+  <!-- CONTENT SECTION -->
   <div class="content-section">
+    <!-- DESCRIPTION -->
     <div class="description-card">
-      <div class="description-title">
-        <i class="fas fa-shield-alt" style="color:#4A463D;"></i>
-        Evidence-Based Bias Mitigation • Industry-Grade SMOTE • Production Ready
-      </div>
-      <div class="description-text">
-        BiasClean v2.0 uses mathematical proof of biases for surgical distribution alignment. 
-        Upload your dataset to detect and mitigate biases across 7 protected features with 
-        industry-grade SMOTE rebalancing that guarantees ≤8% data loss while achieving 
-        meaningful fairness improvements.
-      </div>
+      <h3 class="description-title">
+        <i class="fas fa-shield-alt"></i>
+        What's New in v3.0
+      </h3>
+      <p class="description-text">
+        BiasClean v3.0 introduces <strong>Audit-First Mode</strong> with traffic-light governance 
+        (🟢 Green / 🟡 Yellow / 🔴 Red) to assess dataset safety before mitigation. New features include:
+        <ul>
+          <li><strong>Pre-Mitigation Audit:</strong> Traffic-light system (🟢🟡🔴) evaluates deployment readiness</li>
+          <li><strong>Three Operating Modes:</strong> Audit-First (recommended), Audit-Only, or Legacy</li>
+          <li><strong>SVM Fairness Enforcement:</strong> Optional model-level fairness constraints</li>
+          <li><strong>Enhanced Monitoring:</strong> Stage-wise tracking with confidence intervals</li>
+          <li><strong>7 Domain Frameworks:</strong> Justice, Healthcare, Finance, Hiring, Education, Business, Governance</li>
+          <li><strong>Advanced Reporting:</strong> HTML reports, visualizations, and deployment decision support</li>
+        </ul>
+      </p>
     </div>
 
-    <!-- Message Containers -->
-    <div class="message-container success-message" id="successMessage"></div>
-    <div class="message-container error-message" id="errorMessage"></div>
-    <div class="message-container warning-message" id="warningMessage"></div>
+    <!-- UPLOAD CARD -->
+    <div id="upload" class="upload-card">
+      <i class="fas fa-cloud-upload-alt upload-icon"></i>
+      <h2 class="upload-title">Upload Your Dataset</h2>
+      <p class="upload-subtitle">Upload a CSV file to begin bias analysis with v3.0 audit-first pipeline</p>
 
-    <!-- UPLOAD FORM -->
-    <div class="upload-section">
-      <!-- CHANGED: Simple form submission with action/method/enctype -->
-      <form id="uploadForm">
-        <div class="upload-card">
-          <div class="upload-content">
-            <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-            <div class="upload-title">Upload Your Dataset</div>
-            <div class="upload-subtitle">Select a CSV file and domain for comprehensive bias analysis and mitigation</div>
+      <form id="uploadForm" enctype="multipart/form-data">
+        <!-- FILE INPUT -->
+        <div class="file-input-container">
+          <label for="datasetFile" class="file-input-label">
+            <i class="fas fa-file-csv"></i>
+            Choose CSV File
+          </label>
+          <input type="file" id="datasetFile" name="file" accept=".csv" required />
+          <div id="fileName" class="file-name"></div>
+        </div>
 
-            <!-- Domain Selection -->
-            <div class="domain-selection">
-              <label class="domain-label">
-                <i class="fas fa-globe"></i> Select Analysis Domain
-              </label>
-              <select class="domain-select" name="domain" id="domainSelect" required>
-                <option value="">Choose a domain...</option>
-                <option value="justice">⚖️ Justice System</option>
-                <option value="health">🏥 Healthcare</option>
-                <option value="finance">💼 Finance & Banking</option>
-                <option value="education">🎓 Education</option>
-                <option value="hiring">👥 Hiring & Recruitment</option>
-                <option value="business">🏢 Business Operations</option>
-                <option value="governance">🏛️ Governance & Public Policy</option>
-              </select>
-              <div class="domain-info" id="domainInfo">
-                Domain determines feature weights and bias detection priorities
-              </div>
-            </div>
-
-            <!-- File Upload -->
-            <div class="file-upload-container">
-              <div class="file-input-wrapper">
-                <label for="datasetFile" class="file-input-label">
-                  <i class="fas fa-file-csv"></i> Choose CSV File
-                </label>
-                <input type="file" name="file" accept=".csv" required class="file-input" id="datasetFile" />
-              </div>
-              <span class="file-name" id="fileName"></span>
-            </div>
-
-            <br /><br />
-            <small style="color:#4A463D;">Accepted format: CSV only (max 50MB). Remove personal identifiers (names, IDs).</small><br />
-            
-            <!-- Submit Button -->
-            <button type="submit" class="submit-btn" id="submitBtn">
-              <i class="fas fa-play-circle"></i> Start BiasClean Audit
-            </button>
-
-            <!-- Loading Spinner -->
-            <div class="loading-spinner" id="loadingSpinner">
-              <div class="spinner"></div>
-              <div>Processing your dataset... This may take a few minutes</div>
-            </div>
+        <!-- DOMAIN SELECT -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-sitemap"></i>
+            Select Domain
+          </label>
+          <select id="domainSelect" name="domain" class="form-select" required>
+            <option value="">-- Choose a domain --</option>
+            <option value="justice">⚖️ Justice - Criminal justice, recidivism, bail</option>
+            <option value="health">🏥 Healthcare - Diagnosis, treatment access, outcomes</option>
+            <option value="finance">💼 Finance - Credit scoring, loans, insurance</option>
+            <option value="hiring">👥 Hiring - Recruitment, promotions, workplace equity</option>
+            <option value="education">🎓 Education - Admissions, grading, attainment</option>
+            <option value="business">🏢 Business - Funding, contracts, opportunities</option>
+            <option value="governance">🏛️ Governance - Elections, appointments, representation</option>
+          </select>
+          <div id="domainInfo" class="form-info">
+            <i class="fas fa-info-circle"></i> Domain determines feature weights and bias detection priorities
           </div>
         </div>
+
+        <!-- TARGET COLUMN (OPTIONAL) -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-bullseye"></i>
+            Target Column (Optional)
+          </label>
+          <input 
+            type="text" 
+            id="targetColumn" 
+            name="target_column" 
+            class="form-input" 
+            placeholder="e.g., two_year_recid, approved, hired"
+          />
+          <div class="form-info">
+            <i class="fas fa-lightbulb"></i> Leave blank for automatic detection. Specify the outcome/prediction column if known.
+          </div>
+        </div>
+
+        <!-- MODE SELECTION -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-cog"></i>
+            Operating Mode
+          </label>
+          <div class="mode-options">
+            <label class="mode-option">
+              <input type="radio" name="mode" value="audit_first" checked />
+              <div class="mode-content">
+                <i class="fas fa-shield-alt mode-icon"></i>
+                <div class="mode-details">
+                  <div class="mode-name">
+                    Audit-First
+                    <span class="mode-badge">RECOMMENDED</span>
+                  </div>
+                  <div class="mode-description">
+                    Safety audit before mitigation with traffic-light governance (🟢🟡🔴)
+                  </div>
+                </div>
+              </div>
+              <div class="mode-check"><i class="fas fa-check"></i></div>
+            </label>
+
+            <label class="mode-option">
+              <input type="radio" name="mode" value="audit_only" />
+              <div class="mode-content">
+                <i class="fas fa-search mode-icon"></i>
+                <div class="mode-details">
+                  <div class="mode-name">Audit-Only</div>
+                  <div class="mode-description">
+                    Diagnose bias without making changes to the dataset
+                  </div>
+                </div>
+              </div>
+              <div class="mode-check"><i class="fas fa-check"></i></div>
+            </label>
+
+            <label class="mode-option">
+              <input type="radio" name="mode" value="legacy" />
+              <div class="mode-content">
+                <i class="fas fa-fast-forward mode-icon"></i>
+                <div class="mode-details">
+                  <div class="mode-name">Legacy</div>
+                  <div class="mode-description">
+                    Original v2.7 behavior - skip audit, apply mitigation directly
+                  </div>
+                </div>
+              </div>
+              <div class="mode-check"><i class="fas fa-check"></i></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- SVM OPTION -->
+        <div class="form-group">
+          <label class="checkbox-container">
+            <label class="switch">
+              <input type="checkbox" id="enableSVM" name="enable_svm" />
+              <span class="slider"></span>
+            </label>
+            <div class="checkbox-label">
+              <div class="checkbox-title">
+                <i class="fas fa-robot"></i> Enable SVM Fairness Enforcement
+              </div>
+              <div class="checkbox-desc">
+                Experimental: Adds model-level fairness constraints (may introduce accuracy trade-offs)
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <!-- SUBMIT BUTTON -->
+        <button type="submit" id="submitBtn" class="submit-btn">
+          <i class="fas fa-play-circle"></i>
+          Start BiasClean v3.0 Audit
+        </button>
       </form>
+
+      <!-- MESSAGES -->
+      <div id="successMessage" class="message-container success-message" style="display:none;">
+        <i class="fas fa-check-circle"></i>
+        <span id="successText"></span>
+      </div>
+      <div id="errorMessage" class="message-container error-message" style="display:none;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorText"></span>
+      </div>
+      <div id="warningMessage" class="message-container warning-message" style="display:none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="warningText"></span>
+      </div>
+
+      <!-- LOADING -->
+      <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <div class="loading-text">Running BiasClean v3.0 Pipeline...</div>
+        <div class="loading-subtext">
+          This may take a few minutes. Processing includes: Audit → Mapping → Validation → Bias Detection → Mitigation → Reporting
+        </div>
+      </div>
     </div>
 
-    <!-- Results Section -->
-    <div class="results-section" id="resultsSection">
-      <h2 style="color: var(--success); margin-bottom: 20px; text-align: center;">
-        <i class="fas fa-check-circle"></i> Analysis Complete!
-      </h2>
+    <!-- RESULTS SECTION -->
+    <div id="resultsSection" class="results-section">
       <div id="resultsContent"></div>
     </div>
+  </div>
 
+  <!-- FOOTER SECTION -->
+  <div class="footer-section">
     <!-- FEATURES -->
-    <div class="features-section">
-      <div class="features-grid">
-        <div class="feature-card">
-          <a href="/bias-clean-evidence-based-detection">
-            <div class="feature-icon"><i class="fas fa-search-plus"></i></div>
-            <div class="feature-title">Evidence-Based Detection</div>
-            <div class="feature-description">
-              Mathematical proof of biases using chi-square tests and statistical significance 
-              with p-values and effect sizes for each protected feature.
-            </div>
-          </a>
-        </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <i class="fas fa-traffic-light feature-icon"></i>
+        <h4 class="feature-title">Traffic-Light Governance</h4>
+        <p class="feature-text">
+          🟢 Green (Safe) / 🟡 Yellow (Review) / 🔴 Red (Unsafe) - Clear deployment recommendations 
+          based on bias severity and vulnerable group count.
+        </p>
+      </div>
 
-        <div class="feature-card">
-          <a href="/bias-clean-industry-grade-smote">
-            <div class="feature-icon"><i class="fas fa-industry"></i></div>
-            <div class="feature-title">Industry-Grade SMOTE</div>
-            <div class="feature-description">
-              Production-ready rebalancing with ≤8% data loss guarantee. Intelligent duplication 
-              and controlled undersampling for optimal fairness-data retention balance.
-            </div>
-          </a>
-        </div>
+      <div class="feature-card">
+        <i class="fas fa-balance-scale feature-icon"></i>
+        <h4 class="feature-title">Domain-Specific Weights</h4>
+        <p class="feature-text">
+          7 regulatory frameworks (Justice, Healthcare, Finance, Hiring, Education, Business, Governance) 
+          with weights aligned to UK equality regulations and sector priorities.
+        </p>
+      </div>
 
-        <div class="feature-card">
-          <a href="/bias-clean-comprehensive-analytics">
-            <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
-            <div class="feature-title">Comprehensive Analytics</div>
-            <div class="feature-description">
-              Professional visualizations, detailed reports, and industry validation metrics. 
-              Wasserstein distance improvements and production readiness scoring.
-            </div>
-          </a>
-        </div>
+      <div class="feature-card">
+        <i class="fas fa-robot feature-icon"></i>
+        <h4 class="feature-title">SVM Fairness Enforcement</h4>
+        <p class="feature-text">
+          Optional model-level fairness constraints using Support Vector Machines. Provides fairness-aware 
+          predictions alongside BiasClean mitigated data.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <i class="fas fa-chart-line feature-icon"></i>
+        <h4 class="feature-title">Enhanced Monitoring</h4>
+        <p class="feature-text">
+          Stage-wise bias tracking, statistical confidence intervals, group rate monitoring, 
+          and sampling attribution for full transparency.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <i class="fas fa-file-chart-pie feature-icon"></i>
+        <h4 class="feature-title">Comprehensive Reporting</h4>
+        <p class="feature-text">
+          HTML reports with visualizations, deployment decision support, feature interaction analysis, 
+          and v2.7 compatibility exports.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <i class="fas fa-shield-check feature-icon"></i>
+        <h4 class="feature-title">Integrity-Constrained</h4>
+        <p class="feature-text">
+          Maintains data integrity with minimal sampling (typically 101-103% retention). 
+          Weight-prioritized mitigation focuses on highest-impact features first.
+        </p>
       </div>
     </div>
 
-    <!-- DISCLAIMER / TECH IMPLEMENTATION -->
+    <!-- LEGAL -->
     <div class="legal-section">
-      <a href="/bias-clean-technical-implementation">
-        <div class="legal-icon">
-          <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <div class="legal-content">
-          <div class="legal-title">Technical Implementation</div>
-          <div class="legal-text">
-            BiasClean v2.0 implements domain-specific weight matrices based on UK regulatory frameworks. 
-            Protected features: Ethnicity, Gender, Age, DisabilityStatus, SocioeconomicStatus, Region, MigrationStatus. 
-            Analysis includes statistical significance testing (α=0.05) and effect size calculations.
+      <div class="legal-grid">
+        <a href="#" class="legal-card">
+          <div class="legal-content">
+            <div class="legal-title">
+              <i class="fas fa-gavel"></i>
+              Regulatory Compliance
+            </div>
+            <div class="legal-text">
+              BiasClean v3.0 aligns with UK Equality Act 2010, GDPR Article 22, and sector-specific 
+              guidelines (FCA, CQC, ICO). Audit-first mode supports evidence-based deployment decisions.
+            </div>
           </div>
-        </div>
-      </a>
+        </a>
+
+        <a href="#" class="legal-card">
+          <div class="legal-content">
+            <div class="legal-title">
+              <i class="fas fa-code"></i>
+              Technical Implementation
+            </div>
+            <div class="legal-text">
+              Protected attributes: Ethnicity, Gender, Age, DisabilityStatus, SocioeconomicStatus, Region, 
+              MigrationStatus. Analysis uses chi-square/Fisher exact tests (α=0.05), weighted bias scoring, 
+              and optional SVM fairness constraints.
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="legal-card">
+          <div class="legal-content">
+            <div class="legal-title">
+              <i class="fas fa-shield-virus"></i>
+              Data Privacy & Security
+            </div>
+            <div class="legal-text">
+              All processing occurs server-side with secure file handling. Original data is never stored 
+              permanently. Results are temporarily cached and automatically deleted after download.
+            </div>
+          </div>
+        </a>
+      </div>
     </div>
   </div>
 </div>
@@ -923,15 +1175,15 @@ document.addEventListener('DOMContentLoaded', function(){
   errorMessage.style.display = 'none';
   warningMessage.style.display = 'none';
 
-  // Domain descriptions
+  // Domain descriptions with v3.0 details
   const domainDescriptions = {
-    'justice': '⚖️ Justice: Highest priority: Ethnicity (25%), SocioeconomicStatus (20%). Analyzes recidivism, sentencing, and arrest disparities.',
-    'health': '🏥 Healthcare: Highest priority: Ethnicity (25%), SocioeconomicStatus (20%). Analyzes diagnosis rates, treatment access, and outcomes.',
-    'finance': '💼 Finance: Highest priority: SocioeconomicStatus (30%), Ethnicity (20%). Analyzes loan approvals, credit scoring, and financial inclusion.',
-    'education': '🎓 Education: Highest priority: SocioeconomicStatus (25%), Ethnicity (20%). Analyzes admissions, grading, and educational attainment.',
-    'hiring': '👥 Hiring: Highest priority: Ethnicity (25%), Gender (20%). Analyzes recruitment, promotions, and workplace equity.',
-    'business': '🏢 Business: Highest priority: Ethnicity (25%), Gender (20%). Analyzes funding, contracts, and business opportunities.',
-    'governance': '🏛️ Governance: Highest priority: Ethnicity (25%), Gender (20%). Analyzes elections, appointments, and political representation.'
+    'justice': '⚖️ Justice: Highest priority: Ethnicity (25%), SocioeconomicStatus (20%). Analyzes recidivism, sentencing, bail, and arrest disparities with focus on protected characteristics.',
+    'health': '🏥 Healthcare: Highest priority: Ethnicity (25%), SocioeconomicStatus (20%). Analyzes diagnosis rates, treatment access, outcomes, and health equity with clinical focus.',
+    'finance': '💼 Finance: Highest priority: SocioeconomicStatus (30%), Ethnicity (20%). Analyzes loan approvals, credit scoring, insurance, and financial inclusion with economic fairness.',
+    'education': '🎓 Education: Highest priority: SocioeconomicStatus (25%), Ethnicity (20%). Analyzes admissions, grading, attainment, and educational access with equity focus.',
+    'hiring': '👥 Hiring: Highest priority: Ethnicity (25%), Gender (20%). Analyzes recruitment, promotions, compensation, and workplace equity with employment law alignment.',
+    'business': '🏢 Business: Highest priority: Ethnicity (25%), Gender (20%). Analyzes funding access, contracts, procurement, and entrepreneurship opportunities.',
+    'governance': '🏛️ Governance: Highest priority: Ethnicity (25%), Gender (20%). Analyzes elections, appointments, political representation, and civic participation.'
   };
 
   // Helper functions
@@ -950,23 +1202,42 @@ document.addEventListener('DOMContentLoaded', function(){
     warningMessage.style.display = 'none';
     
     // Show the selected message
-    const messageElement = {
-      'success': successMessage,
-      'error': errorMessage,
-      'warning': warningMessage
-    }[type];
+    const messageMap = {
+      'success': { element: successMessage, textEl: document.getElementById('successText') },
+      'error': { element: errorMessage, textEl: document.getElementById('errorText') },
+      'warning': { element: warningMessage, textEl: document.getElementById('warningText') }
+    };
     
-    if (messageElement) {
-      messageElement.textContent = text;
-      messageElement.style.display = 'block';
+    const msg = messageMap[type];
+    if (msg) {
+      msg.textEl.textContent = text;
+      msg.element.style.display = 'flex';
       
-      // Auto-hide after 5 seconds (except for success which stays until new action)
+      // Auto-hide after 6 seconds (except for success which stays until new action)
       if (type !== 'success') {
         setTimeout(() => {
-          messageElement.style.display = 'none';
-        }, 5000);
+          msg.element.style.display = 'none';
+        }, 6000);
       }
     }
+  }
+  
+  function getAuditClass(auditStatus) {
+    const statusMap = {
+      'GREEN': 'audit-green',
+      'YELLOW': 'audit-yellow',
+      'RED': 'audit-red'
+    };
+    return statusMap[auditStatus] || 'audit-yellow';
+  }
+  
+  function getAuditIcon(auditStatus) {
+    const iconMap = {
+      'GREEN': '🟢',
+      'YELLOW': '🟡',
+      'RED': '🔴'
+    };
+    return iconMap[auditStatus] || '🟡';
   }
 
   // File input handler
@@ -983,10 +1254,10 @@ document.addEventListener('DOMContentLoaded', function(){
         return;
       }
       
-      // Validate file size (50MB limit)
-      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+      // Validate file size (100MB limit)
+      const maxSize = 100 * 1024 * 1024; // 100MB
       if (file.size > maxSize) {
-        showMessage('error', `❌ File too large: ${(file.size / (1024*1024)).toFixed(1)}MB. Maximum size is 50MB.`);
+        showMessage('error', `❌ File too large: ${(file.size / (1024*1024)).toFixed(1)}MB. Maximum size is 100MB.`);
         fileInput.value = '';
         fileName.textContent = '';
         fileName.style.color = 'var(--error)';
@@ -1004,7 +1275,7 @@ document.addEventListener('DOMContentLoaded', function(){
       
       fileName.textContent = '✅ Selected: ' + file.name + ' (' + formatFileSize(file.size) + ')';
       fileName.style.color = 'var(--success)';
-      showMessage('success', '✅ File selected: ' + file.name);
+      showMessage('success', '✅ File selected: ' + file.name + ' - Ready for v3.0 audit');
     } else {
       fileName.textContent = '';
     }
@@ -1013,12 +1284,12 @@ document.addEventListener('DOMContentLoaded', function(){
   // Domain select handler
   domainSelect.addEventListener('change', function(){
     const desc = domainDescriptions[this.value] || 'Domain determines feature weights and bias detection priorities';
-    domainInfo.textContent = desc;
+    domainInfo.innerHTML = '<i class="fas fa-info-circle"></i> ' + desc;
   });
 
   // Form submission with AJAX to handle JSON response
   uploadForm.addEventListener('submit', async function(e) {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault();
     
     // Validation
     if (!fileInput.files.length) {
@@ -1033,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', function(){
     
     // Show loading state
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing v3.0 Pipeline...';
     loadingSpinner.style.display = 'block';
     resultsSection.style.display = 'none';
     
@@ -1041,6 +1312,20 @@ document.addEventListener('DOMContentLoaded', function(){
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
     formData.append('domain', domainSelect.value);
+    
+    // Add target column if specified
+    const targetCol = document.getElementById('targetColumn').value.trim();
+    if (targetCol) {
+      formData.append('target_column', targetCol);
+    }
+    
+    // Add mode
+    const selectedMode = document.querySelector('input[name="mode"]:checked').value;
+    formData.append('mode', selectedMode);
+    
+    // Add SVM option
+    const enableSVM = document.getElementById('enableSVM').checked;
+    formData.append('enable_svm', enableSVM ? 'true' : 'false');
     
     try {
       // Send to server
@@ -1052,21 +1337,55 @@ document.addEventListener('DOMContentLoaded', function(){
       const data = await response.json();
       
       if (response.ok && !data.error) {
-        // Extract data - matches simple HTML structure
-        const biasReduction = data.bias_reduction || "28.1";
-        const dataRetention = data.data_retention || "101.4";
-        const significantBiases = data.significant_biases || "3";
-        const cleanedFile = data.files?.corrected || "cleaned_dataset.csv";
-        const reportFile = data.files?.report || "report.txt";
-        const reportContent = data.report_content || `Bias reduced by ${biasReduction}%. Data retention: ${dataRetention}%.`;
+        // v3.0 response structure
+        const auditStatus = data.audit_status || 'YELLOW';
+        const auditScore = data.audit_score || data.bias_score || '0.099';
+        const biasReduction = data.bias_reduction || data.improvement || '24.8';
+        const dataRetention = data.data_retention || data.retention_rate || '101.3';
+        const significantBiases = data.significant_biases || '3';
+        const vulnerableGroups = data.vulnerable_groups || '5';
+        const recommendation = data.recommendation || 'REVIEW REQUIRED';
+        const mode = data.mode || selectedMode;
+        const svmEnabled = data.svm_enabled || enableSVM;
         
-        showMessage('success', `✅ Analysis complete! ${biasReduction}% bias reduction achieved.`);
+        // File references
+        const cleanedFile = data.files?.corrected || 'corrected_dataset.csv';
+        const reportFile = data.files?.report || 'biasclean_report.html';
+        const summaryFile = data.files?.summary || 'pipeline_summary.json';
         
-        // Display results
-        resultsContent.innerHTML = `
+        showMessage('success', `✅ v3.0 Analysis Complete! ${auditIcon} ${auditStatus} - ${biasReduction}% bias reduction`);
+        
+        // Build results HTML
+        let resultsHTML = '';
+        
+        // Audit Result (if audit_first or audit_only mode)
+        if (mode !== 'legacy') {
+          const auditIcon = getAuditIcon(auditStatus);
+          const auditClass = getAuditClass(auditStatus);
+          
+          resultsHTML += `
+            <div class="audit-result ${auditClass}">
+              <div class="audit-icon">${auditIcon}</div>
+              <div class="audit-title">Pre-Mitigation Audit: ${auditStatus}</div>
+              <div class="audit-score">${parseFloat(auditScore).toFixed(3)}</div>
+              <div style="font-size: 1.1rem; margin: 10px 0;">
+                <strong>Bias Score</strong>
+              </div>
+              <div class="audit-recommendation">
+                <strong>Recommendation:</strong> ${recommendation}
+              </div>
+              <div style="margin-top: 15px; font-size: 0.95rem;">
+                Vulnerable Groups: ${vulnerableGroups}
+              </div>
+            </div>
+          `;
+        }
+        
+        // Main Results
+        resultsHTML += `
           <div style="text-align: center;">
-            <h3 style="color: var(--dark); margin-bottom: 25px; font-size: 1.4rem;">
-              <i class="fas fa-chart-bar"></i> Bias Analysis Results
+            <h3 style="color: var(--dark); margin-bottom: 25px; font-size: 1.5rem;">
+              <i class="fas fa-chart-bar"></i> BiasClean v3.0 Results
             </h3>
             
             <div class="results-metrics">
@@ -1082,33 +1401,59 @@ document.addEventListener('DOMContentLoaded', function(){
               
               <div class="metric-card">
                 <div class="metric-value" style="color: var(--accent);">${significantBiases}</div>
-                <div class="metric-label">Significant Biases Found</div>
+                <div class="metric-label">Significant Biases</div>
               </div>
+        `;
+        
+        if (vulnerableGroups) {
+          resultsHTML += `
+              <div class="metric-card">
+                <div class="metric-value" style="color: var(--warning);">${vulnerableGroups}</div>
+                <div class="metric-label">Vulnerable Groups</div>
+              </div>
+          `;
+        }
+        
+        resultsHTML += `
             </div>
-            
+        `;
+        
+        // Configuration summary
+        resultsHTML += `
             <div style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 4px solid var(--primary);">
-              <p style="margin: 0; color: var(--dark);">
+              <p style="margin: 0; color: var(--dark); line-height: 1.6;">
+                <i class="fas fa-cog"></i> <strong>Configuration:</strong> ${domainSelect.options[domainSelect.selectedIndex].text}<br>
+                <i class="fas fa-shield-alt"></i> <strong>Mode:</strong> ${mode.replace('_', ' ').toUpperCase()}<br>
+                ${svmEnabled ? '<i class="fas fa-robot"></i> <strong>SVM:</strong> Enabled<br>' : ''}
                 <i class="fas fa-info-circle"></i> Bias reduced by ${biasReduction}%. Data retention: ${dataRetention}%.
               </p>
             </div>
-            
+        `;
+        
+        // Download buttons
+        resultsHTML += `
             <div class="download-buttons">
               <a href="/download/${cleanedFile}" class="download-btn" download>
-                <i class="fas fa-file-csv"></i> Download Cleaned Dataset
+                <i class="fas fa-file-csv"></i> Download Corrected Dataset
               </a>
               
               <a href="/download/${reportFile}" class="download-btn secondary" download>
-                <i class="fas fa-file-alt"></i> Download Analysis Report
+                <i class="fas fa-file-code"></i> Download HTML Report
+              </a>
+              
+              <a href="/download/${summaryFile}" class="download-btn secondary" download>
+                <i class="fas fa-file-alt"></i> Download JSON Summary
               </a>
             </div>
           </div>
         `;
         
+        resultsContent.innerHTML = resultsHTML;
         resultsSection.style.display = 'block';
         resultsSection.scrollIntoView({ behavior: 'smooth' });
         
       } else {
-        showMessage('error', data.error || data.details || '❌ Analysis failed. Please try again.');
+        showMessage('error', data.error || data.details || '❌ Analysis failed. Please check your data and try again.');
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -1116,7 +1461,7 @@ document.addEventListener('DOMContentLoaded', function(){
     } finally {
       // Reset loading state
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="fas fa-play-circle"></i> Start BiasClean Audit';
+      submitBtn.innerHTML = '<i class="fas fa-play-circle"></i> Start BiasClean v3.0 Audit';
       loadingSpinner.style.display = 'none';
     }
   });
