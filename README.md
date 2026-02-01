@@ -1,120 +1,89 @@
-# 🧹 BiasClean Toolkit v2.7
+# 🧹 BiasClean Toolkit v3.0
 
 [![GitHub Repository](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
-![Python](https://img.shields.io/badge/python-3.7%2B-green)
-![Bias Reduction](https://img.shields.io/badge/Bias%20Reduction-42.1%25-success)
-![Version](https://img.shields.io/badge/Version-2.7-blue)
-![Hiring Validation](https://img.shields.io/badge/Hiring%20Validated-36.7%25%20Improvement-brightgreen)
+![Python](https://img.shields.io/badge/python-3.8%2B-green)
+![Version](https://img.shields.io/badge/Version-3.0.0-blue)
+![License](https://img.shields.io/badge/license-Open%20Source-green)
+![Domains](https://img.shields.io/badge/Domains-7%20Supported-brightgreen)
 
-**A domain-aware pre-processing toolkit for detecting and mitigating demographic bias in UK datasets before modelling.**
+**Production-ready audit-first fairness pipeline with traffic light governance for algorithmic decision systems.**
 
-Developed to support the **BiasClean™** fairness pre-processing framework described in the book  
-**_BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits_ (Tavakoli, 2026).**
-
----
-
-## 🎯 Quick Start: COMPAS (Justice) & OpenIntro (Hiring)
-**Reproduce 42.1% bias reduction on justice data or 36.7% on hiring data with enhanced monitoring:**
-1. Launch Web Interface
-python biasclean.py
-- Navigate to https://ai-fairness.com/ and upload data/real_datasets/compas.csv
-
-2. Run Jupyter Demo  
-jupyter notebook demos/BiasClean_v2.7_Demo.ipynb
+Developed to support the **BiasClean™** fairness framework described in  
+**_BiasClean: Audit-First Fairness Pipeline for Algorithmic Governance_ (Tavakoli, 2026).**
 
 ---
-### COMPAS Validation Results (v2.7):
 
-*Overall Justice domain Bias Reduction:* **42.1%** (0.10934 → 0.06333)  
-*Data Retention:* **Optimized for fairness** (accuracy normalized to 56–65% range)
+## 🎯 Quick Start: Audit-First Fairness Pipeline
 
-#### Key Fairness Metrics (FDK Validated):
-- **Composite Bias Score:** 42.1% reduction  
-- **Worst Group Accuracy:** 71.5% improvement  
-- **Error Rate Difference:** 100% reduction  
-- **Statistical Parity Difference:** -57.2% (trade-off noted)
+**Audit your data with traffic light governance before any mitigation:**
+1. For Non-Technical Users
+from biasclean_v3_production import run_biasclean_interactive
+run_biasclean_interactive()
+
+2. For Data Analysts  
+from biasclean_v3_production import UniversalBiasClean
+pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
+
+---
+### Traffic Light Governance System (v3.0):
+
+*Pre-Mitigation Audit Performed Before Any Intervention:* **Safety First**  
+*Governance Decision Based on Data Quality & Baseline Fairness:* **🟢🟡🔴 Recommendations**
+
+#### Traffic Light Meanings:
+- **🟢 GREEN:** Safe to proceed with bias mitigation
+- **🟡 YELLOW:** Review required before proceeding
+- **🔴 RED:** Do not deploy - address data quality issues first
+
+#### Cross-Domain Validation:
+- **COMPAS (Justice):** Traffic lights accurate, thresholds correct
+- **MIMIC-IV (Healthcare):** All features functional
+- **German Credit (Finance):** No regressions from v2.7
+- **OULAD (Education):** Harm detection working
+- **Resume Callback (Hiring):** All weights validated
 
 #### Live Production Tool: https://www.ai-fairness.com
 
 ---
 
-### HIRING Validation Results (v2.7):
-*Hiring Domain Bias Reduction:* **36.7%** (0.2128 → 0.1348)  
-*Data Retention:* **100.0%** (4,870 records preserved)  
-*SVM Accuracy:* **74.5%** validation, **79.5%** full dataset
+### 🔍 What's New in v3.0: Audit-First Architecture
 
-#### v2.7 Enhanced Monitoring Insights:
-- **Ethnicity Improvement:** 93.8% (critical for hiring fairness)
-- **Compensatory Pattern Detected:** Ratio 1.53 (Ethnicity gains offset Gender deterioration)
-- **Trade-off Analysis:** Ethnicity ↔ Gender correlation: -1.000
-- **Stage Attribution:** SVM contributes 100% of weighted improvement
+#### ✅ Traffic Light Governance
+- **Pre-mitigation safety checks** before any intervention
+- **Clear deployment recommendations** (🟢🟡🔴) for decision-makers
+- **Vulnerable subgroup detection** identifies at-risk groups early
+- **Conditional mitigation** only proceeds if audit approves
 
-#### Live Production Tool: https://www.ai-fairness.com
+#### ✅ Multi-Domain Production Support
+- **7 supported domains** with UK regulatory-aligned weights
+- **Domain-specific configurations** for justice, health, finance, hiring, education, business, governance
+- **Jurisdiction-ready weights** based on Equality Act 2010 framework
+- **Empirically validated thresholds** from v2.7 research
 
----
+#### ✅ User-Centric Design
+- **Interactive no-code interface** for non-technical users
+- **Three operating modes**: audit_first (recommended), audit_only, legacy (v2.7)
+- **Quick audit mode** for instant fairness diagnosis
+- **Professional reports** with executive summaries
 
-### 🔍 What's Enhanced in v2.7: Feature-Level Monitoring & Statistical Attribution
+#### ✅ Production Readiness
+- **Single-file distribution** (181KB, 4,420 lines, 11 classes, 80 functions)
+- **No test code, no Colab dependencies** - 100% production code
+- **Standard libraries only** (pandas, numpy, scikit-learn, matplotlib, seaborn)
+- **Cross-platform compatibility** (Windows, Mac, Linux, Python 3.8+)
 
-#### ✅ Feature-Level Bias Tracking
-- **Multi-stage progression monitoring** across A/B/C deployment stages
-- **Group outcome rate analysis** per protected group per stage
-- **Bootstrap statistical confidence intervals** for all fairness metrics
-- **Sampling attribution tracking** with origin-to-transformation tracing
-
-#### ✅ Enhanced Export System
-- **6 comprehensive export files** in `/v27_exports/` directory
-- **Stage-comparison reports** showing bias progression
-- **Statistical confidence visualizations** with interval displays
-- **Audit-ready decision documentation** with rationale tracking
-
-#### ✅ Deployment Decision Engine
-- **Multi-criteria scoring engine** for go/no-go deployment decisions
-- **Threshold-based evaluation** across fairness, performance, and compliance
-- **Dynamic weight adjustment** based on domain requirements
-- **Attribution analysis** showing source of improvements/deteriorations
-
-### ✅ Enhanced Monitoring System
-- **StageScoreTracker with progression monitoring** tracking bias score through pipeline stages
-- **Trade-off analysis** revealing feature interaction relationships
-- **Compensatory pattern detection** identifying net vs. gross improvement dynamics
-- **Weight-adjusted attribution** showing stage-specific contributions with domain weights
-
-### ✅ 7 Domains Supported
-- **Justice** - Criminal justice bias detection (COMPAS-validated)
-- **Health** - Healthcare bias analysis
-- **Finance** - Financial services fairness
-- **Hiring** - Employment & recruitment bias (v2.7 validated)
-- **Education** - Educational access & attainment bias
-- **Business** - Business funding & investment bias
-- **Governance** - Political representation & selection bias
-
-### ✅ Weight-Prioritized Mitigation
-Each domain follows **UK 2025 Domain-Specific Weight Prioritization**:
-- **Justice**: Ethnicity (0.25) > SocioeconomicStatus (0.20) > Region/Age (0.15)
-- **Health**: Ethnicity (0.25) > SocioeconomicStatus (0.20) > DisabilityStatus/Gender (0.15)
-- **Business**: Ethnicity (0.25) > Gender (0.20) > Region/SES (0.15) > Age/Disability (0.10)
-
-### ✅ Enhanced Features from v2.6
-- **Enhanced monitoring system** with bias score progression tracking through stages
-- **Trade-off analysis** revealing feature interaction relationships (e.g., Ethnicity ↔ Gender correlation: -1.000)
-- **Compensatory pattern detection** identifying when gains mask deteriorations in other features
-- **Weight-adjusted attribution calculations** showing stage contributions adjusted for domain importance
-- **Backward compatibility maintained** with v2.5 pipeline architecture
-
-### ✅ Professional Report Generation
-- **Dual-format outputs** - HTML and PDF publication-ready reports
-- **Statistical dashboards** - Executive summaries with key fairness metrics
-- **Visual analytics** - Disparity comparison, fairness improvements, data integrity charts
-- **Session tracking** - Unique IDs with timestamped generation
-- **Complete audit trails** - Pipeline execution logs with leakage diagnostics
-
+#### ✅ Enhanced Safety & Governance
+- **Harm prevention** blocks mitigation if critical issues detected
+- **Transparent decision rationale** for all traffic light assignments
+- **Complete audit trails** documenting all findings and actions
+- **Human-in-the-loop design** requires expert review for YELLOW scenarios
 ---
 
 ## 🌍 Overview
 
-**BiasClean v2.7** is an evidence-based fairness cleaning engine with integrated SVM optimization, designed to remove demographic representation bias with rigorous feature governance and leakage prevention. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling the creation of fairer datasets prior to model training.
+**BiasClean v3.0** is a production-ready audit-first fairness pipeline with traffic light governance, designed to prevent harm by auditing datasets before any bias mitigation is applied. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling safe fairness assessment and conditional mitigation.
 
-The toolkit implements a sophisticated **7×7 matrix** of UK domains and universal fairness features, each weighted using the **SIW-ESW-PLW framework** (Structural Inequality Weight, Evidence Strength Weight, Policy & Legal Relevance Weight) based on official UK statistics and regulatory guidance.
+The toolkit implements an **audit-first architecture** with clear traffic light recommendations (🟢🟡🔴), preventing deployment of bias mitigation on unsuitable datasets and ensuring human oversight for borderline cases.
 
 ---
 
@@ -137,31 +106,19 @@ BiasClean is specifically engineered for the UK context, moving beyond generic f
 | **Output** | Bias-mitigated dataset & full audit trail | Model metrics only |
 | **Transparency** | Every weight and decision is explainable | Opaque adjustments |
 
-## 🧩 Supported Domains & Fairness Features
+### ✅ 7 Domains Supported with UK Regulatory Weights
 
-BiasClean operates on a 7×7 matrix of UK domains and universal fairness features, each weighted with evidence from official national sources.
+| Domain | Primary Weights | Key Use Cases | Regulatory Alignment |
+|--------|----------------|---------------|----------------------|
+| **Justice** | Ethnicity (0.25), SES (0.20) | Recidivism, bail, sentencing | Ministry of Justice, HM Inspectorate |
+| **Healthcare** | Ethnicity (0.25), Disability (0.15) | Diagnosis, triage, treatment | NHS Digital, Public Health England |
+| **Finance** | SES (0.30), Ethnicity (0.20) | Credit, loans, insurance | Financial Conduct Authority, Bank of England |
+| **Hiring** | Gender (0.20), Ethnicity (0.25) | Recruitment, promotions, offers | Equality & Human Rights Commission |
+| **Education** | SES (0.25), Disability (0.15) | Admissions, grading, outcomes | Department for Education |
+| **Business** | Ethnicity (0.25), Gender (0.20) | Funding, contracts, procurement | BEIS, Social Mobility Commission |
+| **Governance** | Gender (0.20), Ethnicity (0.25) | Elections, appointments, representation | ONS, Electoral Commission |
 
-### Core Domains
-| Domain | Key Evidence Sources |
-|:--|:--|
-| **Justice** | Ministry of Justice (MoJ), HM Inspectorate of Constabulary |
-| **Health** | NHS Digital, Public Health England |
-| **Finance** | Financial Conduct Authority (FCA), Bank of England |
-| **Education** | Department for Education (DfE), Office for Students |
-| **Hiring** | Equality and Human Rights Commission (EHRC) |
-| **Business** | Department for Business, Energy & Industrial Strategy (BEIS) |
-| **Governance** | Office for National Statistics (ONS), Government Equalities Office |
-
-### Universal Fairness Features
-| Feature | Description | Key Data Sources |
-|:--|:--|:--|
-| **Ethnicity** | Racial and ethnic group representation | ONS, EHRC |
-| **SocioeconomicStatus** | Income, education, occupation-based disparities | ONS, Social Mobility Commission |
-| **Region** | Geographic and regional inequality | ONS, NHS |
-| **Age** | Behavioural gradients affecting outcomes | ONS demographic risk profiles |
-| **Gender** | Documented bias across hiring, health and leadership | EHRC, ONS gender pay gap |
-| **DisabilityStatus** | Protected characteristic with consistent disadvantage | Equality Act, NHS, DWP data |
-| **MigrationStatus** | Affects service access and civic participation | ONS, Electoral Commission |
+*Weights reflect UK regulatory priorities under Equality Act 2010 and can be adapted for other jurisdictions.*
 
 ## 🏥 Real-World Use Cases
 
@@ -177,82 +134,85 @@ BiasClean operates on a 7×7 matrix of UK domains and universal fairness feature
 **Fairness Risk**: Over-representation of young minority defendants creating biased training data  
 **BiasClean Solution**: Uses justice domain weights (Ethnicity: 0.25, Age: 0.15, Region: 0.15) to surgically rebalance dataset composition.
 
-### Hiring: Resume Screening Fairness (v2.6 Validated)
+### Hiring: Resume Screening Fairness (v3.0 Validated)
 **Context**: Training data for automated CV screening system (4,870 OpenIntro resume records) 
-**Sensitive Attributes**: Gender, Age, DisabilityStatus  
-**Fairness Risk**: Under-representation of female, older, and disabled applicants in technical roles  
-**BiasClean v2.6 Solution**: Applies hiring domain weights (Ethnicity: 0.25, Gender: 0.20) achieving 36.7% bias reduction with enhanced monitoring revealing compensatory patterns and trade-off analysis.
+**Sensitive Attributes**: Gender, Ethnicity, Age  
+**Fairness Risk**: Under-representation of minority ethnic and female applicants in technical roles  
+**BiasClean v3.0 Solution**: Audit-first approach checks data quality first, then applies hiring domain weights (Ethnicity: 0.25, Gender: 0.20) with traffic light governance ensuring safe deployment.
 
 ---
 
-## ⚙️ Repository Structure
+## ⚙️ Production Package Structure
 
-```text
-BiasClean/
+BiasClean v3.0 is distributed as a **complete production-ready package**:
+
+```
+BiasClean_v3_Production_Package/
 │
-├── data/                           # Real datasets for validation
-│   └── real_datasets/              # COMPAS dataset included
+├── biasclean_v3_production.py       # MAIN PIPELINE (181KB, 4,420 lines)
+│   ├── 11 classes, 80 functions
+│   ├── No test code, no Colab dependencies
+│   └── 100% production-ready
 │
-├── demos/                          # Jupyter notebook demonstrations
-│   └── [Notebooks to be added]     # COMPAS-validated demo
-│
-├── docs/                           # Comprehensive documentation
-│   ├── installation.md            # Step-by-step installation guide
-│   ├── architecture.md            # System architecture details
-│   ├── domains.md                 # Domain-specific explanations
-│   ├── example_usage.md           # Practical usage examples
-│   └── disclaimer.md              # Legal and ethical guidelines
-│
-├── static/                        # Web interface static files
-├── templates/                     # Web interface templates
-│
-├── tests/                         # Comprehensive test suite
-│   └── [Test files to be added]   # [To be populated]
-│
-├── biased_datasets_samples/       # Example biased datasets
-├── examples/                      # Usage examples
-├── professional_viz/              # Professional visualizations
-│
-├── biasclean.py                   # Main Flask web application
-├── biasclean_cli.py               # Command-line interface
-├── biasclean_pipeline.py          # Core pipeline functions
-├── biasclean_v2_7.py              # Main BiasClean v2.7 algorithm
-├── requirements.txt               # Python dependencies
-├── render.yaml                    # Deployment configuration
-├── LICENSE                        # Apache 2.0 License
-├── NOTICE                         # Copyright notices
-└── README.md                      # Project documentation
+├── README_BiasClean_v3.md          # Complete documentation (11KB)
+├── QUICKSTART.md                   # 30-second start guide (3.3KB)
+├── RELEASE_NOTES_v3.0.md           # What's new in v3.0 (7KB)
+├── DEPLOYMENT_PACKAGE_SUMMARY.txt  # Quick overview
+└── START_HERE.txt                  # Getting started guide
+
+*Output Directory (created after running):*
+
+biasclean_results/
+├── corrected_dataset.csv           # Bias-mitigated data (if approved)
+├── pipeline_summary.json           # Complete results in JSON
+├── biasclean_report.html          # Visual dashboard (open in browser)
+├── disparity_comparison.png       # Before/after fairness charts
+├── fairness_improvements.png      # Feature-level improvements
+└── data_integrity.png            # Quality check visualizations
 ```
 
 ### 🚀 Installation & Usage
-Requirements
-Python 3.7+
+
+**Requirements**
+
+Python 3.8+
 
 pip (Python package manager)
 
 Install Dependencies
-bash
-pip install -r requirements.txt
-Web Interface (Recommended)
-bash
-python biasclean.py
-Then open http://localhost:5000 in your browser.
+pip install pandas numpy scipy scikit-learn matplotlib seaborn
 
-Command-Line Interface
-bash
-python biasclean_cli.py
-Production Pipeline
-python
-from biasclean_v2_6 import biasclean_integrated_pipeline
+Download BiasClean v3.0
+Simply download biasclean_v3_production.py from the release package
 
-results = biasclean_integrated_pipeline(
-input_path='your_dataset.csv',
-enhanced_monitoring=True,  
-trade_off_analysis=True    
-domain='justice', # or health, finance, etc.
-mode='industry',
-enable_svm=True
+Interactive Interface (Recommended for non-coders)
+from biasclean_v3_production import run_biasclean_interactive
+run_biasclean_interactive()
+
+Programmatic Usage
+from biasclean_v3_production import UniversalBiasClean
+import pandas as pd
+
+df = pd.read_csv('your_data.csv')
+
+pipeline = UniversalBiasClean(
+    domain='justice',
+    mode='audit_first',
+    enable_svm=False
 )
+
+results = pipeline.process_dataset(
+    df=df,
+    target_column='outcome',
+    auto_approve_threshold=0.80
+)
+
+print(f"Traffic Light: {results['audit']['recommendation']['traffic_light']}")
+
+Quick Audit (No Mitigation)
+from biasclean_v3_production import quick_audit
+results = quick_audit('my_data.csv', domain='justice', target='outcome')
+
 ### 🧪 Testing & Validation
 The toolkit includes comprehensive validation:
 
@@ -262,7 +222,7 @@ Fairness Metrics: 34 FDK metrics across group fairness, error parity, robustness
 
 Production Readiness: Dual validation with bias scores and distribution alignment
 
-bash
+
 #### Run production test suite
 python -m pytest tests/
 ### ⚖️ Legal & Ethical Disclaimer
@@ -276,26 +236,22 @@ Book and explanatory text: CC BY-NC-SA 4.0
 The book BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits remains under a Creative Commons licence suitable for educational and non-commercial use.
 
 #### 📚 Citation & Credits
-If you use or reference this toolkit in your research, please cite:
+If you use or reference BiasClean v3.0 in your research or production, please cite:
 
-Tavakoli, H. (2026). BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits. London: Apress.
+Tavakoli, H. (2026). BiasClean: Audit-First Fairness Pipeline for Algorithmic Governance.
 
-For v2.7 enhanced monitoring & attribution:
-Tavakoli, H. (2026). Enhanced Monitoring & Attribution: BiasClean v2.7 With Feature-Level Bias Tracking and Statistical Confidence Intervals.
-
-For v2.5 SVM-integrated fairness optimization:
-Tavakoli, H. (2025). SVM-Integrated Fairness Optimization: BiasClean v2.5 With 42.1% Validated Fairness Improvement on COMPAS.
+Related Publication:
+Tavakoli, H. (2026). BiasClean: An Audit-First, No-Code Methodology for Fairness Monitoring and Governance-Aware Bias Mitigation. IEEE Transactions on Artificial Intelligence and Society.
 
 Repository: AI-Fairness-com/BiasClean
-Correspondence: info@ai-fairness.com
+Correspondence: h.tavakoli@ai-fairness.com
 
 #### BibTeX Citation
-bibtex
-@software{Tavakoli2026BiasCleanv27,
+@software{BiasClean2026v30,
   author  = {Hamid Tavakoli},
-  title   = {BiasClean Toolkit v2.7: Enhanced Monitoring & Attribution with Feature-Level Tracking for UK Datasets},
+  title   = {BiasClean Toolkit v3.0: Production-Ready Audit-First Fairness Pipeline with Traffic Light Governance},
   year    = {2026},
   url     = {https://github.com/AI-Fairness-com/BiasClean},
-  version = {v2.7},
-  note    = {Feature-level bias tracking with statistical confidence intervals and deployment decision scoring}
+  version = {v3.0.0},
+  note    = {Audit-first architecture with traffic light governance for 7 UK domains}
 }
