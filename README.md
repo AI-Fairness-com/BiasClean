@@ -46,6 +46,23 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 
 ---
 
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [DISCLAIMER.md](DISCLAIMER.md) | Legal and ethical disclaimer – BiasClean is not a legal compliance tool |
+| [docs/thresholds.md](docs/thresholds.md) | GREEN/YELLOW/RED threshold rationale with exact values |
+| [docs/weighting.md](docs/weighting.md) | Domain-specific weighting framework (SIW-ESW-PLW) with 7 domain tables |
+| [docs/tradeoffs.md](docs/tradeoffs.md) | Ethical boundaries, risks, and four questions before remediation |
+| [examples/compas_biasclean_demo.ipynb](examples/compas_biasclean_demo.ipynb) | Complete COMPAS workflow with all 4 execution modes |
+| [examples/basic_usage.ipynb](examples/basic_usage.ipynb) | Basic usage example |
+| [examples/custom_dataset.ipynb](examples/custom_dataset.ipynb) | Custom dataset example |
+| [examples/multi_domain_test.ipynb](examples/multi_domain_test.ipynb) | Multi-domain testing |
+
+**Source for all documentation:** Tavakoli, H. (2026). *BiasClean: Audit-First Fairness Pipeline for Algorithmic Governance*. Chapters 8, 33, 34, 36, 37.
+
+---
+
 ### 🔍 What's New in v3.0: Audit-First Architecture
 
 #### ✅ Traffic Light Governance
@@ -226,7 +243,21 @@ Production Readiness: Dual validation with bias scores and distribution alignmen
 #### Run production test suite
 python -m pytest tests/
 ### ⚖️ Legal & Ethical Disclaimer
-BiasClean™ is a research and educational toolkit for bias mitigation in datasets. It does not provide legal, regulatory, or compliance advice. Users are responsible for ensuring appropriate dataset preparation and domain-compliant use. Full disclaimer available in docs/disclaimer.md.
+
+**BiasClean™ is a technical bias detection and mitigation toolkit. It is NOT a legal compliance tool.**
+
+- Does not determine legal compliance with Equality Act 2010, GDPR, EU AI Act, or any other regulation
+- Does not adjudicate discrimination claims
+- Does not replace human judgment or organizational governance
+- Traffic light indicators represent statistical thresholds, not legal verdicts
+
+**Before remediation, ask four questions (Source: Chapter 37.2, p. 333):**
+1. Is the disparity real and meaningful?
+2. Does the disparity reflect a legitimate pattern or bias?
+3. Can you explain the change to affected communities?
+4. Have you documented your reasoning?
+
+Full disclaimer available in [DISCLAIMER.md](DISCLAIMER.md).
 
 #### 📄 License
 Software (BiasClean Toolkit code): Apache License 2.0
