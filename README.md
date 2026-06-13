@@ -94,6 +94,20 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 - **Transparent decision rationale** for all traffic light assignments
 - **Complete audit trails** documenting all findings and actions
 - **Human-in-the-loop design** requires expert review for YELLOW scenarios
+
+---
+
+## 🏗️ The Four Execution Modes
+
+| Mode | Governance Gate | Mitigation | SVM Enforcement | Primary Output |
+|------|----------------|------------|-----------------|----------------|
+| **Audit-Only** | ✅ Yes | ❌ No | ❌ No | Audit log only |
+| **Audit-First** | ✅ Yes | ✅ Yes (conditional) | ❌ No | Corrected dataset + report |
+| **Legacy (No SVM)** | ❌ No | ✅ Yes | ❌ No | Corrected dataset + report |
+| **Legacy (+ SVM)** | ❌ No | ✅ Yes | ✅ Yes | Corrected dataset + model outputs |
+
+**Source:** Chapter 33.3, Table 33.1, p. 297
+
 ---
 
 ## 🌍 Overview
