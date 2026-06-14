@@ -2,7 +2,7 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-This guide provides comprehensive domain-specific optimization strategies based on the evidence-based weight matrix from the BiasClean v2.0 Methodology Appendix. Each domain follows the proven multi-objective optimization architecture that achieved 16.1% bias reduction in the Justice domain.
+This guide provides comprehensive domain-specific optimization strategies based on the evidence-based weight matrix from the BiasClean v3.0 Methodology Appendix. Each domain follows the proven multi-objective optimization architecture that achieved 16.1% bias reduction in the Justice domain.
 
 ---
 
@@ -63,7 +63,7 @@ The Domain Specialization Framework implements evidence-based prioritization acr
 ⚖️ **BALANCE OPTIMIZATION**: MigrationStatus (5% weight)
 
 ### Implementation Status
-- **🟡 PLANNED** - Q1 2026 Release
+- **🟡 PLANNED** - Q3 2026 Release
 - **🔧 SPECIALIZED OPTIMIZERS** - Healthcare access and outcome disparities
 - **📊 VALIDATION DATASETS** - NHS disparity datasets and clinical outcomes
 
