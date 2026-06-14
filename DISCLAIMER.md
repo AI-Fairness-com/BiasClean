@@ -176,5 +176,5 @@ For academic enquiries, documentation questions, or domain-specific clarificatio
 
 ---
 
-*Last updated: November 2025*  
+*Last updated: June 2026*  
 *BiasClean Toolkit v2.0.0*
