@@ -3,7 +3,7 @@
 [![GitHub Repository](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
 ![Python](https://img.shields.io/badge/python-3.8%2B-green)
 ![Version](https://img.shields.io/badge/Version-3.0.0-blue)
-![License](https://img.shields.io/badge/license-Open%20Source-green)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Domains](https://img.shields.io/badge/Domains-7%20Supported-brightgreen)
 
 **Production-ready audit-first fairness pipeline with traffic light governance for algorithmic decision systems.**
