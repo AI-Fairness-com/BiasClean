@@ -1,8 +1,8 @@
-# 🧹 BiasClean Toolkit v3.0
+# 🧹 BiasClean Toolkit v3.6.9
 
 [![GitHub Repository](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
 ![Python](https://img.shields.io/badge/python-3.8%2B-green)
-![Version](https://img.shields.io/badge/Version-3.0.0-blue)
+![Version](https://img.shields.io/badge/Version-3.6.9-blue)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Domains](https://img.shields.io/badge/Domains-7%20Supported-brightgreen)
 
@@ -42,7 +42,21 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 - **OULAD (Education):** Harm detection working
 - **Resume Callback (Hiring):** All weights validated
 
+<!-- TODO(Hamid): the bullets above are from the original v3.0 release and have not
+     been independently re-checked here. Justice HAS been independently re-validated
+     since, against 6 real datasets (not just COMPAS) — see the Phase 2 external
+     validation report and the Phase 1 consolidation/regression-testing report.
+     Suggest replacing the Justice bullet above with a link to those once they have
+     a public home, e.g.:
+     - **Justice:** Re-validated against 6 real datasets (COMPAS, NC/OK City traffic
+       stops, NIJ Recidivism Challenge, UCI Communities & Crime) — see
+       [BiasClean External Validation in Justice Domain](docs/phase2-justice-validation.md)
+       and [Phase 1: Consolidation & Regression Testing](docs/phase1-consolidation.md) -->
+
 #### Live Production Tool: https://www.ai-fairness.com
+<!-- TODO(Hamid): flagged previously as stale — confirm whether this URL is
+     currently accurate before this update is published; leaving as-is rather
+     than guessing at a replacement. -->
 
 ---
 
@@ -112,7 +126,7 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 
 ## 🌍 Overview
 
-**BiasClean v3.0** is a production-ready audit-first fairness pipeline with traffic light governance, designed to prevent harm by auditing datasets before any bias mitigation is applied. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling safe fairness assessment and conditional mitigation.
+**BiasClean v3.6.9** is a production-ready audit-first fairness pipeline with traffic light governance, designed to prevent harm by auditing datasets before any bias mitigation is applied. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling safe fairness assessment and conditional mitigation.
 
 The toolkit implements an **audit-first architecture** with clear traffic light recommendations (🟢🟡🔴), preventing deployment of bias mitigation on unsuitable datasets and ensuring human oversight for borderline cases.
 
@@ -174,6 +188,18 @@ BiasClean is specifically engineered for the UK context, moving beyond generic f
 ---
 
 ## ⚙️ Production Package Structure
+
+<!-- TODO(Hamid): everything in this section — the module name
+     `biasclean_v3_production`, the package file list (README_BiasClean_v3.md,
+     QUICKSTART.md, RELEASE_NOTES_v3.0.md, DEPLOYMENT_PACKAGE_SUMMARY.txt,
+     START_HERE.txt) — doesn't match what's actually in this repo (the real file
+     is biasclean_v3_terminal.py, none of those other files exist here) or the
+     locally-developed biasclean_v3_5_1_terminal.py this validation round used.
+     This predates this update, not introduced by it. Left untouched rather than
+     guessing at the right module name for every code example below, since a
+     wrong guess here would break every copy-pasted snippet in this section.
+     Needs a decision on which filename is authoritative before this section can
+     be corrected. -->
 
 BiasClean v3.0 is distributed as a **complete production-ready package**:
 
@@ -279,6 +305,12 @@ See LICENSE and NOTICE in the repository root.
 
 Book and explanatory text: CC BY-NC-SA 4.0
 The book BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits remains under a Creative Commons licence suitable for educational and non-commercial use.
+
+<!-- TODO(Hamid): the citation block below still says v3.0/v3.0.0. Left as-is
+     rather than guessing whether a formal citation should track every patch
+     release or stay pinned to the v3.x line — worth a deliberate decision,
+     since anyone already citing v3.0.0 shouldn't have that reference silently
+     invalidated by an unannounced bump. -->
 
 #### 📚 Citation & Credits
 If you use or reference BiasClean v3.0 in your research or production, please cite:
