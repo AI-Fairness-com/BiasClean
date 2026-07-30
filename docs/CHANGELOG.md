@@ -4,6 +4,139 @@
 
 All notable changes to the BiasClean Toolkit will be documented in this file. The project adheres to Semantic Versioning (semver.org).
 
+> **Note on this update:** versions 3.1.0 through 3.6.9 below were consolidated from the pipeline's own internal changelog (embedded in `biasclean_v3_5_1_terminal.py`) and from two internal validation reports — *Phase 1: Consolidation & Regression Testing* and *BiasClean External Validation in Justice Domain* (Phase 2) — both dated 2026-07-30. Exact release dates for the individual 3.1.x–3.5.x versions were not available at the time of this update; only year is shown. If you have the original dates, they should be added here.
+
+---
+## [3.6.9] - 2026 (Phase 2)
+
+### 🔧 Fixed
+- **Cardinality guard on protected-feature auto-approval.** A near-unique-per-row column (e.g. a free-text `location` field with hundreds of thousands of distinct values) could be auto-approved as a protected feature and win a mapping tie against a genuinely categorical column, causing both a wrong result and, at large scale, a multi-hour runtime stall computing statistics across hundreds of thousands of near-singleton groups. `auto_approve_high_confidence` now rejects any candidate whose group count exceeds `total_records / 50` (derived from the pipeline's existing 50-sample group-size floor) *before* that computation ever runs.
+- Found on, and verified against, Oklahoma City traffic stops (945,107 rows) during Phase 2 external validation.
+
+## [3.6.8] - 2026 (Phase 2)
+
+### 🔧 Fixed
+- **Target-column coverage guard.** A column could satisfy "exactly two distinct values" while having almost no actual data behind them (observed: 2 non-null rows out of 66,662) and still be accepted as a valid binary target, producing a `NaN`-scored report that otherwise looked complete. `coerce_binary_target` now requires the smaller class to have at least 50 samples, enforced uniformly across all three of its code paths (boolean, already-clean 0/1, and generic two-value mapping).
+
+## [3.6.7] - 2026 (Phase 2)
+
+### 🔧 Fixed
+- **Protected-feature mapping tie-break.** When multiple columns mapped to the same protected feature, selection was a blind "last approved column wins" overwrite that ignored both mapping confidence and each candidate's own validation statistics. Added `_select_best_column_per_feature`, which prefers a candidate with no small-group-size warning, then higher confidence, then first-encountered for genuine ties.
+- Found on UCI Communities & Crime (`county` incorrectly beating `state` for Region) and, per the 3.6.5→3.6.6 entry below, previously observed on Oklahoma City.
+
+## [3.6.6] - 2026 (Phase 2, pre-dates this validation round)
+
+### 🔧 Fixed
+- report.pdf compared a group to itself when every group's outcome rate was exactly tied (a "no variation" case), instead of reporting that there was no gap to compare.
+
+## [3.6.5] - 2026 (Phase 2, pre-dates this validation round)
+
+### 🔧 Fixed
+- report.pdf's plain-language summary described a narrowing disparity using "widened" wording in some cases; corrected to match the actual direction of change.
+
+## [3.6.4] - 2026 (Phase 2, pre-dates this validation round)
+
+### 🔧 Fixed
+- `bias_scores.final` could report as `0` instead of `initial_bias_score` when mitigation was correctly skipped (composite score under threshold), rather than correctly carrying the initial score forward unchanged.
+
+## [3.6.3] - 2026 (Phase 2, pre-dates this validation round)
+
+### 🔧 Fixed
+- **Target auto-detection picked a supervision-violation flag over the actual recidivism label** on real NIJ Recidivism Challenge data. Fixed via pattern-specificity confidence decay so a specific pattern (`recid`) outranks a more generic one (`violat`) when multiple outcome-like columns are candidates.
+- **Known residual limitation, not fixed:** when multiple columns match the *identical* pattern (e.g. four different `Recidivism_*` columns), selection still falls back to file order — confirmed still open during Phase 2's NIJ re-validation.
+
+## [3.6.2] - 2026 (Phase 2, pre-dates this validation round)
+
+### 🔧 Fixed
+- `svm_enforcement.post_svm_bias_score` kept showing a rejected classifier's own score after the validation gate had already discarded it and fallen back to the rebalanced-stage result, so this one field disagreed with everything else in the same report. Found by a regression check that had never actually been able to run before this validation round (it imported from a module name that no longer existed).
+
+## [3.6.1] - 2026 (Phase 1)
+
+### 🔧 Fixed
+- report.pdf displayed a fake "Score: 0/100" deployment verdict for runs (e.g. Legacy mode) that never computed a deployment score at all — the console renderer correctly guarded against this, but the HTML/PDF template didn't, and defaulted `.get(key, 0)` calls rendered as if they were real results.
+
+## [3.6.0] - 2026 (Phase 1)
+
+### 🔧 Fixed
+- **Target leakage through sibling outcome-encoding columns.** SVM enforcement reported implausible 100.0% validation accuracy on a real 20.3-million-row dataset; root cause was multiple columns encoding the same underlying decision as the target, none of which matched any existing *name-based* leakage pattern. Added a statistical, name-independent leakage check: any low-cardinality column whose majority class alone predicts the target with ≥98% purity is now excluded as a near-perfect proxy, regardless of its name.
+
+## [3.5.1] - 2026 (Phase 1)
+
+### 🔧 Fixed
+- report.pdf's "Why this recommendation" section used the same alarming "overcorrection" wording for a reversal the fairness regulator had already classified as near-parity noise (below that feature's own disparity threshold), contradicting the machine-readable verdict one section above it. Report text now reflects the regulator's own materiality judgment.
+
+## [3.5.0] - 2026 (Phase 1) — Production hardening
+
+### ✨ Added
+- Explicit degenerate-classifier detection: the validation gate now rejects outright if a classifier collapses to predicting a single class for every row, rather than relying on this being caught by accident via reversal tie-breaking.
+- A pre-flight check skips SVM training with a clear reason if zero usable predictor columns remain after exclusions, instead of crashing or training on nothing meaningful.
+
+### 🔧 Fixed
+- A column named exactly `id` (no underscore) was never excluded from SVM training features due to a substring-only exclusion rule.
+- When several raw columns mapped to the same protected feature (e.g. `dob`, `age`, and `age_cat` all → Age), only one was ever excluded from the classifier's feature set — every other alias reached the model as an ordinary predictor. All approved-mapped raw columns are now excluded, not just one per feature.
+
+## [3.4.0] - 2026 (Phase 1) — The Fairness Regulator
+
+### ✨ Added
+- **Proactive overcorrection prevention ("the thermostat").** `_max_correction_without_crossing()` caps any rebalancing correction at the population mean, so it can no longer overshoot past parity into reversing which group is disadvantaged — the way a thermostat cuts the heat at its setpoint rather than overshooting into overheating. Every time it engages, it's logged in `rebalance_log`'s `regulator_capped` list.
+- **Reactive reversal gate ("the fuse").** A `rebalance_gate` block flags, rather than silently accepts or auto-reverts, any reversal that gets through despite the proactive cap.
+- Automated reversal detection distinct from magnitude tracking: `reversal_checks` now records the disadvantaged group before and after mitigation, so a gap narrowing toward zero and a gap overshooting past zero are no longer indistinguishable.
+- Found on real COMPAS data: rebalancing alone flipped the Age feature's disadvantaged group from the oldest to the youngest bracket.
+
+## [3.3.1] - 2026 (Phase 1)
+
+### 🔄 Changed
+- Default `rebalance_method` changed from Preferential Sampling to Reweighing, based on a direct comparison on real COMPAS data (61.7% disparity reduction vs. 29.8% for Preferential Sampling from the same starting point). Preferential Sampling remains available as an explicit opt-in.
+
+## [3.3.0] - 2026 (Phase 1) — "Smart SVM"
+
+### ✨ Added
+- SVM fairness enforcement rebuilt on `fairlearn`'s `ExponentiatedGradient` (Agarwal, Beygelzimer, Dudík, Langford & Wallach, *A Reductions Approach to Fair Classification*, ICML 2018), trained subject to an explicit `equalized_odds` fairness constraint (Hardt, Price & Srebro, NeurIPS 2016) by default — rather than optimizing for accuracy alone and hoping the result happened to be fair.
+- A mandatory validation gate rejects any classifier-stage result that makes the composite score worse than the pre-classifier baseline, or introduces a new group reversal, and falls back to the rebalanced result instead.
+
+## [3.2.2] - 2026 (Phase 1)
+
+### 🔧 Fixed
+- **Major:** `bias_scores.final` was computed on a different, non-comparable scale than `bias_scores.initial` whenever SVM enforcement ran, inflating the reported magnitude by roughly 2.2x on real COMPAS data. The *direction* of every SVM finding from this period remained correct (independently confirmed via raw group-rate comparisons); only the specific numbers shown were wrong.
+
+## [3.2.1] - 2026 (Phase 1)
+
+### 🔧 Fixed
+- Five user-facing console banners were hardcoded version strings never wired to `__version__`, so terminal output could show a stale version number regardless of the pipeline's actual version.
+
+## [3.2.0] - 2026 (Phase 1)
+
+### 🔄 Changed
+- Rebalancing changed from uniform-random resampling to Preferential Sampling (Kamiran & Calders, *Data preprocessing techniques for classification without discrimination*, Knowledge and Information Systems, 2012): rows nearest the decision boundary are corrected first, rather than a uniform-random pick.
+
+### ✨ Added
+- A hard minimum-group-size floor (50 samples) before any group is eligible for automatic rebalancing, reusing the same threshold already used for the pipeline's own "small group size" warnings.
+
+## [3.1.3] - 2026 (Phase 1)
+
+### 🔧 Fixed
+- SVM enforcement's worsened-fairness finding was correctly captured in the machine-readable audit trail but never surfaced in report.pdf's plain-language "Why this recommendation" section.
+
+## [3.1.2] - 2026 (Phase 1)
+
+### 🔧 Fixed
+- When SVM fairness enforcement made bias measurably *worse* than the rebalancing stage, the top-level `bias_scores.final` kept showing the better-looking pre-SVM number, hiding the regression. Found on real COMPAS data: true final bias score was 0.464 (worse than the original unmitigated 0.095) while the report showed "+31% improvement."
+- Added an explicit `svm_enforcement` block (`pre_svm_bias_score`, `post_svm_bias_score`, `worsened_fairness`) to the machine-readable output.
+
+## [3.1.1] - 2026 (Phase 1)
+
+### 🔧 Fixed
+- Target auto-detection could silently pick a meaningless bookkeeping column (e.g. a train/test split flag) as the target instead of the real outcome column, when the real column's name only matched an outcome pattern as a word-stem. Found on the NIJ Recidivism Challenge dataset, where this had produced a false "no bias found" result from auditing train/test split assignment rather than recidivism.
+
+## [3.1.0] - 2026 (Phase 1) — Reporting consolidation
+
+### 🔄 Changed
+- Output consolidated from 14 scattered files down to three: `report.pdf`, `corrected_dataset.csv`, and one merged `audit_trail.json`.
+- PDF engine switched from WeasyPrint to xhtml2pdf (pure Python — no native OS-level rendering dependencies).
+
+### ✨ Added
+- `_detect_mapping_conflicts` surfaces when multiple columns tie for the same protected feature or outcome variable, since resolution (by column position, not confidence) is otherwise silent.
+
 ---
 ## [3.0] - 2026-01-30
 
