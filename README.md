@@ -36,22 +36,15 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 - **🔴 RED:** Do not deploy - address data quality issues first
 
 #### Cross-Domain Validation:
-- **COMPAS (Justice):** Traffic lights accurate, thresholds correct
+- **Justice:** Re-validated against 6 real datasets (COMPAS, NC & Oklahoma City traffic stops, NIJ Recidivism Challenge, UCI Communities & Crime) — see [BiasClean External Validation in Justice Domain](Validations/BiasClean_External_Validation_Justice_Domain.pdf). (A companion *Phase 1: Consolidation & Regression Testing* report also exists — link to be added once it's uploaded to this repo.)
 - **MIMIC-IV (Healthcare):** All features functional
 - **German Credit (Finance):** No regressions from v2.7
 - **OULAD (Education):** Harm detection working
 - **Resume Callback (Hiring):** All weights validated
 
-<!-- TODO(Hamid): the bullets above are from the original v3.0 release and have not
-     been independently re-checked here. Justice HAS been independently re-validated
-     since, against 6 real datasets (not just COMPAS) — see the Phase 2 external
-     validation report and the Phase 1 consolidation/regression-testing report.
-     Suggest replacing the Justice bullet above with a link to those once they have
-     a public home, e.g.:
-     - **Justice:** Re-validated against 6 real datasets (COMPAS, NC/OK City traffic
-       stops, NIJ Recidivism Challenge, UCI Communities & Crime) — see
-       [BiasClean External Validation in Justice Domain](docs/phase2-justice-validation.md)
-       and [Phase 1: Consolidation & Regression Testing](docs/phase1-consolidation.md) -->
+<!-- Note: Healthcare/Finance/Education/Hiring bullets above are from the
+     original v3.0 release and have not been independently re-checked with
+     the same real-data rigor as Justice. -->
 
 #### Live Production Tool: https://www.ai-fairness.com
 <!-- TODO(Hamid): flagged previously as stale — confirm whether this URL is
@@ -60,10 +53,14 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 
 ---
 
+**A note on the datasets behind the Justice validation:** the real datasets used (North Carolina traffic stops is ~4.9GB; Oklahoma City traffic stops also exceeds the limit even compressed) are larger than GitHub's 25MB file size limit and are not included in this repository. They are drawn from public sources — the Stanford Open Policing Project (NC/OK City stops), the National Institute of Justice's Recidivism Forecasting Challenge, and the UCI Machine Learning Repository (Communities and Crime) — and the full methodology and results are in the validation report linked above.
+
+
 ## 📚 Documentation
 
 | Document | Description |
 |----------|-------------|
+| [BiasClean_Methodology.md](BiasClean_Methodology.md) | Safety design (thermostats/fuses), evidence-based weighting framework, and citations |
 | [DISCLAIMER.md](DISCLAIMER.md) | Legal and ethical disclaimer – BiasClean is not a legal compliance tool |
 | [docs/thresholds.md](docs/thresholds.md) | GREEN/YELLOW/RED threshold rationale with exact values |
 | [docs/weighting.md](docs/weighting.md) | Domain-specific weighting framework (SIW-ESW-PLW) with 7 domain tables |
@@ -72,6 +69,16 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 | [examples/basic_usage.ipynb](examples/basic_usage.ipynb) | Basic usage example |
 | [examples/custom_dataset.ipynb](examples/custom_dataset.ipynb) | Custom dataset example |
 | [examples/multi_domain_test.ipynb](examples/multi_domain_test.ipynb) | Multi-domain testing |
+
+<!-- Note: docs/thresholds.md, docs/weighting.md, and docs/tradeoffs.md above
+     do not currently resolve — docs/ contains different files instead
+     (architecture.md, domains.md, DOMAIN_SPECIALIZATION_GUIDE.md, etc.).
+     The examples/*.ipynb links were checked and do exist. This predates this
+     update and is a separate, pre-existing issue from the version-number
+     staleness — flagged rather than silently removed, since the three docs/
+     files may exist elsewhere and just need uploading, or the links may need
+     retargeting to the docs/ files that do exist. -->
+
 
 **Source for all documentation:** Tavakoli, H. (2026). *BiasClean: Audit-First Fairness Pipeline for Algorithmic Governance*. Chapters 8, 33, 34, 36, 37.
 
@@ -187,45 +194,30 @@ BiasClean is specifically engineered for the UK context, moving beyond generic f
 
 ---
 
-## ⚙️ Production Package Structure
+## ⚙️ Package Structure
 
-<!-- TODO(Hamid): everything in this section — the module name
-     `biasclean_v3_production`, the package file list (README_BiasClean_v3.md,
-     QUICKSTART.md, RELEASE_NOTES_v3.0.md, DEPLOYMENT_PACKAGE_SUMMARY.txt,
-     START_HERE.txt) — doesn't match what's actually in this repo (the real file
-     is biasclean_v3_terminal.py, none of those other files exist here) or the
-     locally-developed biasclean_v3_5_1_terminal.py this validation round used.
-     This predates this update, not introduced by it. Left untouched rather than
-     guessing at the right module name for every code example below, since a
-     wrong guess here would break every copy-pasted snippet in this section.
-     Needs a decision on which filename is authoritative before this section can
-     be corrected. -->
-
-BiasClean v3.0 is distributed as a **complete production-ready package**:
+BiasClean is distributed as a single-file pipeline plus a lightweight web service wrapper:
 
 ```
-BiasClean_v3_Production_Package/
+BiasClean/
 │
-├── biasclean_v3_production.py       # MAIN PIPELINE (181KB, 4,420 lines)
-│   ├── 11 classes, 80 functions
-│   ├── No test code, no Colab dependencies
-│   └── 100% production-ready
+├── biasclean_v3_5_1_terminal.py    # MAIN PIPELINE (v3.6.9 internally — see docs/CHANGELOG.md)
+│   ├── UniversalBiasClean (core orchestration class)
+│   ├── run_biasclean_interactive() / run_interactive_pipeline() (no-code entry points)
+│   └── quick_audit() (diagnostics without mitigation)
 │
-├── README_BiasClean_v3.md          # Complete documentation (11KB)
-├── QUICKSTART.md                   # 30-second start guide (3.3KB)
-├── RELEASE_NOTES_v3.0.md           # What's new in v3.0 (7KB)
-├── DEPLOYMENT_PACKAGE_SUMMARY.txt  # Quick overview
-└── START_HERE.txt                  # Getting started guide
+├── biasclean_server.py             # Web service wrapper (see Procfile / render.yaml)
+├── biasclean_app.py                # Flask application
+├── docs/CHANGELOG.md               # Full version history
+├── DISCLAIMER.md                   # Legal and ethical disclaimer
+└── Validations/                    # Real-dataset validation reports (Justice domain)
 
 *Output Directory (created after running):*
 
 biasclean_results/
-├── corrected_dataset.csv           # Bias-mitigated data (if approved)
-├── pipeline_summary.json           # Complete results in JSON
-├── biasclean_report.html          # Visual dashboard (open in browser)
-├── disparity_comparison.png       # Before/after fairness charts
-├── fairness_improvements.png      # Feature-level improvements
-└── data_integrity.png            # Quality check visualizations
+├── corrected_dataset.csv           # Bias-mitigated data
+├── audit_trail.json                # Full machine-readable results
+└── report.pdf                      # Plain-language summary + technical detail
 ```
 
 ### 🚀 Installation & Usage
@@ -237,17 +229,17 @@ Python 3.8+
 pip (Python package manager)
 
 Install Dependencies
-pip install pandas numpy scipy scikit-learn matplotlib seaborn
+pip install pandas numpy scipy scikit-learn matplotlib seaborn fairlearn reportlab
 
-Download BiasClean v3.0
-Simply download biasclean_v3_production.py from the release package
+Download BiasClean
+Download `biasclean_v3_5_1_terminal.py` from this repository
 
 Interactive Interface (Recommended for non-coders)
-from biasclean_v3_production import run_biasclean_interactive
+from biasclean_v3_5_1_terminal import run_biasclean_interactive
 run_biasclean_interactive()
 
 Programmatic Usage
-from biasclean_v3_production import UniversalBiasClean
+from biasclean_v3_5_1_terminal import UniversalBiasClean
 import pandas as pd
 
 df = pd.read_csv('your_data.csv')
@@ -267,7 +259,7 @@ results = pipeline.process_dataset(
 print(f"Traffic Light: {results['audit']['recommendation']['traffic_light']}")
 
 Quick Audit (No Mitigation)
-from biasclean_v3_production import quick_audit
+from biasclean_v3_5_1_terminal import quick_audit
 results = quick_audit('my_data.csv', domain='justice', target='outcome')
 
 ### 🧪 Testing & Validation
