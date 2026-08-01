@@ -1,0 +1,18 @@
+# BiasClean — dev/test tooling dependencies (Phase 4, Workstream D)
+# These are NOT pipeline runtime dependencies (see requirements.txt for
+# those) — they're used for independent benchmarking and validation
+# during this project's own development (Phase 3's blind benchmark
+# against AIF360/Aequitas, and any future re-runs of it).
+#
+# Known, accepted version tension (documented, not an oversight):
+# aequitas==0.42.0 is required (not >=1.0.0): aequitas 1.0.0 pulls in
+# `fairgbm`, which ships a precompiled binary incompatible with Apple
+# Silicon and crashes outright on install. 0.42.0 avoids this.
+# aequitas==0.42.0 itself declares xhtml2pdf==0.2.2 as a dependency,
+# but BiasClean's own PDF report generation (see requirements.txt)
+# requires xhtml2pdf==0.2.17. This mismatch triggers a pip resolver
+# warning (not a hard failure) when both files are installed together
+# — accepted deliberately; do not "fix" by downgrading xhtml2pdf.
+
+aequitas==0.42.0
+aif360==0.6.1
