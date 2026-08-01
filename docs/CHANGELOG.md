@@ -2,7 +2,13 @@
 
 All notable changes to the BiasClean Toolkit will be documented in this file. The project adheres to [Semantic Versioning](https://semver.org).
 
-> **Note on this update:** versions 3.1.0 through 3.6.9 below were consolidated from the pipeline's own internal changelog (embedded in `biasclean_v3_5_1_terminal.py`) and from two internal validation reports — *Phase 1: Consolidation & Regression Testing* and *BiasClean External Validation in Justice Domain (Phase 2)* — both dated 2026-07-30. Exact release dates for the individual 3.1.x–3.5.x versions were not available at the time of that update; only year is shown. Versions 3.7.1 through 3.10.0 below were similarly consolidated from Phase 3 (independent benchmark vs. AIF360/Aequitas) and Phase 3.5 (fairness-hardening workstreams A/B/C) validation records. If you have the original dates, they should be added here.
+> **Note on this update:** versions 3.1.0 through 3.6.9 below were consolidated from the pipeline's own internal changelog (embedded in `biasclean_v3_5_1_terminal.py`) and from two internal validation reports — *Phase 1: Consolidation & Regression Testing* and *BiasClean External Validation in Justice Domain (Phase 2)* — both dated 2026-07-30. Exact release dates for the individual 3.1.x–3.5.x versions were not available at the time of that update; only year is shown. Versions 3.7.1 through 3.10.0 below were similarly consolidated from Phase 3 (independent benchmark vs. AIF360/Aequitas) and Phase 3.5 (fairness-hardening workstreams A/B/C) validation records. Version 3.10.1 documents Phase 4's first completed workstream (dependency pinning). If you have the original dates, they should be added here.
+
+## [3.10.1] - 2026 (Phase 4)
+
+### 🔧 Changed
+- Dependency pinning (Workstream D): `requirements.txt` converted from `>=` version bounds to exact `==` pins for all 17 pipeline runtime dependencies, using the versions confirmed working in the project's own venv. `aequitas==0.42.0` and `aif360==0.6.1` — used only for this project's own benchmarking/validation work, never a pipeline runtime dependency — moved to a new `requirements-dev.txt`, along with the documented `aequitas`/`xhtml2pdf` version tension (aequitas 1.0.0 pulls in `fairgbm`, which crashes on Apple Silicon; aequitas 0.42.0's own declared `xhtml2pdf==0.2.2` dependency conflicts with the pipeline's required `xhtml2pdf==0.2.17` — accepted, not a bug).
+- Validated: a fresh install into a clean venv from the pinned `requirements.txt` resolved every package to its exact intended version with no resolver errors — catching, in the process, that the *previous* unpinned bounds would have silently resolved `reportlab` to an untested `5.0.0` (vs. the confirmed-working `4.5.1`) and `svglib` to an untested `2.1.0` (vs. `2.0.2`), exactly the kind of drift this workstream exists to prevent. A subsequent Communities & Crime re-run in the clean venv reproduced the on-record `bias_scores` exactly (0.0734 → 0.0268, 1,994/1,994 records retained).
 
 ## [3.10.0] - 2026 (Phase 3.5)
 
@@ -476,7 +482,6 @@ Professional Report Generation - Flask-based pipeline producing publication-read
 ## 🔜 Upcoming Releases
 
 ### [Unreleased] Phase 4 — Internal Production Hardening
-- 🔧 Dependency pinning: `requirements.txt` converted from `>=` bounds to exact `==` pins (Workstream D) — pending final validation.
 - 🐳 Dockerfile for reproducible environment (Workstream E)
 - 📋 Structured logging replacing `print()` output (Workstream F)
 - 🛡️ Graceful malformed-input handling (Workstream G)
