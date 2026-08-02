@@ -2,7 +2,16 @@
 
 All notable changes to the BiasClean Toolkit will be documented in this file. The project adheres to [Semantic Versioning](https://semver.org).
 
-> **Note on this update:** versions 3.1.0 through 3.6.9 below were consolidated from the pipeline's own internal changelog (embedded in `biasclean_v3_5_1_terminal.py`) and from two internal validation reports — *Phase 1: Consolidation & Regression Testing* and *BiasClean External Validation in Justice Domain (Phase 2)* — both dated 2026-07-30. Exact release dates for the individual 3.1.x–3.5.x versions were not available at the time of that update; only year is shown. Versions 3.7.1 through 3.10.0 below were similarly consolidated from Phase 3 (independent benchmark vs. AIF360/Aequitas) and Phase 3.5 (fairness-hardening workstreams A/B/C) validation records. Version 3.10.1 documents Phase 4's first completed workstream (dependency pinning), 3.10.2 documents the second (Dockerfile/reproducible environment), and 3.10.3 documents the third (structured logging). If you have the original dates, they should be added here.
+> **Note on this update:** versions 3.1.0 through 3.6.9 below were consolidated from the pipeline's own internal changelog (embedded in `biasclean_v3_5_1_terminal.py`) and from two internal validation reports — *Phase 1: Consolidation & Regression Testing* and *BiasClean External Validation in Justice Domain (Phase 2)* — both dated 2026-07-30. Exact release dates for the individual 3.1.x–3.5.x versions were not available at the time of that update; only year is shown. Versions 3.7.1 through 3.10.0 below were similarly consolidated from Phase 3 (independent benchmark vs. AIF360/Aequitas) and Phase 3.5 (fairness-hardening workstreams A/B/C) validation records. Version 3.10.1 documents Phase 4's first completed workstream (dependency pinning), 3.10.2 documents the second (Dockerfile/reproducible environment), 3.10.3 documents the third (structured logging), and 3.10.4 documents the fourth and final (malformed-input handling). If you have the original dates, they should be added here.
+
+## [3.10.4] - 2026 (Phase 4)
+
+### 🔧 Fixed
+- Graceful malformed-input handling (Workstream G), following an audit pass across the pipeline's dtype/data-shape assumptions rather than a fix for a single reported incident. Two real gaps found and fixed:
+  - A protected attribute column that's entirely missing (no non-missing values overlapping with the target) previously passed validation with only a generic warning — `value_counts().min()` on the resulting empty Series silently returns `NaN`, and `NaN < 50` evaluates `False`, so the small-group-size check never fired, and auto-approval only blocks on validation errors, never warnings. A column with zero usable data could therefore be silently auto-approved and produce a silent no-op during rebalancing. Now raises a specific, blocking error naming the column and target instead.
+  - **A user-specified `target_column` that doesn't exist in the dataset was silently falling through to auto-detection and picking a *different* column instead** — directly contradicting this exact code path's own comment ("no silent substitution when someone has told us exactly what they want"). A typo'd or missing column name would previously produce a complete-looking report auditing bias against a column the user never asked for, with nothing indicating anything had gone differently than requested. Now fails immediately with a clear error naming the missing column and previewing the dataset's actual columns.
+- Validated against four synthetic test cases (a fully-null protected column, a nonexistent target column, a 3+-class target column, and normal well-formed data) confirming each fails clearly and specifically — or, for the well-formed case, doesn't fail at all — with no regressions. Further validated on real data: COMPAS and Communities & Crime both reproduced their exact on-record `bias_scores` in Docker, confirming both fixes are correctly inert on well-formed input.
+- This completes Phase 4 in full: all four workstreams (D: dependency pinning, E: Dockerfile, F: structured logging, G: malformed-input handling) shipped, cross-verified against the established datasets, native and containerized.
 
 ## [3.10.3] - 2026 (Phase 4)
 
@@ -495,8 +504,8 @@ Professional Report Generation - Flask-based pipeline producing publication-read
 
 ## 🔜 Upcoming Releases
 
-### [Unreleased] Phase 4 — Internal Production Hardening
-- 🛡️ Graceful malformed-input handling (Workstream G)
+### [Unreleased]
+- No further Phase 4 items pending — all four workstreams (D/E/F/G) are complete as of 3.10.4.
 
 ### [3.1.0] Advanced Traffic Light Optimization
 - 🎯 Dynamic threshold adaptation based on deployment context
