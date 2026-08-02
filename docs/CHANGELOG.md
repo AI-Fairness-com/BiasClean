@@ -2,7 +2,14 @@
 
 All notable changes to the BiasClean Toolkit will be documented in this file. The project adheres to [Semantic Versioning](https://semver.org).
 
-> **Note on this update:** versions 3.1.0 through 3.6.9 below were consolidated from the pipeline's own internal changelog (embedded in `biasclean_v3_5_1_terminal.py`) and from two internal validation reports — *Phase 1: Consolidation & Regression Testing* and *BiasClean External Validation in Justice Domain (Phase 2)* — both dated 2026-07-30. Exact release dates for the individual 3.1.x–3.5.x versions were not available at the time of that update; only year is shown. Versions 3.7.1 through 3.10.0 below were similarly consolidated from Phase 3 (independent benchmark vs. AIF360/Aequitas) and Phase 3.5 (fairness-hardening workstreams A/B/C) validation records. Version 3.10.1 documents Phase 4's first completed workstream (dependency pinning). If you have the original dates, they should be added here.
+> **Note on this update:** versions 3.1.0 through 3.6.9 below were consolidated from the pipeline's own internal changelog (embedded in `biasclean_v3_5_1_terminal.py`) and from two internal validation reports — *Phase 1: Consolidation & Regression Testing* and *BiasClean External Validation in Justice Domain (Phase 2)* — both dated 2026-07-30. Exact release dates for the individual 3.1.x–3.5.x versions were not available at the time of that update; only year is shown. Versions 3.7.1 through 3.10.0 below were similarly consolidated from Phase 3 (independent benchmark vs. AIF360/Aequitas) and Phase 3.5 (fairness-hardening workstreams A/B/C) validation records. Version 3.10.1 documents Phase 4's first completed workstream (dependency pinning), and 3.10.2 documents the second (Dockerfile/reproducible environment). If you have the original dates, they should be added here.
+
+## [3.10.2] - 2026 (Phase 4)
+
+### 🔧 Changed
+- Dockerfile (Workstream E): reproducible environment pinned to `python:3.9.6-slim`, with `requirements.txt` copied in as an early cacheable layer so code-only changes don't force a dependency re-resolve. Real datasets are not baked into the image — they're mounted as Docker volumes at runtime instead, since the North Carolina dataset alone is 4.87GB. The pipeline's existing interactive terminal prompt is preserved as the entrypoint (`docker run -it`); no non-interactive CLI mode was added, per a deliberate scope decision for this workstream. A `.dockerignore` keeps the build context lean.
+- Validated: all 5 established datasets re-run inside the built container (`biasclean:3.10.1`) reproduced their on-record `bias_scores` exactly — Communities & Crime (0.0734→0.0268), COMPAS (0.0949→0.0521, correctly rejecting the SVM stage on an Ethnicity reversal), Oklahoma City (0.0003, unchanged, near-null signal), NIJ (0.0468, unchanged, correctly below threshold), and North Carolina (0.0670→0.0314, all three documented reversals — Ethnicity, Region, Age — and the Gender worst-group regression reproduced exactly).
+- North Carolina's scale (20,286,645 rows) required Docker Desktop's memory allocation to be raised well above its default (from 8GB up to ~30GB on a 36GB-RAM machine) before the container could hold the loaded DataFrame without being OOM-killed; SVM fairness enforcement must stay disabled for this dataset in any environment, consistent with its existing memory-exhaustion constraint documented since Phase 1/2.
 
 ## [3.10.1] - 2026 (Phase 4)
 
@@ -482,7 +489,6 @@ Professional Report Generation - Flask-based pipeline producing publication-read
 ## 🔜 Upcoming Releases
 
 ### [Unreleased] Phase 4 — Internal Production Hardening
-- 🐳 Dockerfile for reproducible environment (Workstream E)
 - 📋 Structured logging replacing `print()` output (Workstream F)
 - 🛡️ Graceful malformed-input handling (Workstream G)
 
