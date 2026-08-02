@@ -26,10 +26,588 @@ Features:
 - Stage-wise monitoring and attribution
 - Human-in-the-loop decision support
 
-Version: 3.6.9
+Version: 3.10.0
 License: Open Source
 Author: Hamid Tavakoli
 Date: January 2026
+
+Changelog (3.9.2 -> 3.10.0): Phase 3.5 integration -- Workstream B's
+dual-criteria significance test is now cross-referenced against
+Workstream A's worst-group regression flags, closing out all three
+Phase 3.5 workstreams as a single coherent capability
+- Design decision (Hamid's explicit choice among the options discussed):
+  wire dual_criteria_significant in as an ADDITIONAL signal alongside
+  Workstream A's existing magnitude check -- NOT as a replacement for
+  requires_mitigation's composite 0.05 pre-check, which remains
+  completely untouched. The composite threshold still decides whether
+  rebalancing runs at all; this release only adds a second, independent
+  lens to the warning already produced when a correction leaves a
+  specific group worse off.
+- What changed: every entry in self.worst_group_regressions (the
+  Workstream A warn-only list) now carries a new field,
+  dual_criteria_significant_final -- computed by calling Workstream B's
+  _worst_group_ratio_ci_direct on that same feature's post-correction
+  data. True means the regression Workstream A caught also produced a
+  gap that is independently, statistically and practically
+  distinguishable from parity -- the strongest possible combined
+  signal. False means the relative regression Workstream A correctly
+  flagged nonetheless landed on an absolute gap too small to be
+  practically meaningful. Neither is more "correct" than the other --
+  they are different, complementary questions, and reporting both
+  gives a reviewer more to act on than either alone.
+- Real, disclosed case (North Carolina, already established across the
+  v3.9.0 and v3.9.2 verification passes): Gender is flagged by
+  Workstream A as a 136.6% relative regression, but its resulting ratio
+  (1.005) is still practically negligible -- dual_criteria_significant_
+  final is False here. Age, by contrast, is both a real relative
+  regression AND a practically/statistically significant gap in
+  absolute terms. Reporting both together lets a reviewer immediately
+  distinguish these two cases instead of treating every worst_group_
+  regressions entry as equally urgent.
+- Console warning updated to state which of the three cases applies
+  (both criteria agree it's significant / relative regression on an
+  already-small gap / dual significance could not be computed) inline,
+  so the distinction is visible without opening audit_trail.json.
+- Verified: isolated call of the exact method the new code invokes,
+  against data shaped at the real North Carolina Gender scale, returns
+  dual_criteria_significant=False as expected (a near-null gap, ratio
+  0.995, correctly fails the practical floor) -- confirms the wiring is
+  correct without requiring a fresh end-to-end regression case (the
+  existing synthetic PHASE 3.5 test fixture's floor-excluded group
+  already sits at the theoretical maximum deviation and cannot be
+  pushed further, so it cannot exercise a fresh regression scenario;
+  the underlying CI method itself has already been independently
+  verified correct across all 5 real Phase 2/3 datasets in the v3.9.1/
+  v3.9.2 verification passes). Existing v3.7.2/v3.7.3 regression tests
+  still pass, no regressions.
+- Scope: purely additive -- one new field per worst_group_regressions
+  entry, an updated console message. No existing gate, threshold, or
+  corrected-data value changes under this release.
+- This completes Phase 3.5 as planned: all three workstreams (A: v3.9.0,
+  B: v3.9.1-v3.9.2, C: v3.8.0) are shipped, cross-verified against all 5
+  established Phase 2/3 datasets, and now integrated together as
+  described in this entry. Two decisions remain deliberately open and
+  undecided, per the Phase 3.5 SOP's own scoping: whether
+  dual_criteria_significant should ever inform requires_mitigation's
+  pre-check itself (not just this post-hoc cross-reference), and
+  whether Workstream A's 10%-relative/near-null tolerance needs further
+  tuning now that two full verification passes exist to tune it against.
+  Phase 4 (Docker, dependency pinning, structured logging, graceful
+  malformed-input handling) is next.
+
+Changelog (3.9.1 -> 3.9.2): Phase 3.5, Workstream B (part 2 of 2) -- a
+minimum practical effect-size floor, paired with v3.9.1's confidence
+interval, so a gap that is only "statistically real" because of a huge
+sample size can no longer be mistaken for one worth acting on
+- Motivation: v3.9.1 found that Oklahoma City's Ethnicity/Gender
+  features (ratios 0.998/1.001, gaps of a fraction of a percentage
+  point) both show ci_excludes_parity=True purely because n=945,107
+  makes even a trivial gap statistically distinguishable from chance --
+  the classic large-sample problem where statistical and practical
+  significance diverge.
+- Fixed: _worst_group_ratio_ci_direct gains an effect_size_floor
+  parameter, defaulting to 0.8 -- the "four-fifths rule" (Feldman et
+  al. 2015; the same default Aequitas itself uses, tau=0.8, per this
+  project's own Phase 3 report Section 3.3). A group's ratio to the
+  reference group must be <=0.8 or >=1.25 to count as
+  practically_significant, regardless of sample size. Two new fields:
+  practically_significant (the effect-size test alone) and
+  dual_criteria_significant (True only when BOTH the CI test AND the
+  effect-size test agree) -- the field intended to eventually inform
+  requires_mitigation, once and if that migration is made.
+- Verified: re-ran Oklahoma City -- Ethnicity and Gender now correctly
+  show practically_significant=False and dual_criteria_significant=
+  False, resolving the exact problem v3.9.1 surfaced. Re-ran NIJ --
+  Gender (ratio 0.767) and Age (ratio 0.631) pass both criteria cleanly.
+- IMPORTANT, DISCLOSED FINDING -- not a bug, but a real policy
+  implication worth deciding deliberately rather than accepting by
+  default: NIJ's Ethnicity (ratio 0.960) and DisabilityStatus (ratio
+  0.808, essentially sitting on the 0.8 boundary) are CI-significant
+  but FAIL the four-fifths practical floor, even though BiasClean's
+  existing chi-square/fisher test already flags both as
+  significant_bias=true and treats them as eligible for mitigation
+  whenever NIJ's composite score clears 0.05. Adopting
+  dual_criteria_significant as a future gating criterion would be a
+  real, stricter policy shift for features like these two specifically
+  -- not a neutral tightening of an existing rule. This should be
+  weighed explicitly, not inherited silently, whenever
+  dual_criteria_significant is wired into an actual gate.
+- On the legal (not statistical) origin of 0.8 as a choice: this
+  project's own literature review already documents that the four-
+  fifths rule is a 1970s EEOC legal heuristic, not a statistically
+  derived number (Watkins & Chen, 2024, critiquing its uncritical use
+  ALONE). Using it here is different in kind: paired with a genuine
+  statistical significance test rather than substituting for one, this
+  is the standard "statistically AND practically significant"
+  combination used throughout applied statistics specifically to guard
+  against a pure significance test flagging a trivial effect at large
+  n -- but the specific value 0.8 remains a policy choice, not a
+  statistically derived one, and a different floor would produce
+  different verdicts on borderline cases like NIJ's DisabilityStatus.
+- Scope: purely additive reporting fields (practically_significant,
+  dual_criteria_significant added to the existing ci_significance_
+  initial/final dicts). No existing gate, threshold, or corrected-data
+  value changes under this release. No regressions in the existing
+  test suite.
+- Not yet done: whether/how dual_criteria_significant should replace or
+  augment requires_mitigation's fixed 0.05 composite threshold is still
+  an open, explicit decision -- this release provides the evidence and
+  the machinery, not the decision itself. This completes Workstream B's
+  planned scope from the Phase 3.5 SOP; Workstream A and C are both
+  already shipped (v3.9.0, v3.8.0) -- all three Phase 3.5 workstreams
+  now have at least a reporting-level implementation.
+
+Changelog (3.9.0 -> 3.9.1): Phase 3.5, Workstream B (part 1 of 2) -- a
+sample-size-aware statistical significance test, reported alongside
+BiasClean's existing fixed 0.05 composite mitigation threshold, not yet
+replacing it
+- Implements the log relative-risk confidence interval (the "Katz
+  method"), a well-established closed-form special case of the general
+  asymptotic result in Besse, del Barrio, Gordaliza & Loubes,
+  "Confidence Intervals for Testing Disparate Impact in Fair Learning"
+  (arXiv:1807.06362, 2018) -- their Theorem 3.1 gives the exact
+  asymptotic variance of a disparate-impact ratio estimator via the
+  delta method; for two disjoint groups (BiasClean's case), that reduces
+  to this closed form directly, without needing their full multivariate
+  machinery.
+- New engine method _worst_group_ratio_ci_direct(df, column,
+  target_column): finds the feature's largest group as reference, its
+  worst-off group by ratio, computes the log-ratio CI, and reports
+  whether that CI excludes 1.0 (statistically distinguishable from
+  parity at that group's OWN actual sample size). Every significant
+  feature's audit_trail.json entry now carries ci_significance_initial/
+  ci_significance_final (reference_group, worst_group, ratio, ci_lower,
+  ci_upper, ci_excludes_parity), computed via the same effective-target
+  logic as the v3.7.2 fix so it reads the pipeline's true final result,
+  not a frozen pre-SVM snapshot.
+- IMPORTANT FINDING, not yet resolved -- read before treating this as a
+  drop-in replacement for the composite threshold: verified on real data
+  that NIJ's four features (large, already-known-real gaps, ratios
+  0.63-0.96 at n=25,835) all correctly show ci_excludes_parity=True, no
+  surprises. But Oklahoma City's Ethnicity and Gender -- gaps of a
+  FRACTION of a percentage point (ratios 0.998 and 1.001), which
+  BiasClean's composite threshold correctly treats as not worth
+  correcting -- ALSO show ci_excludes_parity=True, because at
+  n=945,107, even a 0.2% gap is statistically distinguishable from
+  chance. This is the classic large-sample problem with pure
+  significance testing: statistical significance and practical
+  significance diverge sharply at very large n. A naive swap of
+  "composite >= 0.05" for "CI excludes parity" would flag Oklahoma City
+  for correction purely because of its enormous sample size, not
+  because the gap became more real or more consequential -- the exact
+  opposite failure mode from the one this workstream exists to fix.
+- Deliberately NOT wired into requires_mitigation yet, and this release
+  should not be read as resolving that design question -- it surfaces a
+  real complication that needs a second criterion (a minimum practical
+  effect-size floor, independent of sample size, paired with the
+  statistical-significance test above) before any gating decision is
+  made. That effect-size-floor design is Workstream B part 2, not yet
+  built.
+- Scope: purely additive reporting fields. No existing gate, threshold,
+  or corrected-data value changes under this release.
+
+Changelog (3.8.0 -> 3.9.0): Phase 3.5, Workstream A -- a worst-group
+safeguard (warn-only, not yet a gate) that catches a case none of
+BiasClean's existing checks can see: a specific group's own deviation
+from parity getting WORSE, even while the feature's composite/CV score
+and reversal_checks both look fine
+- Motivation: v3.8.0 (Workstream C) added worst_group_deviation_initial/
+  final to the audit trail so this case is at least visible, using North
+  Carolina's Gender feature as the real, disclosed example (a near-null
+  0.0025 raw gap widened to 0.0060). But visibility alone means someone
+  has to notice a negative worst_group_improvement_pct buried in a JSON
+  field -- this release adds an explicit, printed warning and a
+  dedicated audit_trail list so it can't be missed the way it was missed
+  the first time (found only because an independent judge, Aequitas,
+  happened to compute a second metric during the Phase 3 benchmark).
+- Why reversal_checks alone doesn't catch this: reversal_checks answers
+  "did the disadvantaged group's IDENTITY change" -- North Carolina's
+  Gender feature kept the same disadvantaged group throughout, so
+  reversal_checks correctly reported reversed: false. The question this
+  release adds is different: "did that group's OWN gap get worse in
+  magnitude," which a composite/average-based or identity-only check
+  cannot answer by construction.
+- Design: two trigger conditions, run once after PHASE 7's full
+  rebalancing+SVM sequence completes (so it always sees the final state
+  regardless of whether SVM ran or changed anything) -- (1) a feature's
+  worst-group deviation worsened by more than 10% relatively, or (2) the
+  gap started under a 0.05 near-null floor (deliberately reusing the same
+  number as the composite mitigation threshold, so this project has one
+  shared definition of "near-null" rather than two) and widened at all.
+  Condition 2 exists because a tiny absolute change on an already-tiny
+  base can produce a misleadingly large or small relative percentage
+  either way.
+- Deliberately warn-only, not a gate: per the Phase 3.5 SOP, the plan is
+  to observe what this actually flags across real datasets first (all
+  five Phase 2/3 datasets, plus whatever comes after them) before
+  deciding whether it should ever reject a correction outright, the way
+  svm_gate already does for identity-reversals. Whether to add that
+  gating behavior is an explicit, deferred decision, not an oversight.
+- Fixed/added: a new list, self.worst_group_regressions, populated once
+  per process_dataset() run; surfaced in audit_trail.json as
+  'worst_group_regressions' (empty list when nothing triggers or
+  mitigation never ran), and printed to console as
+  "WORST-GROUP SAFEGUARD (warn-only, not gated): ..." whenever it fires.
+- Scope: purely additive. No existing gate, field, or corrected-data
+  value changes under this release -- this only adds a new warning and
+  a new audit_trail list. Every result already delivered in this project
+  is unaffected by this release; running any of them again on v3.9.0
+  would only add this new field (populated or empty) to a fresh
+  audit_trail.json.
+- Not yet done (tracked in the Phase 3.5 SOP): re-running all five
+  Phase 2/3 datasets specifically to confirm this fires on North
+  Carolina's Gender feature and does not fire spuriously elsewhere;
+  Workstream B (replacing the fixed 0.05 mitigation threshold with the
+  log relative-risk confidence interval approach, per Besse et al. 2018)
+  is also still outstanding.
+
+Changelog (3.7.4 -> 3.8.0): Phase 3.5, Workstream C -- disparity_initial/
+disparity_final have always been a coefficient-of-variation figure, an
+average across all of a feature's groups; that average can improve even
+while a single group's own gap gets worse, and nothing in BiasClean's own
+report or audit_trail.json said so
+- Found during the Phase 3 benchmark's independent Aequitas judging on
+  North Carolina: BiasClean's Ethnicity feature improved +40.5% on the
+  CV/mean-across-groups view while its single worst-off group actually
+  regressed -9.1% on a worst-group view -- a real, disclosed tradeoff
+  (see the Phase 3 report, Section 4.5), but one BiasClean's own output
+  never surfaced. It was only visible because an independent judge
+  happened to compute a second metric BiasClean didn't report.
+- This is a visibility addition, not a new disparity definition or a
+  change to any existing number: disparity_initial/disparity_final/
+  improvement_pct keep their exact current meaning and values.
+- Fixed: a new engine method, _calculate_worst_group_deviation_direct,
+  reuses the identical group-rate computation and 10-sample floor as the
+  existing _calculate_disparity_direct, so the two figures are always
+  computed from an identical group definition and are directly
+  comparable. Every significant feature's audit_trail.json entry now
+  carries worst_group_initial/worst_group_final (which group),
+  worst_group_deviation_initial/worst_group_deviation_final (how far
+  that group sits from the feature's own mean rate, as a fraction of
+  it), and worst_group_improvement_pct -- alongside, never instead of,
+  the existing disparity_initial/disparity_final/improvement_pct.
+- The post-SVM recompute already fixed in v3.7.2 (bug #6, for the CV
+  figure) is extended to the worst-group figure at the same point in
+  PHASE 7, for the identical reason: without this, the new field would
+  itself freeze at the pre-SVM snapshot on day one, reproducing bug #6
+  in a field that didn't exist yet when that bug was fixed.
+- Verified: re-ran a synthetic case shaped like the real North Carolina
+  Ethnicity finding (SVM stage accepted and genuinely different from
+  rebalancing) -- worst_group_deviation_final correctly reflects the
+  post-SVM data, not the pre-SVM snapshot, matching the same verification
+  standard used for v3.7.2's fix to the CV figure.
+- Scope: purely additive new fields. No existing field's value, meaning,
+  or computation changes under this release. Every result already
+  delivered in this project (Phase 1/2's six datasets, Phase 3's full
+  benchmark) is unaffected; re-running any of them on v3.8.0 only adds
+  the new fields to a fresh audit_trail.json.
+- Not yet done in this release (tracked separately in the Phase 3.5 SOP):
+  Workstream A (a safeguard that actually flags/gates on a worsening
+  worst-group figure, rather than only reporting it) and Workstream B
+  (replacing the fixed 0.05 mitigation threshold with a sample-size-aware
+  statistical test). This release is Workstream C only.
+
+Changelog (3.7.3 -> 3.7.4): when two or more columns tied at the same top
+confidence for outcome-pattern auto-detection, the pipeline picked one
+silently -- the console and audit_trail.json only ever showed the
+winner, never that a tie existed
+- Found on COMPAS during Phase 3 benchmark comparison work: is_recid,
+  is_violent_recid, and two_year_recid all match the outcome pattern at
+  an identical 90% confidence. Auto-detection had always selected
+  is_recid -- a deliberately accepted choice under this project's
+  "act as a new user, accept every auto-detect default" policy, known
+  and correct from the start of Phase 2 onward. The bug surfaced when a
+  later comparison run was built against two_year_recid instead, without
+  anyone being able to see from the tool's own output that these were
+  two different, non-interchangeable outcome definitions -- the printed
+  "Auto-detected target: 'is_recid' (90% confidence)" line looked
+  identical either way, whether or not other equally-valid candidates
+  existed.
+- Root cause: outcome_candidates.sort() is a stable sort; when
+  confidences tie, the winner is decided purely by which column happens
+  to come first in the CSV's own column order, not by anything
+  principled -- there is no statistical basis for auto-detection to
+  prefer one recidivism definition over another, since that's a domain
+  judgment call, not something confidence scores can resolve. The
+  selection itself was never wrong; the silence around it was.
+- Fixed: this is a visibility fix, not a different selection algorithm.
+  When multiple outcome-pattern columns tie at the top confidence,
+  PHASE 3 now prints all of them before announcing which one was
+  auto-selected, and the full tied set is written to audit_trail.json
+  as 'tied_outcome_candidates' (empty list when the target was
+  specified explicitly or there was no ambiguity) -- so the ambiguity
+  is part of the permanent, reproducible record, not just a console
+  message that scrolls past. Which column actually gets selected is
+  unchanged: still by column order among ties, since there's no
+  principled way to pick differently, and this project's "just press
+  Enter" workflow deliberately doesn't stop to ask.
+- Verified: re-ran COMPAS through PHASE 3 with the fix in place --
+  console now prints "3 columns matched the outcome pattern at equal
+  90% confidence: is_recid, is_violent_recid, two_year_recid" before
+  the existing auto-detection line, and audit_trail.json's
+  tied_outcome_candidates field lists all three.
+- Scope: purely additive -- no dataset's actual target selection,
+  corrected output, or bias scores change under this fix. Every result
+  already delivered in this project (Phase 1/2's six datasets, Phase 3's
+  benchmark work) is unaffected; re-running any of them on v3.7.4 would
+  only add the new field to a fresh audit_trail.json, not change any
+  existing number.
+
+Changelog (3.7.2 -> 3.7.3): corrected_dataset.csv -- the actual data file
+external tools/auditors read -- silently exported the pre-SVM
+rebalancing snapshot under the target column's real name, even after
+v3.7.2 fixed the report/audit_trail.json's per-feature numbers
+- Found while handing Communities & Crime's v3.7.2 output to AIF360 and
+  Aequitas for Phase 3 judging: opened corrected_dataset.csv to sanity-
+  check it before sending it out, and group 23/24's HighCrime values
+  matched the RAW, uncorrected data exactly (23: 0.0588, 24: 1.0) --
+  while audit_trail.json, already fixed in v3.7.2, showed the true
+  post-SVM values (0.353/0.75) for the same two groups. A non-floor-
+  excluded group (6) showed the same pattern one stage later: HighCrime
+  in the CSV matched the REBALANCING-stage regulator-capped rate
+  (0.4964), not the further-adjusted SVM value.
+- Root cause: the exact same root cause as v3.7.2's bug #6, in a third
+  location that fix didn't reach. self.corrected_df's named target
+  column (e.g. 'HighCrime') is deliberately never overwritten with SVM's
+  output -- only 'svm_fair_target' holds the true final predictions (see
+  PHASE 7's CRITICAL FIX comment). v3.7.2 fixed what the report and
+  audit_trail.json read from, but _save_results' CSV export
+  (export_df = self.corrected_df.drop(columns=[...])) still wrote out
+  the named target column as-is, then dropped 'svm_fair_target' entirely
+  -- discarding the one column that held the real answer. The old
+  comment right above this code even said 'biasclean_target'/
+  'svm_fair_target' "are exact duplicates of the real target column,"
+  which is only true when SVM never ran or was gate-rejected; the
+  comment's own unstated assumption was the bug.
+- Workaround used in the meantime (Phase 3's Communities & Crime
+  judging on v3.7.2): the export happened to already carry a second,
+  separately-added 'svm_y_pred' column (from an older/different code
+  path than 'biasclean_target'/'svm_fair_target') that DID hold the true
+  final predictions -- verified it matched audit_trail.json exactly
+  (23: 0.353, 24: 0.75) -- so that column was used in place of
+  'HighCrime' for that one judging run rather than blocking on this fix.
+- Fixed: before building export_df, if 'svm_fair_target' exists on
+  self.corrected_df and differs from the named target column, its
+  values are copied into the named target column first -- so
+  corrected_dataset.csv always reflects the pipeline's true final result
+  under the target's own real name, and no downstream consumer needs to
+  know to look for 'svm_y_pred'/'svm_fair_target' instead.
+  'biasclean_target'/'svm_fair_target' are still dropped from the
+  export afterward, now genuinely redundant rather than silently wrong.
+- Verified: re-ran Communities & Crime on v3.7.3 -- corrected_dataset.csv's
+  HighCrime column for groups 23/24 now reads 0.353/0.75, matching
+  audit_trail.json and the v3.7.2-era 'svm_y_pred' workaround exactly;
+  group 6 now reads the further-SVM-adjusted value instead of the
+  rebalancing-stage 0.4964. self.corrected_df itself (used by everything
+  upstream, e.g. the report/audit_trail.json path fixed in v3.7.2) is
+  untouched by this fix -- only the CSV export function builds its own
+  copy before writing.
+- Regression test added: extends test_svm_final_disparities_v3_7_2.py's
+  accepted-SVM case to also write corrected_dataset.csv and assert the
+  exported target column matches svm_fair_target's values, not the
+  pre-SVM target -- and a second case confirms the gate-rejection path
+  (where svm_fair_target already equals the pre-SVM value) still exports
+  correctly and is a no-op change.
+- Scope: only affects the exported corrected_dataset.csv file itself.
+  audit_trail.json and report.pdf were already correct as of v3.7.2 and
+  are unaffected by this fix. Any dataset/run where SVM was enabled and
+  actually changed the result relative to rebalancing -- so far, only
+  Communities & Crime in this project -- should have its
+  corrected_dataset.csv re-exported on v3.7.3 before further external
+  use; COMPAS and the other three Phase 2 datasets are unaffected for
+  the same reasons v3.7.2 didn't affect them (SVM never ran or was
+  gate-rejected in all of them).
+
+Changelog (3.7.1 -> 3.7.2): every per-feature number (disparity_final,
+group_rates_final, improvement_pct) and the plain-language report
+narrative built from them silently froze at the pre-SVM rebalancing
+snapshot whenever SVM fairness enforcement actually ran and changed the
+result -- only the single composite bias_scores.final correctly tracked
+the full pipeline
+- Found on communities_prepared.csv (UCI Communities & Crime) during the
+  Phase 3 external benchmark's SVM re-run on v3.7.1 -- the first dataset
+  in this whole project where SVM both ran AND was accepted as different
+  from rebalancing (COMPAS's SVM was rejected by the gate, so the two
+  numbers happened to agree there by coincidence; NC/NIJ/OK City never
+  trigger SVM at all). report.pdf's Region finding read: "Before any
+  correction, 24 had a 100.0% outcome rate, compared to 23 at 5.9% -- a
+  gap of 94.1 percentage points. After rebalancing, that gap stayed
+  essentially unchanged at 94.1 percentage points." -- directly beside a
+  headline "Overall bias score: 0.07 -> 0.03 (+63%)" that DID reflect
+  SVM's real effect, and beside audit_trail.json's own
+  reversal_checks.Region.after_svm.after_gap, which already recorded the
+  true post-SVM gap at ~0.40 (39.7% on the v3.7.1 run). Confirmed not a
+  v3.7.1 regression: an identically-shaped v3.6.7 run of the same
+  dataset showed the same frozen 94.1%-unchanged text next to the same
+  kind of ~0.42 after_svm gap, so this has been present since at least
+  v3.6.7.
+- Root cause: SVM's actual fairness-corrected predictions are stored in
+  their own 'svm_fair_target' column (self.corrected_df[final_target] is
+  deliberately preserved untouched, per the CRITICAL FIX in PHASE 7 --
+  see its own comment for why). validation['final_disparities'] (feeding
+  disparity_final/improvement_pct) is computed once in PHASE 7, against
+  final_target, BEFORE the SVM block even starts. results['target_column']
+  is likewise hardcoded to final_target and never revisited, so
+  group_rates_final (feeding both audit_trail.json's per-feature block AND
+  report.pdf's plain-language findings via _plain_feature_findings) always
+  read the same frozen pre-SVM column too. The one place that WAS already
+  correct was svm_reversal_checks, computed inline right after SVM using
+  'svm_fair_target' directly -- which is exactly why the reversal-check
+  gap and the plain-language findings gap disagreed with each other in
+  the same report.
+- Fixed: after the SVM stage completes (in every branch -- accepted,
+  gate-rejected, skipped, errored, or disabled all leave 'svm_fair_target'
+  holding the correct effective-final values, since gate-rejection already
+  falls back to biasclean_target inside that same column), the pipeline
+  now determines an effective final target column -- 'svm_fair_target' if
+  self.corrected_df has it, else final_target -- and (a) recomputes
+  validation['final_disparities']/['fairness_improvement']/
+  ['absolute_disparity_reduction'] against it, and (b) computes
+  results['group_rates_final'] against it in _compile_v30_results.
+  initial_disparities is untouched -- it's computed against
+  self.original_df, which SVM never touches, so it was never wrong.
+- Verified: on a re-run shaped like the real Communities & Crime case
+  (SVM enabled and accepted, corrected_df's target column intentionally
+  left stale to simulate the bug), group_rates_final and disparity_final
+  now match the SVM-stage group rates instead of the rebalancing-stage
+  ones, and the reversal-check gap and the plain-language findings gap
+  agree with each other for the first time.
+- Regression test added: synthetic dataset engineered so SVM changes at
+  least one group's rate relative to the rebalancing stage, asserting
+  group_rates_final/disparity_final match the post-SVM data, not the
+  pre-SVM data; a second case covers SVM gate-rejection (svm_fair_target
+  falls back to biasclean_target) to confirm the fix doesn't disturb the
+  already-correct fallback behaviour.
+- Scope: only affects datasets/runs where SVM was enabled AND actually
+  changed the result relative to rebalancing. Every dataset already
+  delivered in this project's Phase 1/2 reports, and the COMPAS Phase 3
+  benchmark, is unaffected -- confirmed above that SVM either never ran
+  (NC/NIJ/OK City) or was rejected by the gate (COMPAS) in all of them.
+  Communities & Crime's own headline composite score (0.07 -> 0.03) does
+  not change under this fix, since bias_scores.final was already reading
+  the correct column -- only the per-feature breakdown and narrative text
+  are corrected.
+
+Changelog (3.7.0 -> 3.7.1): the v3.6.9 cardinality guard's threshold was
+too strict for small datasets, and rejected a previously-correct,
+previously-validated result outright
+- Found on communities_prepared.csv (UCI Communities & Crime, 1,994 real
+  rows), pure auto-detect, Legacy mode, policy: run exactly as a
+  non-technical user would -- this is the first time this dataset has
+  been run since v3.6.9 shipped (its successful Phase 2 validation was on
+  v3.6.7, before the guard existed), so this was a latent bug newly
+  exposed, not a regression from working code. 'state' (46 groups,
+  averaging ~43 samples each) is the exact column that correctly won this
+  dataset's Region mapping under v3.6.7 -- but the v3.6.9 guard rejects
+  any column where n_groups > total_records/50 (39.9 here), and 46 is
+  just over that. With every other column in this 130-column file also
+  rejected on ordinary confidence grounds (continuous demographic
+  percentages, none matching any recognized pattern), the pipeline ended
+  up with zero approved mappings anywhere and crashed outright: "No
+  mappings approved. Lower threshold or check data quality."
+- Root cause: the original threshold (reject when average group size
+  would fall below the 50-sample floor) is mathematically sound as a
+  detector for "this column is basically a row identifier" -- OK City's
+  location averaged 4.6 samples/group, drastically below any reasonable
+  floor -- but 50 itself is too tight a cutoff to apply directly, since a
+  column can be a completely legitimate, bounded category (46 U.S.
+  states) while still averaging somewhat under 50 purely because the
+  dataset itself is small. The threshold conflated "not maximally ideal"
+  with "not a real category" -- those are different severities, and only
+  the second should cause outright rejection.
+- Fixed: the cardinality guard's rejection floor is now half the
+  min_samples_per_group floor (25, not 50) -- i.e. only reject when a
+  column's average group size would fall below 25, not 50. This keeps
+  every previously-confirmed rejection correctly rejected (OK City's
+  location, avg 4.6, still ~85% under the new floor; Communities & Crime's
+  own county, avg 18.5, also still correctly rejected) while re-admitting
+  state (avg 43, now comfortably above 25). The separate, unchanged
+  50-sample min_samples_per_group floor still governs which INDIVIDUAL
+  groups get excluded from actual rebalancing once a column is accepted
+  as a category -- this fix only changes whether a column is considered a
+  viable category to begin with.
+- Verified: state now correctly approved for Communities & Crime;
+  location (OK City) and county (Communities & Crime's own genuinely bad
+  candidate) both still correctly rejected; a full synthetic end-to-end
+  run shaped like this dataset (one usable 46-group categorical column
+  among many unrecognized ones) now completes instead of crashing with
+  "No mappings approved."
+- Regression test added: the exact real-data shape (state approved,
+  county still rejected, location still rejected) plus a full end-to-end
+  pipeline run confirming the crash is gone. The pre-existing v3.6.9
+  boundary test was also corrected -- it had been asserting the OLD
+  threshold's boundary (n_groups == total_records/50) and would have kept
+  passing trivially under the new threshold without actually testing the
+  real boundary, so it now asserts against the current threshold
+  (total_records/25) instead.
+- Scope: this only affects the cardinality guard's rejection threshold.
+  Every other v3.6.7/3.6.8/3.6.9/3.7.0 fix is unaffected. Any dataset
+  previously run under v3.6.9 or v3.7.0 where a legitimate categorical
+  column happened to average between 25 and 50 samples/group may have
+  been wrongly rejected the same way Communities & Crime was -- worth a
+  quick re-check on any dataset in this range that produced fewer
+  approved mappings than expected.
+
+Changelog (3.6.9 -> 3.7.0): a group excluded from one feature's rebalancing
+for being too small could still have its row composition perturbed by a
+DIFFERENT feature's rebalancing pass
+- Found on real COMPAS data during the Phase 3 external benchmark against
+  AIF360 and Aequitas (University of Chicago) -- not during BiasClean's own
+  validation, but by an independent judge (Aequitas) auditing BiasClean's
+  own corrected_dataset.csv and disagreeing with BiasClean's self-reported
+  Ethnicity improvement (+25.4% per BiasClean's own composite metric, but
+  Aequitas's independently-computed max-min gap showed a slight widening,
+  0.2674 -> 0.2727). Root cause traced precisely: Ethnicity's rebalancing
+  correctly excluded Asian (n=32) and Native American (n=18) as disparate
+  but below the 50-sample floor, flagging them for manual review as
+  designed -- but both groups grew anyway (Asian 32->33, Native American
+  18->21) once Age's rebalancing pass ran afterward, because Age's
+  resampling had no knowledge of what Ethnicity had already excluded and
+  freely duplicated/removed rows that happened to also belong to those two
+  small race groups.
+- This is the first real-data confirmation of a limitation already named,
+  as a theoretical risk, in the 3.3.1->3.4.0 changelog (the Fairness
+  Regulator entry): "one feature's rebalancing perturbing an earlier
+  feature's row composition through row overlap, since the regulator only
+  sees one feature at a time." That entry treated auto-reverting this as
+  out of scope; this release takes the different, simpler approach of
+  preventing it from happening in the first place.
+- Fixed: transform_industry now assigns a stable per-row identifier
+  ('_biasclean_row_uid', dropped before the corrected dataset is returned)
+  at the start of the whole weight-prioritized mitigation pass, and
+  self._protected_row_uids accumulates every row belonging to any group
+  any feature has excluded as too small, across the ENTIRE sequential
+  loop -- not reset per feature. _rebalance_feature_reweighing now excludes
+  protected-uid rows from both the duplication-source pool and the
+  removal-candidate pool for every later feature's resampling. A protected
+  row can still be PRESENT in another feature's cell (nothing removes it
+  on its own); it just can never be the row that a later feature chooses
+  to add-from or remove.
+- Verified: re-ran the exact real COMPAS case this was found on -- Asian
+  and Native American now stay at exactly 32 and 18 samples (matching the
+  raw data precisely) through the full mitigation pass, instead of
+  drifting to 33 and 21. Confirmed no change to Age's or Gender's own
+  results (89.7%-class and double-digit improvements respectively,
+  unaffected -- this fix only removes touches on already-excluded rows,
+  it doesn't change how any feature rebalances its own eligible rows).
+- Regression test added: synthetic two-feature dataset with an
+  intentionally-small, disparate subgroup on the higher-weight feature and
+  an independent second feature whose own resampling cells overlap with
+  that subgroup's rows -- asserts the subgroup's size and composition are
+  bit-for-bit unchanged after the full mitigation pass.
+- Scope: this release only touches _rebalance_feature_reweighing (the
+  default rebalance_method since v3.3.1, and the only method exercised in
+  this validation). _rebalance_feature_weighted (the Preferential Sampling
+  path) has the same theoretical vulnerability but was not independently
+  confirmed on real data this round -- flag if a similar cross-tool
+  disagreement shows up on data rebalanced with that method instead.
+- Known residual limitation, not fixed here: this prevents an excluded
+  group's rows from being CHANGED by a later feature, but a later
+  feature's rebalancing target (population mean, group sizes) is still
+  computed as if the protected rows were fully eligible -- i.e. the later
+  feature's own correction may be marginally less precise than it would
+  be with full knowledge of which rows are locked. This was judged an
+  acceptable, much smaller trade-off than the bug it replaces.
 
 Changelog (3.6.8 -> 3.6.9): a near-unique-per-row column could still win
 a Region/protected-feature tie and make the pipeline grind for a very
@@ -999,7 +1577,7 @@ Changelog (3.1.0 -> 3.1.1):
   outcome_pattern at all -- auto-detect will now raise a clear error
   and ask for a manual target instead of silently picking a split flag.
 """
-__version__ = "3.6.9"
+__version__ = "3.10.0"
 
 # ============================================================================
 
@@ -1009,9 +1587,11 @@ import json
 import os
 import re
 import warnings
+import logging
+import sys
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
-from scipy.stats import fisher_exact, chi2_contingency
+from scipy.stats import fisher_exact, chi2_contingency, norm
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
@@ -1029,6 +1609,61 @@ try:
     FAIRLEARN_AVAILABLE = True
 except ImportError:
     FAIRLEARN_AVAILABLE = False
+
+# ============================================================================
+# STRUCTURED LOGGING (Phase 4, Workstream F)
+# ============================================================================
+# Replaces the pipeline's print() calls with Python's logging module so
+# output can be filtered by severity (INFO / WARNING / ERROR) and captured
+# to a file automatically -- without changing what any message says, only
+# how and where it's emitted. Scope: the pipeline's own diagnostic output
+# (phase banners, safeguard/gate warnings, genuine failures). The
+# interactive CLI's menus and prompts (run_interactive_pipeline,
+# run_biasclean_interactive) are left as plain print()/input(), since
+# those are direct user-interface text, not audit/diagnostic output.
+#
+# Console formatting is message-only, so the interactive console
+# experience looks identical to before. A timestamped file handler,
+# attached fresh at the start of each process_dataset() run alongside
+# audit_trail.json in biasclean_results/, additionally captures every
+# level (including DEBUG) with a timestamp and severity prefix for later
+# review -- satisfying the Phase 4 SOP's Workstream F requirement that
+# every run leave a permanent, filterable record without needing shell
+# redirection.
+logger = logging.getLogger("biasclean")
+logger.setLevel(logging.DEBUG)
+logger.propagate = False
+
+if not logger.handlers:
+    _console_handler = logging.StreamHandler(sys.stdout)
+    _console_handler.setLevel(logging.INFO)
+    _console_handler.setFormatter(logging.Formatter("%(message)s"))
+    logger.addHandler(_console_handler)
+
+
+def _setup_run_file_logging(output_dir: str = "biasclean_results") -> str:
+    """
+    Attach a fresh timestamped file handler for this run, written
+    alongside audit_trail.json in output_dir. Any file handler left over
+    from a previous run on this logger is removed first, so log content
+    doesn't accumulate across separate runs within the same process.
+    Returns the log file path.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    for _h in list(logger.handlers):
+        if isinstance(_h, logging.FileHandler):
+            logger.removeHandler(_h)
+            _h.close()
+    _timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_path = os.path.join(output_dir, f"run_{_timestamp}.log")
+    _file_handler = logging.FileHandler(log_path, encoding="utf-8")
+    _file_handler.setLevel(logging.DEBUG)
+    _file_handler.setFormatter(
+        logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    )
+    logger.addHandler(_file_handler)
+    return log_path
+
 
 class _SVMSkippedNoFeatures(Exception):
     """v3.5.0: internal sentinel, never surfaced to the user directly.
@@ -1266,9 +1901,9 @@ class PreMitigationAuditor:
 
     def audit(self, df: pd.DataFrame, target: str, feature_map: dict) -> dict:
         """Complete pre-mitigation audit"""
-        print(f"\n{'='*80}")
-        print("BIASCLEAN v3.0: PRE-MITIGATION AUDIT")
-        print(f"{'='*80}")
+        logger.info(f"\n{'='*80}")
+        logger.info("BIASCLEAN v3.0: PRE-MITIGATION AUDIT")
+        logger.info(f"{'='*80}")
 
         results = {
             "data_quality": self._check_data_quality(df, target, feature_map),
@@ -1445,12 +2080,12 @@ class PreMitigationAuditor:
     def _print_summary(self, results: dict):
         """Concise audit summary"""
         rec = results["recommendation"]
-        print(f"\n  Audit Complete: {rec['traffic_light']}")
-        print(f"  Recommendation: {rec['action']}")
-        print(f"  Records: {results['data_quality']['n_records']:,}")
-        print(f"  Bias Score: {results['baseline_fairness']['aggregate_bias']:.3f}")
-        print(f"  Vulnerable Groups: {results['vulnerable_subgroups']['count']}")
-        print(f"{'='*80}")
+        logger.info(f"\n  Audit Complete: {rec['traffic_light']}")
+        logger.info(f"  Recommendation: {rec['action']}")
+        logger.info(f"  Records: {results['data_quality']['n_records']:,}")
+        logger.info(f"  Bias Score: {results['baseline_fairness']['aggregate_bias']:.3f}")
+        logger.info(f"  Vulnerable Groups: {results['vulnerable_subgroups']['count']}")
+        logger.info(f"{'='*80}")
 
 # ============================================================================
 # DOMAIN CONFIGURATIONS (7 DOMAINS - UK 2025 METHODOLOGY)
@@ -1982,6 +2617,45 @@ class ConstraintValidator:
 
         clean_data = df[[column, target]].dropna()
 
+        # Workstream G (Phase 4): a protected attribute column that's
+        # entirely missing -- or entirely non-overlapping with the
+        # target's own missing values -- previously fell through this
+        # function's later checks in a way that looked harmless but
+        # wasn't. value_counts() on the resulting empty clean_data
+        # returns an empty Series, whose .min() is NaN (not an
+        # exception); `NaN < self.min_samples_per_group` then silently
+        # evaluates to False, so the "Small group size" warning never
+        # fires. The crosstab a few lines below DOES raise on zero rows,
+        # but that's caught by this function's own broad except and
+        # surfaces only as a generic warning ("Statistical test failed:
+        # No data; `observed` has size 0.") -- a warning, not an error,
+        # so it does NOT block auto-approval (auto_approve_high_
+        # confidence only refuses on validation['errors'], never on
+        # warnings). A column with literally zero usable rows could
+        # therefore be silently auto-approved and passed on to
+        # rebalancing, where groupby(column) on an all-missing column
+        # produces zero groups and rebalancing becomes a silent no-op --
+        # nothing tells a no-code user their protected-attribute mapping
+        # measured nothing at all. Checked explicitly and early, before
+        # any of the value_counts/crosstab logic that previously masked
+        # it, with a specific, actionable message rather than a
+        # leaked-through scipy/pandas exception string.
+        if len(clean_data) == 0:
+            result["valid"] = False
+            result["errors"].append(
+                f"Protected attribute column '{column}' has no rows where "
+                f"both it and the target column '{target}' are non-missing "
+                f"-- there is no overlapping data to compute a group "
+                f"disparity from. This column cannot be used for fairness "
+                f"analysis; check whether '{column}' was populated "
+                f"correctly for this dataset (e.g. an entirely blank "
+                f"column, or a column populated only for rows where the "
+                f"target itself is missing)."
+            )
+            result["statistics"]["min_group_size"] = 0
+            result["statistics"]["n_groups"] = 0
+            return result
+
         # Check sample size per group
         value_counts = clean_data[column].value_counts()
         min_samples = value_counts.min()
@@ -2034,9 +2708,9 @@ class MappingConfirmationUI:
                                     threshold: float = 0.80,
                                     total_records: Optional[int] = None) -> Dict:
         """Auto-approve high-confidence mappings for production"""
-        print(f"\n{'='*80}")
-        print(f"AUTO-APPROVAL MODE (Confidence Threshold: {threshold:.0%})")
-        print(f"{'='*80}\n")
+        logger.info(f"\n{'='*80}")
+        logger.info(f"AUTO-APPROVAL MODE (Confidence Threshold: {threshold:.0%})")
+        logger.info(f"{'='*80}\n")
 
         approved_count = 0
         rejected_count = 0
@@ -2059,16 +2733,32 @@ class MappingConfirmationUI:
         # rather than just picking a better tie-break winner after the
         # fact.
         #
-        # Threshold is derived, not arbitrary: with total_records rows
-        # and ConstraintValidator's existing 50-sample floor per group,
-        # at most total_records/50 groups could each possibly meet that
-        # floor. More groups than that is mathematically guaranteed to
-        # mean most groups are undersized -- e.g. OK City's 945,107 rows
-        # support at most 18,902 such groups; location's 204,447 is
-        # ~10.8x over that.
+        # v3.7.1: the original threshold (reject if average group size
+        # would be below the 50-sample floor, i.e. n_groups >
+        # total_records/50) was too strict for small datasets and broke a
+        # previously-correct, previously-validated result. Found on
+        # communities_prepared.csv (1,994 real rows): 'state' has 46
+        # groups, averaging ~43 samples each -- comfortably usable, and
+        # the exact column that correctly won this dataset's Region
+        # mapping under v3.6.7 -- but 46 > 1994/50 (=39.9), so the guard
+        # rejected it outright, and with EVERY other column in this
+        # 130-column file also rejected on confidence grounds, the
+        # pipeline had zero approved mappings and crashed entirely
+        # ("No mappings approved"). The gap between a genuinely
+        # pathological column and a merely-somewhat-fine-grained one on a
+        # small dataset is large -- OK City's location averaged 4.6
+        # samples/group; Communities & Crime's state averaged 43 -- so the
+        # threshold now requires the average to fall below HALF the
+        # floor (25, not 50) before rejecting, which keeps location
+        # rejected (4.6 << 25) while correctly re-admitting state
+        # (43 > 25). The per-group 50-sample floor itself is unchanged
+        # and still governs which INDIVIDUAL groups get excluded from
+        # actual rebalancing -- this only changes whether a column is
+        # considered a viable CATEGORY at all.
         MIN_SAMPLES_PER_GROUP = 50  # matches ConstraintValidator.min_samples_per_group
+        CARDINALITY_REJECTION_FLOOR = MIN_SAMPLES_PER_GROUP / 2  # v3.7.1: 25, not 50
         max_supportable_groups = (
-            total_records / MIN_SAMPLES_PER_GROUP if total_records else None
+            total_records / CARDINALITY_REJECTION_FLOOR if total_records else None
         )
 
         for column, candidates in proposals.items():
@@ -2087,6 +2777,7 @@ class MappingConfirmationUI:
                 max_supportable_groups and n_groups and n_groups > max_supportable_groups
             )
 
+
             # Auto-approve criteria
             should_approve = (
                 confidence >= threshold and
@@ -2104,7 +2795,7 @@ class MappingConfirmationUI:
                 }
 
                 icon = "✅"
-                print(f"{icon} {column:25} → {feature:20} ({confidence:.0%})")
+                logger.info(f"{icon} {column:25} → {feature:20} ({confidence:.0%})")
                 approved_count += 1
             else:
                 self.rejected_mappings.append(column)
@@ -2123,20 +2814,20 @@ class MappingConfirmationUI:
                     reasons.append(
                         f"excessive cardinality ({n_groups} groups across "
                         f"{total_records} rows -- max supportable at "
-                        f"{MIN_SAMPLES_PER_GROUP}-sample floor: "
+                        f"{int(CARDINALITY_REJECTION_FLOOR)}-sample floor: "
                         f"{int(max_supportable_groups)})"
                     )
 
                 icon = "⏭️"
-                print(f"{icon} {column:25}   SKIPPED ({', '.join(reasons)})")
+                logger.info(f"{icon} {column:25}   SKIPPED ({', '.join(reasons)})")
                 rejected_count += 1
 
-        print(f"\n{'='*80}")
-        print(f"MAPPING SUMMARY")
-        print(f"{'='*80}")
-        print(f"✅ Approved: {approved_count} columns")
-        print(f"⏭️  Skipped:  {rejected_count} columns")
-        print(f"{'='*80}\n")
+        logger.info(f"\n{'='*80}")
+        logger.info(f"MAPPING SUMMARY")
+        logger.info(f"{'='*80}")
+        logger.info(f"✅ Approved: {approved_count} columns")
+        logger.warning(f"⏭️  Skipped:  {rejected_count} columns")
+        logger.info(f"{'='*80}\n")
 
         return self.approved_mappings
 
@@ -2218,11 +2909,23 @@ class BiasCleanEngine:
         W(g,y) = P(g)*P(y)/P(g,y) per protected-group/label cell, then
         realize it as row resampling so the result is a corrected
         dataframe directly comparable to 'preferential' via the same
-        composite-score evaluation)."""
+        composite-score evaluation).
+
+        v3.7.0: df_optimized carries a temporary '_biasclean_row_uid'
+        column (dropped before return) through every feature's pass, and
+        self._protected_row_uids accumulates the uids of every row
+        belonging to a group any feature has excluded as too small to
+        rebalance. Both persist across the whole per-feature loop below --
+        see _rebalance_feature_reweighing's docstring for why this is
+        needed (cross-feature row overlap perturbing an excluded group's
+        composition), found on real COMPAS data during the Phase 3
+        AIF360/Aequitas benchmark."""
         if not diagnostic_results.get("requires_mitigation", False):
             return df.copy()
 
         df_optimized = df.copy()
+        df_optimized["_biasclean_row_uid"] = range(len(df_optimized))
+        self._protected_row_uids = set()
         target = self._target_column or diagnostic_results.get("target_column_used")
 
         # Get features with significant bias, sorted by weight (highest first)
@@ -2235,11 +2938,11 @@ class BiasCleanEngine:
         # FIXED: Sort by weight descending (highest weight = highest priority)
         biased_features.sort(key=lambda x: x[1], reverse=True)
 
-        print(f"\n   WEIGHT-PRIORITIZED MITIGATION ORDER:")
-        print(f"   {'Feature':<25} {'Weight':<10} {'Priority'} ")
-        print(f"   {'-'*25} {'-'*10} {'-'*8}")
+        logger.info(f"\n   WEIGHT-PRIORITIZED MITIGATION ORDER:")
+        logger.info(f"   {'Feature':<25} {'Weight':<10} {'Priority'} ")
+        logger.info(f"   {'-'*25} {'-'*10} {'-'*8}")
         for i, (feature, weight) in enumerate(biased_features, 1):
-            print(f"   {feature:<25} {weight:<10.2f} #{i}")
+            logger.info(f"   {feature:<25} {weight:<10.2f} #{i}")
 
         # Apply rebalancing in weight-priority order. v3.2.0: fresh
         # bookkeeping for this run -- read by UniversalBiasClean right
@@ -2271,10 +2974,12 @@ class BiasCleanEngine:
             column = self._feature_map.get(feature)
             if column and column in df_optimized.columns:
                 self.reversal_checks[feature] = self._detect_reversal(
-                    df_before_any, df_optimized, column, target
+                    df_before_any.drop(columns=["_biasclean_row_uid"], errors="ignore"),
+                    df_optimized.drop(columns=["_biasclean_row_uid"], errors="ignore"),
+                    column, target
                 )
 
-        return df_optimized
+        return df_optimized.drop(columns=["_biasclean_row_uid"], errors="ignore")
 
     def _rank_by_boundary_distance(self, df: pd.DataFrame, target: str,
                                    exclude_cols: List[str]) -> Optional[pd.Series]:
@@ -2325,7 +3030,7 @@ class BiasCleanEngine:
             proba = clf.predict_proba(X)[:, 1]
             return pd.Series(np.abs(proba - 0.5), index=df.index)
         except Exception as e:
-            print(f"       (Preferential Sampling ranker unavailable ({e}); "
+            logger.info(f"       (Preferential Sampling ranker unavailable ({e}); "
                   f"falling back to uniform-random selection for this feature)")
             return None
 
@@ -2372,7 +3077,7 @@ class BiasCleanEngine:
             before, _rates_before = disadvantaged(df_before, target_before)
             after, rates_after = disadvantaged(df_after, target)
         except Exception as e:
-            print(f"       (Reversal check unavailable for '{column}': {e})")
+            logger.warning(f"       (Reversal check unavailable for '{column}': {e})")
             return None
         if before is None or after is None:
             return None
@@ -2487,12 +3192,12 @@ class BiasCleanEngine:
         boundary_dist = self._rank_by_boundary_distance(df, target, exclude_cols=protected_cols)
         method_used = "preferential_sampling" if boundary_dist is not None else "uniform_random"
 
-        print(f"\n     Rebalancing '{column}' (weight: {weight:.2f}, factor: {weight_factor:.2f})")
-        print(f"       • Disparity threshold: {disparity_threshold:.3f}")
-        print(f"       • Removal rate: {removal_rate:.3f}, Addition rate: {addition_rate:.3f}")
-        print(f"       • Min group size: {min_group_size} (weight-derived {weight_derived_min}, "
+        logger.info(f"\n     Rebalancing '{column}' (weight: {weight:.2f}, factor: {weight_factor:.2f})")
+        logger.info(f"       • Disparity threshold: {disparity_threshold:.3f}")
+        logger.info(f"       • Removal rate: {removal_rate:.3f}, Addition rate: {addition_rate:.3f}")
+        logger.info(f"       • Min group size: {min_group_size} (weight-derived {weight_derived_min}, "
               f"floored at audit's min_samples_per_group={config.THRESHOLDS['min_samples_per_group']})")
-        print(f"       • Selection method: {method_used}")
+        logger.info(f"       • Selection method: {method_used}")
 
         total_removed = 0
         total_added = 0
@@ -2609,16 +3314,16 @@ class BiasCleanEngine:
 
         if excluded_small_groups:
             for g in excluded_small_groups:
-                print(f"       ⚠️  Excluded '{g['group']}' (n={g['size']}) -- below the "
+                logger.warning(f"       ⚠️  Excluded '{g['group']}' (n={g['size']}) -- below the "
                       f"minimum-group-size floor ({min_group_size}); needs manual review")
 
         if regulator_capped:
             for g in regulator_capped:
-                print(f"       🌡️  Regulator capped '{g['group']}': wanted to correct "
+                logger.warning(f"       🌡️  Regulator capped '{g['group']}': wanted to correct "
                       f"{g['naive_target']} rows, capped to {g['regulator_capped_to']} "
                       f"to avoid crossing past the population mean")
 
-        print(f"       • Samples removed: {total_removed}, Samples added: {total_added}")
+        logger.info(f"       • Samples removed: {total_removed}, Samples added: {total_added}")
 
         self.rebalance_log.append({
             "feature": feature_name, "column": column, "method": method_used,
@@ -2681,8 +3386,8 @@ class BiasCleanEngine:
         p_y1 = overall_mean
         p_y0 = 1 - overall_mean
 
-        print(f"\n     Reweighing '{column}' (weight: {weight:.2f}, factor: {weight_factor:.2f})")
-        print(f"       • Min group size: {min_group_size} (floored at "
+        logger.info(f"\n     Reweighing '{column}' (weight: {weight:.2f}, factor: {weight_factor:.2f})")
+        logger.info(f"       • Min group size: {min_group_size} (floored at "
               f"config.THRESHOLDS['min_samples_per_group']={config.THRESHOLDS['min_samples_per_group']})")
 
         total_removed = total_added = 0
@@ -2701,6 +3406,22 @@ class BiasCleanEngine:
                     "reason": "disparate but below the minimum-group-size floor -- excluded "
                               "from automatic rebalancing, needs manual review",
                 })
+                # v3.7.0: protect this group's rows from every LATER
+                # feature's resampling too, not just this feature's own --
+                # a group excluded here previously could still grow or
+                # shrink when a later feature (e.g. Age) resampled a cell
+                # that happened to overlap with it. Confirmed on real
+                # COMPAS data: Asian went 32->33 and Native American
+                # 18->21 despite both being excluded from Ethnicity's OWN
+                # rebalancing, because Age's rebalancing pass (the only
+                # other feature resampled) touched their rows as a side
+                # effect. Keyed by the stable '_biasclean_row_uid' column,
+                # not the pandas index, since duplicated rows share their
+                # source row's index but each keeps a unique uid.
+                if "_biasclean_row_uid" in df.columns:
+                    self._protected_row_uids.update(
+                        df.loc[df[column] == group, "_biasclean_row_uid"].tolist()
+                    )
                 continue
 
             p_g = group_size / n_total
@@ -2753,31 +3474,46 @@ class BiasCleanEngine:
                 delta = target_n - n_cell
                 cell_mask = group_mask & (df[target] == label)
 
+                # v3.7.0: never pick a protected row (excluded by an
+                # earlier feature, this run) as a duplication source or a
+                # removal candidate -- see the excluded_small_groups
+                # branch above for why. A protected row can still be
+                # PRESENT in this cell (it stays exactly as it was); it
+                # just can't be chosen as the row that changes.
+                protected_uids = getattr(self, "_protected_row_uids", set())
+                if protected_uids and "_biasclean_row_uid" in df.columns:
+                    eligible_mask = cell_mask & (~df["_biasclean_row_uid"].isin(protected_uids))
+                else:
+                    eligible_mask = cell_mask
+
                 if delta > 0:
                     # Underrepresented cell -- duplicate rows up toward target_n.
-                    cell_rows = df[cell_mask]
+                    cell_rows = df[eligible_mask]
+                    if len(cell_rows) == 0:
+                        continue  # every candidate row is protected -- skip this cell
                     add_idx = np.random.RandomState(42).choice(cell_rows.index, delta, replace=True)
                     df_balanced = pd.concat([df_balanced, df.loc[add_idx]])
                     total_added += delta
                 elif delta < 0:
                     # Overrepresented cell -- remove rows down toward target_n.
                     remove_n = min(-delta, n_cell - 1)  # never remove the whole cell
+                    cell_rows = df[eligible_mask]
+                    remove_n = min(remove_n, len(cell_rows))  # can't remove more than eligible
                     if remove_n > 0:
-                        cell_rows = df[cell_mask]
                         remove_idx = cell_rows.sample(n=remove_n, random_state=42).index
                         df_balanced = df_balanced.drop(remove_idx)
                         total_removed += remove_n
 
         if excluded_small_groups:
             for g in excluded_small_groups:
-                print(f"       ⚠️  Excluded '{g['group']}' (n={g['size']}) -- below the "
+                logger.warning(f"       ⚠️  Excluded '{g['group']}' (n={g['size']}) -- below the "
                       f"minimum-group-size floor ({min_group_size}); needs manual review")
         if regulator_capped:
             for g in regulator_capped:
-                print(f"       🌡️  Regulator capped '{g['group']}': naive target rate "
+                logger.warning(f"       🌡️  Regulator capped '{g['group']}': naive target rate "
                       f"{g['naive_target_rate']:.3f} would cross past the population mean, "
                       f"capped to {g['regulator_capped_to_rate']:.3f}")
-        print(f"       • Samples removed: {total_removed}, Samples added: {total_added}")
+        logger.info(f"       • Samples removed: {total_removed}, Samples added: {total_added}")
 
         self.rebalance_log.append({
             "feature": feature_name, "column": column, "method": "reweighing",
@@ -2798,6 +3534,16 @@ class BiasCleanEngine:
             "absolute_disparity_reduction": {},
             "initial_disparities": {},
             "final_disparities": {},
+            # PHASE 3.5, Workstream C: worst-single-group view, computed
+            # alongside the existing mean/CV-based view so a report never
+            # shows only the aggregate number -- see the method's own
+            # comment for the North Carolina Ethnicity case that motivated
+            # this.
+            "initial_worst_group": {},
+            "final_worst_group": {},
+            "initial_worst_group_deviation": {},
+            "final_worst_group_deviation": {},
+            "worst_group_improvement_pct": {},
             "data_integrity": {
                 "records_before": len(df_before),
                 "records_after": len(df_after),
@@ -2824,6 +3570,21 @@ class BiasCleanEngine:
 
             validation["initial_disparities"][feature] = before
             validation["final_disparities"][feature] = after
+
+            before_worst_group, before_worst_dev = self._calculate_worst_group_deviation_direct(
+                df_before, column_name, target
+            )
+            after_worst_group, after_worst_dev = self._calculate_worst_group_deviation_direct(
+                df_after, column_name, target
+            )
+            validation["initial_worst_group"][feature] = before_worst_group
+            validation["final_worst_group"][feature] = after_worst_group
+            validation["initial_worst_group_deviation"][feature] = before_worst_dev
+            validation["final_worst_group_deviation"][feature] = after_worst_dev
+            if before_worst_dev > 0:
+                validation["worst_group_improvement_pct"][feature] = (
+                    (before_worst_dev - after_worst_dev) / before_worst_dev
+                ) * 100
 
             if before > 0:
                 # Percentage improvement
@@ -2866,6 +3627,179 @@ class BiasCleanEngine:
 
         except Exception:
             return 0.0
+
+    # PHASE 3.5, Workstream C: BiasClean's own disparity_final has always
+    # been a coefficient-of-variation figure -- the spread across ALL
+    # groups averaged together. That average can improve even while the
+    # single worst-off group gets worse (confirmed on real data during the
+    # Phase 3 benchmark: North Carolina's Ethnicity feature improved
+    # +40.5% on this CV/mean basis while its single worst group actually
+    # regressed -9.1%, and this was only caught because an external judge
+    # happened to compute both views -- BiasClean's own reporting didn't).
+    # This method reuses the exact same group-rate computation and 10-
+    # sample floor as _calculate_disparity_direct above, so the two numbers
+    # are always computed from an identical group definition and are
+    # directly comparable -- this is a visibility addition, not a
+    # different disparity definition; disparity_final's own meaning and
+    # value are completely unchanged by this method's existence.
+    def _calculate_worst_group_deviation_direct(self, df: pd.DataFrame, column: str,
+                                                 target_column: str):
+        """Return (worst_group_name, worst_group_relative_deviation) --
+        the single group whose rate deviates furthest from the feature's
+        own mean rate, as a fraction of that mean. None, 0.0 if there
+        aren't at least 2 groups clearing the 10-sample floor."""
+        if column not in df.columns or target_column not in df.columns:
+            return None, 0.0
+
+        try:
+            group_rates = {}
+            for group in df[column].unique():
+                if pd.isna(group):
+                    continue
+                group_data = df[df[column] == group]
+                if len(group_data) >= 10:
+                    group_rates[str(group)] = group_data[target_column].mean()
+
+            if len(group_rates) < 2:
+                return None, 0.0
+
+            mean_rate = np.mean(list(group_rates.values()))
+            if mean_rate == 0:
+                return None, 0.0
+
+            worst_group, worst_rate = max(
+                group_rates.items(), key=lambda kv: abs(kv[1] - mean_rate)
+            )
+            worst_deviation = min(abs(worst_rate - mean_rate) / mean_rate, 1.0)
+            return worst_group, worst_deviation
+
+        except Exception:
+            return None, 0.0
+
+    # PHASE 3.5, Workstream B: BiasClean's composite mitigation threshold
+    # (0.05) is a single fixed number applied regardless of sample size or
+    # group count -- a given percentage-point gap can be highly reliable
+    # at n=20 million and pure noise at n=30, and the fixed threshold
+    # can't tell the difference. This method implements the standard log
+    # relative-risk confidence interval (the "Katz method"), a special
+    # case of the general asymptotic result in Besse, del Barrio,
+    # Gordaliza & Loubes, "Confidence Intervals for Testing Disparate
+    # Impact in Fair Learning" (arXiv:1807.06362, 2018) -- their Theorem
+    # 3.1 gives the exact asymptotic variance of a disparate-impact ratio
+    # estimator via the delta method; for two disjoint groups (BiasClean's
+    # case -- a group's rate is never counted in another group's
+    # denominator), that reduces to this well-established closed form.
+    # This is reporting-only for now, per the Phase 3.5 SOP: it adds a
+    # second, sample-size-aware significance lens alongside the existing
+    # fixed threshold, and does not yet change requires_mitigation's own
+    # decision -- that migration (an explicit opt-in mode, matching the
+    # Audit-First/Legacy/Audit-Only pattern already in this pipeline) is
+    # deliberately a separate, later step so every existing result stays
+    # reproducible under today's default in the meantime.
+    def _worst_group_ratio_ci_direct(self, df: pd.DataFrame, column: str,
+                                      target_column: str, alpha: float = 0.05,
+                                      min_group_size: int = 10,
+                                      effect_size_floor: float = 0.8):
+        """Log relative-risk CI (Katz method) for the feature's worst
+        group versus its largest (reference) group. Returns a dict:
+        {reference_group, worst_group, ratio, ci_lower, ci_upper,
+        ci_excludes_parity, practically_significant,
+        dual_criteria_significant} or None if there aren't at least 2
+        groups clearing min_group_size, or if either group's rate is 0 or
+        1 (the log-ratio SE is undefined at the boundary -- BiasClean's
+        own regulator-capping logic elsewhere in this file hits the same
+        edge case for the same reason).
+
+        ci_excludes_parity is True when the 95%-default CI does not
+        contain 1.0 -- i.e. this specific group's gap is statistically
+        distinguishable from chance at its own actual sample size, not
+        merely large in raw percentage-point terms.
+
+        PHASE 3.5, Workstream B part 2: ci_excludes_parity alone is not
+        enough to decide whether a gap is worth acting on. Verified on
+        real data (Oklahoma City, v3.9.1): a 0.2% gap at n=945,107 is
+        statistically real (CI excludes parity) but not remotely
+        practically meaningful -- the classic large-sample problem where
+        statistical and practical significance diverge. practically_
+        significant pairs the CI test with an effect-size floor that
+        does NOT depend on sample size: effect_size_floor defaults to
+        0.8, the "four-fifths rule" (Feldman et al. 2015; also Aequitas's
+        own default threshold, tau=0.8) -- a group's ratio to the
+        reference group must fall at or below 0.8 (or, symmetrically, at
+        or above 1/0.8=1.25) to count as practically significant,
+        regardless of how large n is. This project's own Phase 3 report
+        (Section 3.3) already documents that the four-fifths rule's
+        legal, not statistical, origin makes it a weak choice used ALONE
+        (Watkins & Chen, 2024) -- but paired with a genuine statistical
+        test rather than substituting for one, it is exactly the
+        standard "statistically AND practically significant" combination
+        used throughout applied statistics precisely to avoid a pure
+        significance test flagging a trivial effect at large n.
+        dual_criteria_significant is True only when BOTH criteria agree;
+        this is the field intended to eventually inform requires_
+        mitigation, once that migration is made (still not done as of
+        this release -- see the changelog)."""
+        if column not in df.columns or target_column not in df.columns:
+            return None
+        try:
+            groups = {}
+            for group in df[column].unique():
+                if pd.isna(group):
+                    continue
+                group_data = df[df[column] == group]
+                n = len(group_data)
+                if n < min_group_size:
+                    continue
+                rate = group_data[target_column].mean()
+                groups[str(group)] = (rate, n)
+
+            if len(groups) < 2:
+                return None
+
+            reference_group = max(groups, key=lambda g: groups[g][1])
+            p_ref, n_ref = groups[reference_group]
+            if p_ref <= 0 or p_ref >= 1:
+                return None
+
+            worst_group, worst_ratio_dev = None, -1.0
+            for g, (p_g, n_g) in groups.items():
+                if g == reference_group or p_g <= 0 or p_g >= 1:
+                    continue
+                ratio = p_g / p_ref
+                dev = abs(np.log(ratio)) if ratio > 0 else float("inf")
+                if dev > worst_ratio_dev:
+                    worst_group, worst_ratio_dev = g, dev
+
+            if worst_group is None:
+                return None
+
+            p_worst, n_worst = groups[worst_group]
+            ratio = p_worst / p_ref
+            se_log_ratio = np.sqrt(
+                (1 - p_worst) / (n_worst * p_worst) + (1 - p_ref) / (n_ref * p_ref)
+            )
+            z = norm.ppf(1 - alpha / 2)
+            log_ratio = np.log(ratio)
+            ci_lower = np.exp(log_ratio - z * se_log_ratio)
+            ci_upper = np.exp(log_ratio + z * se_log_ratio)
+
+            ci_excludes_parity = bool(ci_upper < 1.0 or ci_lower > 1.0)
+            practically_significant = bool(
+                ratio <= effect_size_floor or ratio >= (1.0 / effect_size_floor)
+            )
+
+            return {
+                "reference_group": reference_group,
+                "worst_group": worst_group,
+                "ratio": ratio,
+                "ci_lower": ci_lower,
+                "ci_upper": ci_upper,
+                "ci_excludes_parity": ci_excludes_parity,
+                "practically_significant": practically_significant,
+                "dual_criteria_significant": bool(ci_excludes_parity and practically_significant),
+            }
+        except Exception:
+            return None
 
 """# Part 2"""
 
@@ -3597,7 +4531,7 @@ class ReportGenerator:
                 result = pisa.CreatePDF(html_content, dest=f)
             if result.err:
                 raise RuntimeError(f"xhtml2pdf reported {result.err} rendering error(s)")
-            print(f"Report saved to: {output_file}")
+            logger.info(f"Report saved to: {output_file}")
             return output_file
         except Exception as e:
             fallback_file = re.sub(r'\.pdf$', '.html', output_file, flags=re.IGNORECASE)
@@ -3606,16 +4540,16 @@ class ReportGenerator:
             with open(fallback_file, 'w', encoding='utf-8') as f:
                 f.write(html_content)
             if isinstance(e, ImportError):
-                print(f"   ⚠️  xhtml2pdf not installed (pip install xhtml2pdf) -- wrote {fallback_file} instead.")
+                logger.warning(f"   ⚠️  xhtml2pdf not installed (pip install xhtml2pdf) -- wrote {fallback_file} instead.")
             else:
-                print(f"   ⚠️  PDF rendering failed ({e}) -- wrote {fallback_file} instead.")
+                logger.warning(f"   ⚠️  PDF rendering failed ({e}) -- wrote {fallback_file} instead.")
             return fallback_file
 
     def print_console_report(self, results: Dict):
         """Print comprehensive console report with v2.7 enhancements"""
-        print("\n" + "="*80)
-        print(f"BIASCLEAN ANALYSIS REPORT v{__version__}")
-        print("="*80)
+        logger.info("\n" + "="*80)
+        logger.info(f"BIASCLEAN ANALYSIS REPORT v{__version__}")
+        logger.info("="*80)
 
         diagnostics = results.get("diagnostics", {})
         validation = results.get("validation", {})
@@ -3627,86 +4561,86 @@ class ReportGenerator:
         enhanced_analysis = monitoring.get("enhanced_analysis", {})
 
         # Executive Summary
-        print("\n📊 EXECUTIVE SUMMARY")
-        print("-"*80)
+        logger.info("\n📊 EXECUTIVE SUMMARY")
+        logger.info("-"*80)
 
         initial_bias = diagnostics.get("initial_bias_score", 0)
         final_bias = diagnostics.get("final_bias_score", initial_bias)
         improvement = ((initial_bias - final_bias) / initial_bias * 100) if initial_bias > 0 else 0
 
-        print(f"Initial Bias Score:     {initial_bias:.4f}")
-        print(f"Final Bias Score:       {final_bias:.4f}")
-        print(f"Overall Improvement:    {improvement:+.1f}%")
-        print(f"Significant Biases:     {diagnostics.get('significant_bias_count', 0)}")
+        logger.info(f"Initial Bias Score:     {initial_bias:.4f}")
+        logger.info(f"Final Bias Score:       {final_bias:.4f}")
+        logger.info(f"Overall Improvement:    {improvement:+.1f}%")
+        logger.info(f"Significant Biases:     {diagnostics.get('significant_bias_count', 0)}")
 
         # v2.7: Deployment Decision
         if deployment_decision:
-            print("\n🎯 DEPLOYMENT DECISION (v2.7)")
-            print("-"*80)
+            logger.info("\n🎯 DEPLOYMENT DECISION (v2.7)")
+            logger.info("-"*80)
             recommendation = deployment_decision.get("recommended", False)
             score = deployment_decision.get("score", 0)
             confidence = deployment_decision.get("confidence", "low")
 
             status_icon = "✅" if recommendation else "❌"
-            print(f"{status_icon} Recommendation:    {'DEPLOY' if recommendation else 'DO NOT DEPLOY'}")
-            print(f"  Score:              {score}/100")
-            print(f"  Confidence:         {confidence.upper()}")
+            logger.info(f"{status_icon} Recommendation:    {'DEPLOY' if recommendation else 'DO NOT DEPLOY'}")
+            logger.info(f"  Score:              {score}/100")
+            logger.info(f"  Confidence:         {confidence.upper()}")
 
             reasons = deployment_decision.get("reasons", [])
             if reasons:
-                print(f"  Reasons:")
+                logger.info(f"  Reasons:")
                 for reason in reasons[:3]:  # Show top 3 reasons
-                    print(f"    • {reason}")
+                    logger.info(f"    • {reason}")
 
             warnings = deployment_decision.get("warnings", [])
             if warnings:
-                print(f"  Warnings:")
+                logger.info(f"  Warnings:")
                 for warning in warnings[:3]:  # Show top 3 warnings
-                    print(f"    ⚠️  {warning}")
+                    logger.warning(f"    ⚠️  {warning}")
 
         # Data Integrity
         integrity = validation.get("data_integrity", {})
-        print(f"\n💾 DATA INTEGRITY")
-        print("-"*80)
-        print(f"Records Before:         {integrity.get('records_before', 0):,}")
-        print(f"Records After:          {integrity.get('records_after', 0):,}")
-        print(f"Retention Rate:         {integrity.get('retention_rate', 100):.1f}%")
+        logger.info(f"\n💾 DATA INTEGRITY")
+        logger.info("-"*80)
+        logger.info(f"Records Before:         {integrity.get('records_before', 0):,}")
+        logger.info(f"Records After:          {integrity.get('records_after', 0):,}")
+        logger.info(f"Retention Rate:         {integrity.get('retention_rate', 100):.1f}%")
 
         # v2.7: Enhanced Monitoring Summary
         if enhanced_analysis:
-            print(f"\n🔍 v2.7 ENHANCED MONITORING")
-            print("-"*80)
+            logger.info(f"\n🔍 v2.7 ENHANCED MONITORING")
+            logger.info("-"*80)
 
             # Feature-level tracking
             feature_export = enhanced_analysis.get('feature_level_export', {})
             if feature_export.get('features'):
-                print(f"Feature-level tracking: {len(feature_export.get('features', {}))} features across 3 stages")
+                logger.info(f"Feature-level tracking: {len(feature_export.get('features', {}))} features across 3 stages")
 
             # Group rates
             group_export = enhanced_analysis.get('group_rates_export', {})
             if group_export:
-                print(f"Group rates analysis:  Available for all protected groups")
+                logger.info(f"Group rates analysis:  Available for all protected groups")
 
             # Statistical confidence
             stats_export = enhanced_analysis.get('statistical_confidence_export', {})
             if stats_export:
-                print(f"Statistical confidence: Bootstrap confidence intervals calculated")
+                logger.info(f"Statistical confidence: Bootstrap confidence intervals calculated")
 
             # Sampling attribution
             sampling_export = enhanced_analysis.get('sampling_attribution_export', {})
             if sampling_export:
-                print(f"Sampling attribution:  Tracked rebalancing and SVM changes")
+                logger.info(f"Sampling attribution:  Tracked rebalancing and SVM changes")
 
             # Trade-off analysis
             trade_offs = enhanced_analysis.get('trade_off_analysis', {})
             if trade_offs:
-                print(f"Trade-off analysis:    {len(trade_offs)} feature interactions analyzed")
+                logger.info(f"Trade-off analysis:    {len(trade_offs)} feature interactions analyzed")
 
         # Feature Improvements with Weights
         improvements = validation.get("fairness_improvement", {})
         if improvements:
-            print(f"\n📈 FAIRNESS IMPROVEMENTS BY FEATURE (Weight-Prioritized)")
-            print("-"*80)
+            logger.info(f"\n📈 FAIRNESS IMPROVEMENTS BY FEATURE (Weight-Prioritized)")
+            logger.info("-"*80)
             # Sort by weight
             sorted_improvements = sorted(
                 improvements.items(),
@@ -3717,13 +4651,13 @@ class ReportGenerator:
                 weight = self.config["weights"].get(feature, "N/A")
                 icon = "✅" if imp_value > 0 else "⚠️"
                 weight_display = f"{weight:.2f}" if isinstance(weight, (int, float)) else weight
-                print(f"{icon} {feature:25} Weight: {weight_display:<6} {imp_value:+.1f}%")
+                logger.info(f"{icon} {feature:25} Weight: {weight_display:<6} {imp_value:+.1f}%")
 
         # Statistical Tests
         feature_tests = diagnostics.get("feature_tests", {})
         if feature_tests:
-            print(f"\n🧪 STATISTICAL TESTS")
-            print("-"*80)
+            logger.info(f"\n🧪 STATISTICAL TESTS")
+            logger.info("-"*80)
             # Sort by weight
             sorted_tests = sorted(
                 feature_tests.items(),
@@ -3736,13 +4670,13 @@ class ReportGenerator:
                 weight = self.config["weights"].get(feature, "N/A")
                 weight_display = f"{weight:.2f}" if isinstance(weight, (int, float)) else weight
                 sig_icon = "🔴" if sig else "🟢"
-                print(f"{sig_icon} {feature:25} p={p_val:.6f}  Weight: {weight_display}")
+                logger.info(f"{sig_icon} {feature:25} p={p_val:.6f}  Weight: {weight_display}")
 
         # Mappings Summary
         mappings = results.get("mappings", {})
-        print(f"\n🗺️  FEATURE MAPPINGS")
-        print("-"*80)
-        print(f"Total Approved:         {len(mappings)}")
+        logger.info(f"\n🗺️  FEATURE MAPPINGS")
+        logger.info("-"*80)
+        logger.info(f"Total Approved:         {len(mappings)}")
 
         tier_counts = {}
         for mapping in mappings.values():
@@ -3751,20 +4685,20 @@ class ReportGenerator:
 
         for tier, count in tier_counts.items():
             icon = "🏆" if tier == "universal" else "🎯" if tier == "domain" else "📝"
-            print(f"  {icon} {tier.title():15}  {count}")
+            logger.info(f"  {icon} {tier.title():15}  {count}")
 
         # Output files summary -- v3.1 consolidation: exactly 3 files
         # now (report.pdf + corrected_dataset.csv + audit_trail.json),
         # replacing the earlier spread of 11+ separate files.
-        print(f"\n💾 OUTPUT FILES")
-        print("-"*80)
-        print("  • biasclean_results/report.pdf            - Summary (plain-language) + Technical Detail (expert)")
-        print("  • biasclean_results/corrected_dataset.csv - Rebalanced dataset")
-        print("  • biasclean_results/audit_trail.json      - Full machine-readable numbers for reproducibility/compliance")
+        logger.info(f"\n💾 OUTPUT FILES")
+        logger.info("-"*80)
+        logger.info("  • biasclean_results/report.pdf            - Summary (plain-language) + Technical Detail (expert)")
+        logger.info("  • biasclean_results/corrected_dataset.csv - Rebalanced dataset")
+        logger.info("  • biasclean_results/audit_trail.json      - Full machine-readable numbers for reproducibility/compliance")
 
-        print(f"\n" + "="*80)
-        print("PIPELINE COMPLETE")
-        print("="*80)
+        logger.info(f"\n" + "="*80)
+        logger.info("PIPELINE COMPLETE")
+        logger.info("="*80)
 
 # ============================================================================
 # 6.5. SVM FAIRNESS ENFORCER (INTEGRATED FROM svmfairnessenforcer.py)
@@ -4002,7 +4936,7 @@ class SVMFairnessEnforcer:
             purity = crosstab.max(axis=1).sum() / total_observed
             if purity >= LEAKAGE_PURITY_THRESHOLD:
                 exclude_cols.append(col)
-                print(f"   ⚠️  STATISTICAL LEAKAGE: '{col}' predicts the target with "
+                logger.warning(f"   ⚠️  STATISTICAL LEAKAGE: '{col}' predicts the target with "
                       f"{purity:.1%} purity using only its own value -- excluded as a "
                       f"near-perfect target proxy (not caught by name-based patterns).")
 
@@ -4029,8 +4963,8 @@ class SVMFairnessEnforcer:
         X_features = X_features.fillna(0)
 
         # ============ STEP 1: LEAKAGE CHECK ============
-        print(f"\n   DEBUG: Checking for leakage columns in features")
-        print(f"   Current feature count: {X_features.shape[1]}")
+        logger.warning(f"\n   DEBUG: Checking for leakage columns in features")
+        logger.info(f"   Current feature count: {X_features.shape[1]}")
 
         leakage_cols = ['y_pred', 'y_prob', 'final_result', 'group', 'y_true', 'biasclean_target']
         found_leakage = []
@@ -4038,13 +4972,13 @@ class SVMFairnessEnforcer:
         for col in leakage_cols:
             if col in X_features.columns:
                 found_leakage.append(col)
-                print(f"   ⚠️  CRITICAL: Found leakage column '{col}' in features")
+                logger.warning(f"   ⚠️  CRITICAL: Found leakage column '{col}' in features")
 
         if found_leakage:
-            print(f"   Removing leakage columns: {found_leakage}")
+            logger.warning(f"   Removing leakage columns: {found_leakage}")
             X_features = X_features.drop(columns=found_leakage)
 
-        print(f"   Clean feature count: {X_features.shape[1]}")
+        logger.info(f"   Clean feature count: {X_features.shape[1]}")
         # ============ END LEAKAGE CHECK ============
 
         # Store feature columns for later reference
@@ -4072,9 +5006,9 @@ class SVMFairnessEnforcer:
         Returns:
             Dictionary containing predictions, metrics, and enhanced DataFrame
         """
-        print(f"\n{'='*80}")
-        print("SVM FAIRNESS ENFORCEMENT")
-        print(f"{'='*80}")
+        logger.info(f"\n{'='*80}")
+        logger.info("SVM FAIRNESS ENFORCEMENT")
+        logger.info(f"{'='*80}")
 
         # Prepare features with leakage prevention
         X_features, y_true, group_labels = self._prepare_features(
@@ -4082,12 +5016,12 @@ class SVMFairnessEnforcer:
             all_protected_columns=all_protected_columns
         )
 
-        print(f"   Samples: {len(df):,}")
-        print(f"   Features: {X_features.shape[1]}")
-        print(f"   Target: '{target_column}' (positive rate: {y_true.mean():.1%})")
+        logger.info(f"   Samples: {len(df):,}")
+        logger.info(f"   Features: {X_features.shape[1]}")
+        logger.info(f"   Target: '{target_column}' (positive rate: {y_true.mean():.1%})")
 
         if group_column:
-            print(f"   Protected attribute: '{group_column}' (excluded from features)")
+            logger.info(f"   Protected attribute: '{group_column}' (excluded from features)")
 
         # v3.5.0 hardening: a real dataset can genuinely have ZERO usable
         # predictor columns left after leakage/protected-attribute exclusion
@@ -4100,11 +5034,11 @@ class SVMFairnessEnforcer:
         # training entirely and let the caller fall back to the rebalanced-
         # only result, exactly like the existing "SVM disabled" path.
         if X_features.shape[1] == 0:
-            print(f"\n   ⏸️  SVM SKIPPED: no usable predictor columns remain after "
+            logger.warning(f"\n   ⏸️  SVM SKIPPED: no usable predictor columns remain after "
                   f"excluding the target, protected attributes, and leakage-prone "
                   f"columns. A classifier with zero features would either crash or "
                   f"silently degenerate to a meaningless constant prediction --")
-            print(f"   neither is safe to present as a result. Falling back to the "
+            logger.info(f"   neither is safe to present as a result. Falling back to the "
                   f"rebalanced-only data for this dataset.")
             return {
                 'skipped': True,
@@ -4129,15 +5063,15 @@ class SVMFairnessEnforcer:
         if self.svm_method == "fair_reduction" and not use_fair_reduction:
             reason = ("fairlearn is not installed (`pip install fairlearn`)" if not FAIRLEARN_AVAILABLE
                        else "no protected-attribute column is available to use as sensitive_features")
-            print(f"\n   NOTE: Smart SVM (ExponentiatedGradient) requested but unavailable -- {reason}.")
-            print(f"   Falling back to legacy SVM (no in-training fairness constraint).")
+            logger.info(f"\n   NOTE: Smart SVM (ExponentiatedGradient) requested but unavailable -- {reason}.")
+            logger.info(f"   Falling back to legacy SVM (no in-training fairness constraint).")
 
         if use_fair_reduction:
             constraint = DemographicParity() if self.fairness_constraint == "demographic_parity" else EqualizedOdds()
-            print(f"\n   Training Smart SVM: SVC wrapped in fairlearn ExponentiatedGradient")
-            print(f"   Fairness constraint: {self.fairness_constraint}")
+            logger.info(f"\n   Training Smart SVM: SVC wrapped in fairlearn ExponentiatedGradient")
+            logger.info(f"   Fairness constraint: {self.fairness_constraint}")
         else:
-            print(f"\n   Training legacy SVM with fairness-aware configuration...")
+            logger.info(f"\n   Training legacy SVM with fairness-aware configuration...")
 
         # Scale once, up front. ExponentiatedGradient requires a bare
         # estimator (not a Pipeline) -- Pipeline.fit rejects the
@@ -4173,10 +5107,10 @@ class SVMFairnessEnforcer:
                 y_train = y_train_reset.iloc[sample_indices].values
                 if g_train is not None:
                     g_train = pd.Series(g_train).reset_index(drop=True).iloc[sample_indices].values
-                print(f"   Subsample: Using 5,000 samples for SVM training")
+                logger.info(f"   Subsample: Using 5,000 samples for SVM training")
 
-            print(f"   Training samples: {len(X_train):,}")
-            print(f"   Validation samples: {len(X_val):,}")
+            logger.info(f"   Training samples: {len(X_train):,}")
+            logger.info(f"   Validation samples: {len(X_val):,}")
 
             if use_fair_reduction:
                 self.model = ExponentiatedGradient(SVC(**self.svm_config), constraints=constraint)
@@ -4188,7 +5122,7 @@ class SVMFairnessEnforcer:
                 val_pred = self.model.predict(X_val)
 
             val_acc = (val_pred == y_val).mean()
-            print(f"   Validation accuracy: {val_acc:.1%}")
+            logger.info(f"   Validation accuracy: {val_acc:.1%}")
 
             # Generate predictions on full dataset for fairness enforcement
             if use_fair_reduction:
@@ -4211,7 +5145,7 @@ class SVMFairnessEnforcer:
                 y_pred = self.model.predict(X_scaled).astype(int)
                 y_prob = self.model.predict_proba(X_scaled)[:, 1].astype(float)
             full_acc = (y_pred == y_true).mean()
-            print(f"   Note: Training on full dataset (no validation split)")
+            logger.info(f"   Note: Training on full dataset (no validation split)")
             val_acc = None
 
         # Compute decision boundary margins
@@ -4251,16 +5185,16 @@ class SVMFairnessEnforcer:
             results['group_column'] = group_column
 
         # Print summary
-        print(f"\n   SVM Fairness Enforcement Complete")
+        logger.info(f"\n   SVM Fairness Enforcement Complete")
         if validation_split > 0 and val_acc is not None:
-            print(f"   • Validation accuracy: {val_acc:.1%}")
-        print(f"   • Full dataset accuracy: {full_acc:.1%}")
-        print(f"   • Positive prediction rate: {y_pred.mean():.1%}")
+            logger.info(f"   • Validation accuracy: {val_acc:.1%}")
+        logger.info(f"   • Full dataset accuracy: {full_acc:.1%}")
+        logger.info(f"   • Positive prediction rate: {y_pred.mean():.1%}")
 
         if 'disparity' in fairness_metrics:
-            print(f"   • Group disparity: {fairness_metrics['disparity']:.3f}")
+            logger.info(f"   • Group disparity: {fairness_metrics['disparity']:.3f}")
 
-        print(f"{'='*80}")
+        logger.info(f"{'='*80}")
 
         return results
 
@@ -4423,7 +5357,7 @@ class SVMFairnessEnforcer:
         with open(f"{output_dir}/svm_metadata.json", 'w') as f:
             json.dump(metadata, f, indent=2)
 
-        print(f"\nResults saved to: {output_dir}/")
+        logger.info(f"\nResults saved to: {output_dir}/")
         return output_dir
 
 # ============================================================================
@@ -4475,7 +5409,7 @@ class EnhancedStageScoreTracker:
             self.stages[stage_name] = stage_data
 
         except Exception as e:
-            print(f"Warning: Could not record stage '{stage_name}': {e}")
+            logger.warning(f"Warning: Could not record stage '{stage_name}': {e}")
             self.stages[stage_name] = {
                 'bias_score': None,
                 'records': len(df),
@@ -4571,7 +5505,7 @@ class GroupRateTracker:
                 for group, stats in rates.items()
             }
         except Exception as e:
-            print(f"Warning: Could not track group rates for {group_col}: {e}")
+            logger.warning(f"Warning: Could not track group rates for {group_col}: {e}")
 
     def get_disparities(self, group_key: str) -> Dict:
         """Calculate disparities for a tracked group"""
@@ -4664,7 +5598,7 @@ class SamplingAttributionLogger:
             self.log_operation('rebalancing_summary', changes)
 
         except Exception as e:
-            print(f"Warning: Could not log rebalancing changes: {e}")
+            logger.warning(f"Warning: Could not log rebalancing changes: {e}")
             self.log_operation('rebalancing_summary', {'error': str(e)})
 
     def log_svm_changes(self, df: pd.DataFrame, original_target: str,
@@ -4691,7 +5625,7 @@ class SamplingAttributionLogger:
                 })
 
         except Exception as e:
-            print(f"Warning: Could not log SVM changes: {e}")
+            logger.warning(f"Warning: Could not log SVM changes: {e}")
             self.log_operation('svm_enforcement', {'error': str(e)})
 
     def get_summary(self) -> Dict:
@@ -4777,9 +5711,9 @@ class UniversalBiasClean:
         self.svm_gate = {}
         self.rebalance_gate = {}
 
-        print(f"\n{'='*80}")
-        print(f"BIASCLEAN v{__version__} - {self.mode.upper()} MODE")
-        print(f"{'='*80}")
+        logger.info(f"\n{'='*80}")
+        logger.info(f"BIASCLEAN v{__version__} - {self.mode.upper()} MODE")
+        logger.info(f"{'='*80}")
 
     def _compile_audit_only_results(self, audit_results: dict, target: str,
                                      feature_map: Optional[dict] = None) -> dict:
@@ -4849,26 +5783,26 @@ class UniversalBiasClean:
 
         self._save_results()
 
-        print(f"\n{'='*80}")
-        print("GENERATING REPORT (mitigation was not performed -- explains why)")
-        print(f"{'='*80}")
+        logger.info(f"\n{'='*80}")
+        logger.info("GENERATING REPORT (mitigation was not performed -- explains why)")
+        logger.info(f"{'='*80}")
         report_path = "biasclean_results/report.pdf"
         try:
-            print("\n   Generating report...")
+            logger.info("\n   Generating report...")
             self.reporter.print_console_report(self.results)
             report_path = self.reporter.generate_report(self.results, output_file=report_path, charts={})
         except Exception as e:
-            print(f"   Report generation failed: {str(e)}")
+            logger.info(f"   Report generation failed: {str(e)}")
 
-        print(f"\n{'='*80}")
-        print("PIPELINE STOPPED -- report saved (no mitigation was performed)")
-        print(f"{'='*80}")
-        print(f"   Results saved to: biasclean_results/")
-        print(f"   Audit: {audit_results.get('recommendation', {}).get('traffic_light', 'N/A')}")
-        print(f"   • {os.path.basename(report_path):<24} - explains why mitigation didn't run")
-        print(f"   • audit_trail.json       - full machine-readable numbers")
-        print(f"   (no corrected_dataset.csv -- no mitigation was performed on this data)")
-        print(f"{'='*80}\n")
+        logger.info(f"\n{'='*80}")
+        logger.info("PIPELINE STOPPED -- report saved (no mitigation was performed)")
+        logger.info(f"{'='*80}")
+        logger.info(f"   Results saved to: biasclean_results/")
+        logger.info(f"   Audit: {audit_results.get('recommendation', {}).get('traffic_light', 'N/A')}")
+        logger.info(f"   • {os.path.basename(report_path):<24} - explains why mitigation didn't run")
+        logger.info(f"   • audit_trail.json       - full machine-readable numbers")
+        logger.info(f"   (no corrected_dataset.csv -- no mitigation was performed on this data)")
+        logger.info(f"{'='*80}\n")
 
         return self.results
 
@@ -4974,32 +5908,36 @@ class UniversalBiasClean:
             Complete results dictionary with v3.0 monitoring
         """
         try:
+            # Workstream F: fresh per-run log file alongside audit_trail.json,
+            # attached before any phase output so the whole run is captured.
+            self._log_file_path = _setup_run_file_logging()
+
             # ================================================================
             # PHASE 1: DATASET LOADING
             # ================================================================
-            print(f"\n{'='*80}")
-            print("PHASE 1: DATASET LOADING")
-            print(f"{'='*80}")
+            logger.info(f"\n{'='*80}")
+            logger.info("PHASE 1: DATASET LOADING")
+            logger.info(f"{'='*80}")
 
             if df is not None:
                 self.original_df = df.copy()
-                print(f"Loaded DataFrame from memory")
+                logger.info(f"Loaded DataFrame from memory")
             elif file_path:
                 self.original_df = pd.read_csv(file_path)
-                print(f"Loaded CSV: {file_path}")
+                logger.info(f"Loaded CSV: {file_path}")
             else:
                 raise ValueError("Must provide either file_path or df")
 
-            print(f"   Records:  {len(self.original_df):,}")
-            print(f"   Columns:  {len(self.original_df.columns)}")
-            print(f"   Memory:   {self.original_df.memory_usage(deep=True).sum() / 1024**2:.2f} MB")
+            logger.info(f"   Records:  {len(self.original_df):,}")
+            logger.info(f"   Columns:  {len(self.original_df.columns)}")
+            logger.info(f"   Memory:   {self.original_df.memory_usage(deep=True).sum() / 1024**2:.2f} MB")
 
             # ================================================================
             # PHASE 2: HIERARCHICAL MAPPING
             # ================================================================
-            print(f"\n{'='*80}")
-            print("PHASE 2: HIERARCHICAL FEATURE MAPPING")
-            print(f"{'='*80}")
+            logger.info(f"\n{'='*80}")
+            logger.info("PHASE 2: HIERARCHICAL FEATURE MAPPING")
+            logger.info(f"{'='*80}")
 
             raw_mappings = self.mapper.map_dataset(self.original_df)
 
@@ -5009,16 +5947,16 @@ class UniversalBiasClean:
                 tier = mapping.get("tier", "unknown")
                 tier_counts[tier] = tier_counts.get(tier, 0) + 1
 
-            print(f"   Analyzed {len(raw_mappings)} columns:")
+            logger.info(f"   Analyzed {len(raw_mappings)} columns:")
             for tier, count in sorted(tier_counts.items()):
-                print(f"     • {tier.title()}: {count}")
+                logger.info(f"     • {tier.title()}: {count}")
 
             # ================================================================
             # PHASE 3: CONSTRAINT VALIDATION
             # ================================================================
-            print(f"\n{'='*80}")
-            print("PHASE 3: CONSTRAINT VALIDATION")
-            print(f"{'='*80}")
+            logger.info(f"\n{'='*80}")
+            logger.info("PHASE 3: CONSTRAINT VALIDATION")
+            logger.info(f"{'='*80}")
 
             # Determine target column.
             #
@@ -5038,20 +5976,85 @@ class UniversalBiasClean:
             # run. This is what makes "just press Enter" actually work
             # on real-world data instead of only on pre-cleaned samples.
             target_binarization_map = None
+            self._tied_outcome_candidates = []
             if target_column and target_column in self.original_df.columns:
                 final_target = target_column
-                print(f"   Using specified target: '{final_target}'")
+                logger.info(f"   Using specified target: '{final_target}'")
                 try:
                     coerced_target, target_binarization_map = coerce_binary_target(self.original_df, final_target)
                     self.original_df[final_target] = coerced_target
                 except ValueError as e:
                     raise ValueError(f"Cannot use '{final_target}' as the target column.\n{e}") from e
+            elif target_column:
+                # Workstream G (Phase 4): this branch used to not exist --
+                # a target_column that was truthy but NOT present in
+                # self.original_df.columns fell straight through to the
+                # auto-detection `else` below, silently ignoring the
+                # user's explicit request and picking a DIFFERENT column
+                # instead, with nothing in the console output or
+                # audit_trail.json indicating the requested column was
+                # ever missing. This directly contradicted this exact
+                # function's own comment two lines above ("no silent
+                # substitution when someone has told us exactly what
+                # they want"): the code and its own documented intent had
+                # drifted apart. A no-code user with a typo'd column name
+                # (or a column dropped during their own upstream cleanup)
+                # would get a complete-looking report auditing bias
+                # against a column they never asked for, with no
+                # indication anything had gone differently than
+                # requested -- silent wrong-behavior, not a crash, and
+                # arguably worse for exactly that reason. Found via
+                # Workstream G's own audit rather than a hard failure.
+                available_preview = ", ".join(list(self.original_df.columns)[:15])
+                more = "" if len(self.original_df.columns) <= 15 else f", ... and {len(self.original_df.columns) - 15} more"
+                raise ValueError(
+                    f"Target column '{target_column}' was not found in this "
+                    f"dataset. Available columns include: {available_preview}"
+                    f"{more}. Check for a typo, or omit target_column to let "
+                    f"auto-detection pick a candidate instead."
+                )
             else:
                 outcome_candidates = []
                 for col, mapping in raw_mappings.items():
                     if mapping.get("feature") == "__outcome__":
                         outcome_candidates.append((col, mapping.get("confidence", 0), "outcome-pattern match"))
                 outcome_candidates.sort(key=lambda x: x[1], reverse=True)
+
+                # BUG FIX (v3.7.4): when two or more outcome-pattern candidates
+                # tie at the same top confidence (e.g. COMPAS's is_recid,
+                # is_violent_recid, and two_year_recid all match at 90%),
+                # sort() being stable means the winner was decided purely by
+                # which column happened to come first in the CSV's original
+                # column order -- not by anything principled, since there is
+                # no statistical basis for preferring one recidivism
+                # definition over another; that's a domain judgment call.
+                # The real problem wasn't the tie-break itself (there's no
+                # "more correct" answer to auto-detect toward) but that nobody
+                # running the pipeline could see the tie ever happened -- only
+                # the winner was ever printed. Found when a is_recid-based
+                # result was compared against a differently-run two_year_recid
+                # benchmark without anyone noticing they were different
+                # outcome definitions for several days of downstream work.
+                # Fixed: store every top-confidence-tied candidate so both the
+                # console output and the audit trail can surface the ambiguity
+                # explicitly, without changing which column ends up selected
+                # (auto-proceeding with one is still correct for the
+                # non-technical "just press Enter" workflow this project
+                # deliberately targets -- the fix is visibility, not a
+                # different selection algorithm).
+                self._tied_outcome_candidates = []
+                if len(outcome_candidates) > 1:
+                    top_confidence = outcome_candidates[0][1]
+                    tied = [c for c in outcome_candidates if c[1] == top_confidence]
+                    if len(tied) > 1:
+                        self._tied_outcome_candidates = [c[0] for c in tied]
+                        logger.warning(f"   ⚠️  {len(tied)} columns matched the outcome pattern at equal "
+                              f"{top_confidence:.0%} confidence: {', '.join(c[0] for c in tied)}")
+                        logger.info(f"      Only one will be auto-selected below (by column order, not "
+                              f"by which definition is 'correct' -- that's a domain judgment call "
+                              f"auto-detection can't make). If these represent genuinely different "
+                              f"outcome definitions, consider re-running with the target specified "
+                              f"explicitly to confirm the right one for your analysis.")
 
                 # Exclude columns already recognized as protected attributes
                 # (Gender, Ethnicity, Age, etc.) from the fallback search --
@@ -5110,12 +6113,12 @@ class UniversalBiasClean:
                     final_target = col
                     self.original_df[final_target] = coerced_target
                     label = f"{confidence:.0%} confidence, {reason}" if reason == "outcome-pattern match" else reason
-                    print(f"   Auto-detected target: '{final_target}' ({label})")
+                    logger.info(f"   Auto-detected target: '{final_target}' ({label})")
                     break
 
                 if skipped:
                     for col, why in skipped:
-                        print(f"   Skipped '{col}' as target candidate: {why}")
+                        logger.info(f"   Skipped '{col}' as target candidate: {why}")
 
                 if final_target is None:
                     raise ValueError(
@@ -5127,20 +6130,20 @@ class UniversalBiasClean:
             self.target_binarization_map = target_binarization_map
             if target_binarization_map:
                 mapping_str = ", ".join(f"'{k}'→{v}" for k, v in target_binarization_map.items())
-                print(f"   Target '{final_target}' converted to binary: {mapping_str}")
+                logger.info(f"   Target '{final_target}' converted to binary: {mapping_str}")
 
             # Validate outcome
             outcome_validation = self.validator.validate_outcome(self.original_df, final_target)
 
             if outcome_validation.get("errors"):
-                print(f"   Outcome validation errors:")
+                logger.info(f"   Outcome validation errors:")
                 for error in outcome_validation["errors"]:
-                    print(f"      • {error}")
+                    logger.info(f"      • {error}")
 
             if outcome_validation.get("warnings"):
-                print(f"   Outcome validation warnings:")
+                logger.info(f"   Outcome validation warnings:")
                 for warning in outcome_validation["warnings"][:3]:  # Show first 3
-                    print(f"      • {warning}")
+                    logger.warning(f"      • {warning}")
 
             # Validate all mappings
             validated_proposals = {}
@@ -5174,17 +6177,17 @@ class UniversalBiasClean:
                     else:
                         validated_proposals[column] = [mapping]
 
-            print(f"\n   Validation Summary:")
-            print(f"     Passed:   {validation_summary['passed']}")
-            print(f"     Warnings: {validation_summary['warnings']}")
-            print(f"     Errors:   {validation_summary['errors']}")
+            logger.info(f"\n   Validation Summary:")
+            logger.info(f"     Passed:   {validation_summary['passed']}")
+            logger.info(f"     Warnings: {validation_summary['warnings']}")
+            logger.info(f"     Errors:   {validation_summary['errors']}")
 
             # ================================================================
             # PHASE 4: MAPPING CONFIRMATION (AUTO-APPROVAL)
             # ================================================================
-            print(f"\n{'='*80}")
-            print("PHASE 4: MAPPING CONFIRMATION")
-            print(f"{'='*80}")
+            logger.info(f"\n{'='*80}")
+            logger.info("PHASE 4: MAPPING CONFIRMATION")
+            logger.info(f"{'='*80}")
 
             self.approved_mappings = self.ui.auto_approve_high_confidence(
                 validated_proposals, threshold=auto_approve_threshold,
@@ -5197,9 +6200,9 @@ class UniversalBiasClean:
             # ================================================================
             # PHASE 5: PREPARE FOR BIAS ANALYSIS
             # ================================================================
-            print(f"\n{'='*80}")
-            print("PHASE 5: PREPARATION FOR BIAS ANALYSIS")
-            print(f"{'='*80}")
+            logger.info(f"\n{'='*80}")
+            logger.info("PHASE 5: PREPARATION FOR BIAS ANALYSIS")
+            logger.info(f"{'='*80}")
 
             # Build feature map (exclude outcome and excluded columns).
             # v3.6.7: selection is now validation-aware (see
@@ -5225,19 +6228,19 @@ class UniversalBiasClean:
             self.engine._feature_map = feature_map
             self.engine._target_column = final_target
 
-            print(f"   Target column: '{final_target}'")
-            print(f"   Features for analysis (with domain weights):")
+            logger.info(f"   Target column: '{final_target}'")
+            logger.info(f"   Features for analysis (with domain weights):")
             for feature, column in feature_map.items():
                 weight = self.config["weights"].get(feature, 0.05)
-                print(f"     • {feature:25} ← {column:30} (weight: {weight:.2f})")
+                logger.info(f"     • {feature:25} ← {column:30} (weight: {weight:.2f})")
 
             # ================================================================
             # PHASE 3.5: PRE-MITIGATION AUDIT (v3.0 NEW)
             # ================================================================
             if self.mode in [config.MODE_AUDIT_FIRST, config.MODE_AUDIT_ONLY]:
-                print(f"\n{'='*80}")
-                print("PHASE 3.5: PRE-MITIGATION AUDIT (v3.0)")
-                print(f"{'='*80}")
+                logger.info(f"\n{'='*80}")
+                logger.info("PHASE 3.5: PRE-MITIGATION AUDIT (v3.0)")
+                logger.info(f"{'='*80}")
 
                 # Convert approved_mappings to feature_map format for auditor
                 # (v3.6.7: same validation-aware selection as PHASE 5, so the
@@ -5257,22 +6260,22 @@ class UniversalBiasClean:
 
                 # Block if RED
                 if not audit_results["recommendation"]["proceed"]:
-                    print(f"\n🛑 MITIGATION BLOCKED by v3.0 Audit")
+                    logger.info(f"\n🛑 MITIGATION BLOCKED by v3.0 Audit")
                     return self._compile_audit_only_results(audit_results, final_target, feature_map)
 
                 # Stop if audit-only mode
                 if self.mode == config.MODE_AUDIT_ONLY:
-                    print(f"\n🔍 AUDIT-ONLY MODE - STOPPING")
+                    logger.info(f"\n🔍 AUDIT-ONLY MODE - STOPPING")
                     return self._compile_audit_only_results(audit_results, final_target, feature_map)
 
-                print(f"\n✅ AUDIT APPROVED - PROCEEDING")
+                logger.info(f"\n✅ AUDIT APPROVED - PROCEEDING")
 
             # ================================================================
             # PHASE 6: BIAS DETECTION & STATISTICAL DIAGNOSIS (v2.7 ENHANCED)
             # ================================================================
-            print(f"\n{'='*80}")
-            print("PHASE 6: BIAS DETECTION & STATISTICAL DIAGNOSIS")
-            print(f"{'='*80}")
+            logger.info(f"\n{'='*80}")
+            logger.info("PHASE 6: BIAS DETECTION & STATISTICAL DIAGNOSIS")
+            logger.info(f"{'='*80}")
 
             # Initialize v2.7 monitoring components
             stage_tracker = EnhancedStageScoreTracker(self.config["weights"])
@@ -5294,8 +6297,8 @@ class UniversalBiasClean:
                 confidence_calculator
             )
 
-            print(f"\n   Initial Bias Score: {diagnostic_results['initial_bias_score']:.4f}")
-            print(f"   Significant Biases: {diagnostic_results['significant_bias_count']}")
+            logger.info(f"\n   Initial Bias Score: {diagnostic_results['initial_bias_score']:.4f}")
+            logger.info(f"   Significant Biases: {diagnostic_results['significant_bias_count']}")
 
             # v2.7: Print statistical confidence
             if 'statistical_confidence' in diagnostic_results:
@@ -5304,12 +6307,12 @@ class UniversalBiasClean:
                     bias_score = conf.get('bias_score', 0)
                     ci_lower = conf.get('ci_lower', 0)
                     ci_upper = conf.get('ci_upper', 0)
-                    print(f"   Statistical Confidence: {bias_score:.4f} [{ci_lower:.4f}, {ci_upper:.4f}] (95% CI)")
+                    logger.info(f"   Statistical Confidence: {bias_score:.4f} [{ci_lower:.4f}, {ci_upper:.4f}] (95% CI)")
                     if conf.get('significant', False):
-                        print(f"   ✓ Statistically significant bias detected")
+                        logger.info(f"   ✓ Statistically significant bias detected")
 
             if diagnostic_results.get("feature_tests"):
-                print(f"\n   Statistical Tests (sorted by domain weight):")
+                logger.info(f"\n   Statistical Tests (sorted by domain weight):")
                 # Sort by weight
                 sorted_tests = sorted(
                     diagnostic_results["feature_tests"].items(),
@@ -5321,17 +6324,17 @@ class UniversalBiasClean:
                     p_val = test.get("p_value", 1.0)
                     weight = self.config["weights"].get(feature, 0.05)
                     threshold = test.get("threshold_used", 0.05)  # Show weight-adjusted threshold
-                    print(f"     • {feature:25} p={p_val:.6f}  {sig}  (weight: {weight:.2f}, threshold: {threshold:.3f})")
+                    logger.info(f"     • {feature:25} p={p_val:.6f}  {sig}  (weight: {weight:.2f}, threshold: {threshold:.3f})")
 
             # ============================================================================
             # PHASE 7: BIAS MITIGATION (WEIGHT-PRIORITIZED) + SVM FAIRNESS ENFORCEMENT
             # ============================================================================
             if diagnostic_results["requires_mitigation"]:
-                print(f"\n{'='*80}")
-                print("PHASE 7: WEIGHT-PRIORITIZED BIAS MITIGATION + SVM FAIRNESS ENFORCEMENT")
-                print(f"{'='*80}")
+                logger.info(f"\n{'='*80}")
+                logger.info("PHASE 7: WEIGHT-PRIORITIZED BIAS MITIGATION + SVM FAIRNESS ENFORCEMENT")
+                logger.info(f"{'='*80}")
 
-                print(f"   Applying weight-prioritized rebalancing...")
+                logger.info(f"   Applying weight-prioritized rebalancing...")
 
                 self.corrected_df = self.engine.transform_industry(
                     self.original_df, diagnostic_results, rebalance_method=self.rebalance_method
@@ -5408,11 +6411,11 @@ class UniversalBiasClean:
                     "near_parity_reversals": near_parity_reversals,
                 }
                 if actionable_reversals:
-                    print(f"\n   ⛔ REBALANCE GATE: regulator did not fully prevent a reversal in: "
+                    logger.warning(f"\n   ⛔ REBALANCE GATE: regulator did not fully prevent a reversal in: "
                           f"{', '.join(actionable_reversals)}. Flagged for manual review -- see "
                           f"audit_trail.json's rebalance_gate block.")
                 if near_parity_reversals:
-                    print(f"\n   ℹ️  Near-parity rank swap (not gated -- gap below this feature's "
+                    logger.warning(f"\n   ℹ️  Near-parity rank swap (not gated -- gap below this feature's "
                           f"own disparity threshold): {', '.join(near_parity_reversals)}")
 
                 # v2.7: Log rebalancing sampling changes
@@ -5446,20 +6449,20 @@ class UniversalBiasClean:
                 initial_bias = diagnostic_results["initial_bias_score"]
                 improvement = ((initial_bias - final_bias) / initial_bias * 100) if initial_bias > 0 else 0
 
-                print(f"\n   Bias Score: {initial_bias:.4f} → {final_bias:.4f}")
-                print(f"   Improvement: {improvement:+.1f}%")
+                logger.info(f"\n   Bias Score: {initial_bias:.4f} → {final_bias:.4f}")
+                logger.info(f"   Improvement: {improvement:+.1f}%")
 
                 # Validate results
                 validation = self.engine.validate_industry_readiness(
                     self.original_df, self.corrected_df, diagnostic_results
                 )
 
-                print(f"\n   Data Integrity:")
-                print(f"     • Records: {validation['data_integrity']['records_before']:,} → {validation['data_integrity']['records_after']:,}")
-                print(f"     • Retention: {validation['data_integrity']['retention_rate']:.1f}%")
+                logger.info(f"\n   Data Integrity:")
+                logger.info(f"     • Records: {validation['data_integrity']['records_before']:,} → {validation['data_integrity']['records_after']:,}")
+                logger.info(f"     • Retention: {validation['data_integrity']['retention_rate']:.1f}%")
 
                 if validation.get("fairness_improvement"):
-                    print(f"\n   Fairness Improvements (sorted by weight):")
+                    logger.info(f"\n   Fairness Improvements (sorted by weight):")
                     # Sort by weight
                     sorted_improvements = sorted(
                         validation["fairness_improvement"].items(),
@@ -5469,13 +6472,13 @@ class UniversalBiasClean:
                     for feature, imp in sorted_improvements:
                         icon = "✅" if imp > 0 else "⚠️"
                         weight = self.config["weights"].get(feature, 0.05)
-                        print(f"     {icon} {feature:25} {imp:+.1f}%  (weight: {weight:.2f})")
+                        logger.info(f"     {icon} {feature:25} {imp:+.1f}%  (weight: {weight:.2f})")
 
                 # ========================================================================
                 # SVM FAIRNESS ENFORCEMENT (v3.0: Configurable)
                 # ========================================================================
                 if self.enable_svm:
-                    print(f"\n   Applying SVM fairness enforcement...")
+                    logger.info(f"\n   Applying SVM fairness enforcement...")
 
                     # Determine primary protected attribute for SVM monitoring
                     primary_protected_attr = None
@@ -5590,7 +6593,7 @@ class UniversalBiasClean:
                             svm_bias_score is not None and svm_bias_score > pre_svm_bias
                         )
                         if svm_worsened_fairness:
-                            print(f"\n   ⚠️  WARNING: SVM enforcement INCREASED measured bias "
+                            logger.warning(f"\n   ⚠️  WARNING: SVM enforcement INCREASED measured bias "
                                   f"({pre_svm_bias:.4f} → {svm_bias_score:.4f}). The SVM stage "
                                   f"reports disparity in its OWN predictions, not the rebalanced "
                                   f"data's real outcome rates -- a poorly-fit or miscalibrated "
@@ -5635,7 +6638,7 @@ class UniversalBiasClean:
                                     target_before=final_target
                                 )
                         except Exception as e:
-                            print(f"       (Post-SVM reversal check unavailable: {e})")
+                            logger.warning(f"       (Post-SVM reversal check unavailable: {e})")
 
                         # v3.3.0: mandatory validation gate. A classifier stage
                         # that claims to improve fairness must actually be
@@ -5715,8 +6718,8 @@ class UniversalBiasClean:
                                     f"rebalancing: {', '.join(new_reversals)}"
                                 )
                             gate_reason_text = "; ".join(gate_reasons)
-                            print(f"\n   ⛔ VALIDATION GATE: rejecting SVM/classifier output -- {gate_reason_text}.")
-                            print(f"   Falling back to rebalanced predictions for the final stage.")
+                            logger.warning(f"\n   ⛔ VALIDATION GATE: rejecting SVM/classifier output -- {gate_reason_text}.")
+                            logger.info(f"   Falling back to rebalanced predictions for the final stage.")
                             self.svm_gate = {
                                 'accepted': False,
                                 'reason': gate_reason_text,
@@ -5755,16 +6758,16 @@ class UniversalBiasClean:
                             # suite for the first time.
                             svm_validation['post_svm_bias_score'] = pre_svm_bias
 
-                        print(f"\n   SVM Fairness Enforcement Complete:")
+                        logger.info(f"\n   SVM Fairness Enforcement Complete:")
                         if svm_results.get('validation_accuracy'):
-                            print(f"     • Validation accuracy: {svm_results['validation_accuracy']:.1%}")
-                        print(f"     • Full dataset accuracy: {svm_results['full_accuracy']:.1%}")
-                        print(f"     • SVM method: {svm_results.get('svm_method_used', 'legacy')}")
-                        print(f"     • Validation gate: {'ACCEPTED' if self.svm_gate.get('accepted') else 'REJECTED (' + self.svm_gate.get('reason', '') + ')'}")
-                        print(f"     • SVM fairness predictions added as 'svm_fair_target' column")
-                        print(f"     • BiasClean predictions preserved as 'biasclean_target' column")
+                            logger.info(f"     • Validation accuracy: {svm_results['validation_accuracy']:.1%}")
+                        logger.info(f"     • Full dataset accuracy: {svm_results['full_accuracy']:.1%}")
+                        logger.info(f"     • SVM method: {svm_results.get('svm_method_used', 'legacy')}")
+                        logger.warning(f"     • Validation gate: {'ACCEPTED' if self.svm_gate.get('accepted') else 'REJECTED (' + self.svm_gate.get('reason', '') + ')'}")
+                        logger.info(f"     • SVM fairness predictions added as 'svm_fair_target' column")
+                        logger.info(f"     • BiasClean predictions preserved as 'biasclean_target' column")
                         if 'disparity' in svm_results['fairness_metrics']:
-                            print(f"     • Group disparity: {svm_results['fairness_metrics']['disparity']:.3f}")
+                            logger.info(f"     • Group disparity: {svm_results['fairness_metrics']['disparity']:.3f}")
 
                     except _SVMSkippedNoFeatures as e:
                         # v3.5.0: a clean, deliberate skip -- NOT a crash.
@@ -5772,8 +6775,8 @@ class UniversalBiasClean:
                         # messaging/labeling instead of "SVM enforcement
                         # failed", which would misrepresent a safe,
                         # intentional decision as an error.
-                        print(f"\n   ⏸️  SVM SKIPPED: {e}")
-                        print(f"   Continuing with BiasClean-only mitigation...")
+                        logger.info(f"\n   ⏸️  SVM SKIPPED: {e}")
+                        logger.info(f"   Continuing with BiasClean-only mitigation...")
                         svm_validation = {
                             'svm_applied': False,
                             'reason': f'SVM skipped -- {e}',
@@ -5793,8 +6796,8 @@ class UniversalBiasClean:
                         )
                         stage_tracker.stages['final'] = stage_tracker.stages['svm']
                     except Exception as e:
-                        print(f"\n   ⚠️ SVM enforcement failed: {str(e)}")
-                        print(f"   Continuing with BiasClean-only mitigation...")
+                        logger.warning(f"\n   ⚠️ SVM enforcement failed: {str(e)}")
+                        logger.info(f"   Continuing with BiasClean-only mitigation...")
                         svm_validation = {
                             'svm_error': str(e),
                             'svm_applied': False
@@ -5810,7 +6813,7 @@ class UniversalBiasClean:
                         self.corrected_df['svm_fair_target'] = self.corrected_df[final_target].copy()
                         stage_tracker.stages['final'] = stage_tracker.stages['rebalanced']
                 else:
-                    print(f"\n   ⏸️  SVM DISABLED - USING REBALANCED PREDICTIONS")
+                    logger.info(f"\n   ⏸️  SVM DISABLED - USING REBALANCED PREDICTIONS")
                     svm_validation = {
                         'svm_applied': False,
                         'reason': 'Using rebalanced predictions directly',
@@ -5825,7 +6828,7 @@ class UniversalBiasClean:
                     # Use rebalanced data as final output (no SVM corruption)
                     self.corrected_df['biasclean_target'] = self.corrected_df[final_target].copy()
                     self.corrected_df['svm_fair_target'] = self.corrected_df[final_target].copy()  # Same as rebalanced
-                    print(f"   ✓ Final bias score: {svm_validation['post_svm_bias_score']:.4f}")
+                    logger.info(f"   ✓ Final bias score: {svm_validation['post_svm_bias_score']:.4f}")
 
                     # v2.7: Record stage with rebalanced data
                     stage_tracker.record_stage(
@@ -5839,12 +6842,165 @@ class UniversalBiasClean:
                     )
                     stage_tracker.stages['final'] = stage_tracker.stages['svm']
 
+                # BUG FIX (v3.7.2): validation['final_disparities'] (and the
+                # fairness_improvement / absolute_disparity_reduction derived
+                # from it) were computed once above at PHASE 7's rebalancing
+                # step, BEFORE the SVM block even starts, and never revisited
+                # -- see the v3.7.2 changelog entry for the full root-cause
+                # writeup and the real Communities & Crime run that surfaced
+                # it. Recompute the "final" side against whichever column
+                # actually holds the pipeline's true final predictions:
+                # 'svm_fair_target' when self.corrected_df has it (every SVM
+                # branch above sets it -- accepted, gate-rejected [already
+                # falls back to biasclean_target inside that same column],
+                # skipped, errored, or disabled all leave 'svm_fair_target'
+                # holding the correct effective-final values), else
+                # final_target (only when no SVM stage of any kind ran).
+                # initial_disparities is untouched -- it's computed against
+                # self.original_df, which SVM never touches, so it was never
+                # wrong; only the final/improvement side needs redoing.
+                effective_final_target = (
+                    'svm_fair_target'
+                    if (self.corrected_df is not None and 'svm_fair_target' in self.corrected_df.columns)
+                    else final_target
+                )
+                if effective_final_target != final_target and self.corrected_df is not None:
+                    for feature, test_result in diagnostic_results.get("feature_tests", {}).items():
+                        if not test_result.get("significant_bias", False):
+                            continue
+                        column_name = test_result.get("column_name")
+                        if not column_name or column_name not in self.corrected_df.columns:
+                            continue
+                        before = validation["initial_disparities"].get(feature)
+                        after = self.engine._calculate_disparity_direct(
+                            self.corrected_df, column_name, effective_final_target
+                        )
+                        validation["final_disparities"][feature] = after
+                        if before is not None and before > 0:
+                            validation["fairness_improvement"][feature] = ((before - after) / before) * 100
+                            validation["absolute_disparity_reduction"][feature] = before - after
+
+                        # PHASE 3.5, Workstream C: the worst-group figure
+                        # needs the same post-SVM recompute as the CV
+                        # figure just above it, for the same reason bug #6
+                        # existed -- otherwise this new field would freeze
+                        # at the pre-SVM snapshot on day one.
+                        worst_before = validation["initial_worst_group_deviation"].get(feature)
+                        worst_group_after, worst_after = self.engine._calculate_worst_group_deviation_direct(
+                            self.corrected_df, column_name, effective_final_target
+                        )
+                        validation["final_worst_group"][feature] = worst_group_after
+                        validation["final_worst_group_deviation"][feature] = worst_after
+                        if worst_before is not None and worst_before > 0:
+                            validation["worst_group_improvement_pct"][feature] = (
+                                (worst_before - worst_after) / worst_before
+                            ) * 100
+
+                # PHASE 3.5, Workstream A: worst-group safeguard (warn-only).
+                # This is deliberately NOT a gate yet -- per the Phase 3.5
+                # SOP, the plan is to see what this actually flags across
+                # real datasets first, before deciding whether it should
+                # ever reject a correction the way svm_gate already does
+                # for identity-reversals. This check asks a different
+                # question than reversal_checks: not "did the disadvantaged
+                # group's IDENTITY change" but "did ANY group's OWN
+                # deviation from parity get WORSE in magnitude" -- the
+                # exact gap reversal_checks cannot see, since a feature's
+                # composite/CV score can improve even while a specific
+                # group is left worse off (the real North Carolina Gender
+                # case that motivated this: a near-null 0.0025 raw gap
+                # widened to 0.0060 after correction, invisible to every
+                # existing gate because the dataset's other features
+                # carried the composite average).
+                #
+                # Two trigger conditions, matching the SOP's proposed
+                # tolerance: (1) the worst group's own deviation got more
+                # than 10% relatively worse, or (2) the gap started under
+                # the near-null floor (reusing 0.05, the same number as
+                # the composite mitigation threshold, so this project has
+                # one shared definition of "near-null" rather than two)
+                # and widened at all, however small the relative percentage
+                # looks. Condition 2 exists because a tiny absolute change
+                # on an already-tiny base can look like a huge percentage
+                # (or a deceptively small one) and either way deserves a
+                # human's attention, not a threshold's assumption.
+                self.worst_group_regressions = []
+                _tolerance_pct = -10.0
+                _near_null_floor = 0.05
+                for feature in validation.get("initial_worst_group_deviation", {}):
+                    before_dev = validation["initial_worst_group_deviation"].get(feature)
+                    after_dev = validation["final_worst_group_deviation"].get(feature)
+                    if before_dev is None or after_dev is None:
+                        continue
+                    pct = validation.get("worst_group_improvement_pct", {}).get(feature)
+                    reason = None
+                    if pct is not None and pct < _tolerance_pct:
+                        reason = f"worst-group deviation worsened by {abs(pct):.1f}% (relative)"
+                    elif before_dev < _near_null_floor and after_dev > before_dev:
+                        reason = f"a near-null gap ({before_dev:.4f}) widened to {after_dev:.4f}"
+                    if reason:
+                        group = validation.get("final_worst_group", {}).get(feature)
+
+                        # PHASE 3.5, Workstream A+B integration (Hamid's
+                        # chosen option: wire Workstream B in as an
+                        # ADDITIONAL signal alongside Workstream A's
+                        # existing magnitude check, not as a replacement
+                        # for requires_mitigation's composite pre-check,
+                        # which is deliberately left untouched). Cross-
+                        # references this regression against Workstream
+                        # B's dual-criteria test on the SAME feature's
+                        # post-correction data: is the resulting gap
+                        # itself still statistically AND practically
+                        # distinguishable from parity, or is Workstream A
+                        # flagging a real relative worsening that landed
+                        # on an absolute gap too small to matter? These
+                        # can genuinely disagree -- verified on real North
+                        # Carolina data: Gender is a relative 136.6%
+                        # regression (Workstream A fires) whose resulting
+                        # ratio (1.005) is still practically negligible
+                        # (Workstream B's dual test says False) -- both
+                        # true at once, not a contradiction. Two
+                        # independent lenses agreeing (as they do on this
+                        # project's Age/Region findings) is a much
+                        # stronger signal for a reviewer than either
+                        # alone; two lenses disagreeing (as on Gender) is
+                        # itself useful context, not noise to suppress.
+                        dual_significant_final = None
+                        test_result = diagnostic_results.get("feature_tests", {}).get(feature, {})
+                        column_name = test_result.get("column_name")
+                        if column_name and self.corrected_df is not None and effective_final_target:
+                            ci_result = self.engine._worst_group_ratio_ci_direct(
+                                self.corrected_df, column_name, effective_final_target
+                            )
+                            if ci_result:
+                                dual_significant_final = ci_result.get("dual_criteria_significant")
+
+                        self.worst_group_regressions.append({
+                            "feature": feature,
+                            "worst_group": group,
+                            "deviation_initial": before_dev,
+                            "deviation_final": after_dev,
+                            "reason": reason,
+                            "dual_criteria_significant_final": dual_significant_final,
+                        })
+                        _dual_note = (
+                            "the resulting gap is ALSO statistically and practically significant -- two independent checks agree this needs attention"
+                            if dual_significant_final is True
+                            else "but the resulting gap itself is not statistically+practically significant (may be a relative worsening of an already-small gap)"
+                            if dual_significant_final is False
+                            else "dual-criteria significance could not be computed for this feature"
+                        )
+                        logger.warning(f"   ⚠️  WORST-GROUP SAFEGUARD (warn-only, not gated): {feature}'s "
+                              f"worst-off group ('{group}') -- {reason}. This can happen even "
+                              f"when the feature's own average/composite score improved. "
+                              f"Needs manual review -- {_dual_note}.")
+
             # ============================================================================
             # PHASE 8: RESULTS COMPILATION WITH v3.0 ENHANCEMENTS
             # ============================================================================
-            print(f"\n{'='*80}")
-            print("PHASE 8: COMPILING RESULTS (v3.0 ENHANCED)")
-            print(f"{'='*80}")
+            logger.info(f"\n{'='*80}")
+            logger.info("PHASE 8: COMPILING RESULTS (v3.0 ENHANCED)")
+            logger.info(f"{'='*80}")
 
             # FIX: Ensure svm_validation exists even if no mitigation
             if not diagnostic_results.get("requires_mitigation", False):
@@ -5900,15 +7056,15 @@ class UniversalBiasClean:
                 stage_tracker if 'stage_tracker' in locals() else None
             )
 
-            print(f"   Results compiled successfully")
+            logger.info(f"   Results compiled successfully")
 
             # FIXED: Check if svm_validation exists and if SVM was applied
             if svm_validation.get('svm_applied', False):
-                print(f"   • SVM fairness enforcement included")
+                logger.info(f"   • SVM fairness enforcement included")
             else:
-                print(f"   • BiasClean-only mitigation")
+                logger.info(f"   • BiasClean-only mitigation")
                 if svm_validation.get('reason'):
-                    print(f"   • Reason: {svm_validation['reason']}")
+                    logger.info(f"   • Reason: {svm_validation['reason']}")
 
             # ================================================================
             # PHASE 9: SAVE RESULTS (v3.1 consolidated data export)
@@ -5924,23 +7080,23 @@ class UniversalBiasClean:
             # ================================================================
             # PHASE 10: GENERATE REPORT (charts embedded, no separate PNGs)
             # ================================================================
-            print(f"\n{'='*80}")
-            print("PHASE 10: GENERATING REPORT")
-            print(f"{'='*80}")
+            logger.info(f"\n{'='*80}")
+            logger.info("PHASE 10: GENERATING REPORT")
+            logger.info(f"{'='*80}")
 
             # Generate visualizations as in-memory base64 PNGs
             charts = {}
             try:
-                print("\n   Generating charts...")
+                logger.info("\n   Generating charts...")
                 charts["Outcome Rates by Group, Before vs. After"] = self.viz.plot_disparity_comparison(
                     self.original_df, self.corrected_df, feature_map, final_target
                 )
                 if validation.get("fairness_improvement"):
                     charts["Fairness Improvement by Feature"] = self.viz.plot_feature_improvements(validation)
                 charts["Record Count Before vs. After"] = self.viz.plot_data_integrity(validation)
-                print(f"   {sum(1 for v in charts.values() if v)} chart(s) generated")
+                logger.info(f"   {sum(1 for v in charts.values() if v)} chart(s) generated")
             except Exception as e:
-                print(f"   Chart generation failed: {str(e)}")
+                logger.info(f"   Chart generation failed: {str(e)}")
 
             # Generate reports: one console summary + one report.pdf
             # (plain-language summary, then technical detail on its own
@@ -5948,7 +7104,7 @@ class UniversalBiasClean:
             # scientific/governance document, not a web page)
             report_path = "biasclean_results/report.pdf"
             try:
-                print("\n   Generating report...")
+                logger.info("\n   Generating report...")
                 self.reporter.print_console_report(self.results)
                 report_path = self.reporter.generate_report(
                     self.results,
@@ -5956,30 +7112,30 @@ class UniversalBiasClean:
                     charts=charts
                 )
             except Exception as e:
-                print(f"   Report generation failed: {str(e)}")
+                logger.info(f"   Report generation failed: {str(e)}")
 
             # ================================================================
             # FINAL SUCCESS MESSAGE
             # ================================================================
-            print(f"\n{'='*80}")
-            print("PIPELINE COMPLETED SUCCESSFULLY!")
-            print(f"{'='*80}")
-            print(f"   Results saved to: biasclean_results/")
+            logger.info(f"\n{'='*80}")
+            logger.info("PIPELINE COMPLETED SUCCESSFULLY!")
+            logger.info(f"{'='*80}")
+            logger.info(f"   Results saved to: biasclean_results/")
             if hasattr(self, 'audit_results'):
-                print(f"   Audit: {self.audit_results['recommendation']['traffic_light']}")
-            print(f"   • {os.path.basename(report_path):<24} - open this first (Summary + Technical Detail)")
-            print(f"   • corrected_dataset.csv  - rebalanced data")
-            print(f"   • audit_trail.json       - full machine-readable numbers")
-            print(f"{'='*80}\n")
+                logger.info(f"   Audit: {self.audit_results['recommendation']['traffic_light']}")
+            logger.info(f"   • {os.path.basename(report_path):<24} - open this first (Summary + Technical Detail)")
+            logger.info(f"   • corrected_dataset.csv  - rebalanced data")
+            logger.info(f"   • audit_trail.json       - full machine-readable numbers")
+            logger.info(f"{'='*80}\n")
 
             return self.results
 
         except Exception as e:
-            print(f"\n{'='*80}")
-            print(f"PIPELINE FAILED")
-            print(f"{'='*80}")
-            print(f"Error: {str(e)}")
-            print(f"{'='*80}\n")
+            logger.info(f"\n{'='*80}")
+            logger.error(f"PIPELINE FAILED")
+            logger.info(f"{'='*80}")
+            logger.error(f"Error: {str(e)}")
+            logger.info(f"{'='*80}\n")
             raise
 
     def _run_statistical_diagnosis_v27(self, feature_map: Dict, target_column: str) -> Dict:
@@ -6100,6 +7256,17 @@ class UniversalBiasClean:
             "rebalance_log": getattr(self, "rebalance_log", []),
             "reversal_checks": getattr(self, "reversal_checks", {}),
             "svm_reversal_checks": getattr(self, "svm_reversal_checks", {}),
+            # BUG FIX (v3.7.4): other outcome-pattern columns that tied at
+            # the same top confidence as the auto-selected target_column,
+            # if any -- see PHASE 3's tie-break comment for the full
+            # root-cause writeup. Empty list means either the target was
+            # specified explicitly, or auto-detection had no ambiguity.
+            "tied_outcome_candidates": getattr(self, "_tied_outcome_candidates", []),
+            # PHASE 3.5, Workstream A: warn-only worst-group safeguard --
+            # see PHASE 7's comment for the full design writeup. Empty
+            # list means no group's own deviation from parity got worse
+            # by more than the tolerance, or mitigation never ran.
+            "worst_group_regressions": getattr(self, "worst_group_regressions", []),
             # v3.3.0: the Smart SVM validation gate's accept/reject decision --
             # see the gate logic in PHASE 7 for what it checks and why.
             "svm_gate": getattr(self, "svm_gate", {}),
@@ -6175,8 +7342,25 @@ class UniversalBiasClean:
         # (or, previously, never persisting them anywhere at all).
         feature_map = results.get("feature_map", {})
         target_column = results.get("target_column")
-        if self.corrected_df is not None and target_column:
-            results["group_rates_final"] = self._compute_group_rates(self.corrected_df, feature_map, target_column)
+        # BUG FIX (v3.7.2): group_rates_final used to always read from
+        # target_column (== final_target, the pre-SVM rebalancing-stage
+        # target) even when SVM ran and produced a different, real final
+        # result in the separate 'svm_fair_target' column. Since this feeds
+        # BOTH audit_trail.json's per-feature group_rates_final AND
+        # report.pdf's plain-language findings (_plain_feature_findings
+        # reads results["group_rates_final"] directly), every per-feature
+        # narrative silently reported the pre-SVM snapshot -- see the
+        # v3.7.2 changelog entry for the real Communities & Crime run that
+        # surfaced this (report said a group's gap "stayed essentially
+        # unchanged at 94.1 percentage points" while audit_trail.json's own
+        # svm_reversal_checks already showed it had closed to ~40%).
+        effective_target_column = (
+            'svm_fair_target'
+            if (self.corrected_df is not None and 'svm_fair_target' in self.corrected_df.columns)
+            else target_column
+        )
+        if self.corrected_df is not None and effective_target_column:
+            results["group_rates_final"] = self._compute_group_rates(self.corrected_df, feature_map, effective_target_column)
         else:
             results["group_rates_final"] = {}
         results["feature_interactions"] = self._compute_feature_interactions(diagnostic_results, validation)
@@ -6237,18 +7421,51 @@ class UniversalBiasClean:
         os.makedirs("biasclean_results", exist_ok=True)
 
         if self.corrected_df is not None:
+            # BUG FIX (v3.7.3): this comment used to say
+            # 'biasclean_target'/'svm_fair_target' "are exact duplicates
+            # of the real target column" -- true only when SVM never ran
+            # or was gate-rejected. When SVM ran AND was accepted as
+            # genuinely different from rebalancing, self.corrected_df's
+            # named target column (e.g. 'HighCrime') is DELIBERATELY never
+            # overwritten with SVM's output (see PHASE 7's CRITICAL FIX
+            # comment) -- only 'svm_fair_target' holds the true final
+            # predictions. Dropping 'svm_fair_target' here without first
+            # copying it into the named target column meant
+            # corrected_dataset.csv -- the file external tools/auditors
+            # actually read -- silently exported the pre-SVM rebalancing
+            # snapshot under the target column's real name, even after the
+            # v3.7.2 fix corrected the report/audit_trail.json. Found when
+            # handing Communities & Crime's v3.7.2 corrected_dataset.csv to
+            # AIF360/Aequitas for Phase 3 judging: group 23/24's HighCrime
+            # values in the exported CSV matched the RAW data exactly,
+            # while audit_trail.json already showed 0.353/0.75 post-SVM --
+            # the export was a third, still-unfixed manifestation of bug
+            # #6's root cause. Fixed: write 'svm_fair_target' into the
+            # named target column before export whenever it exists and
+            # differs, so corrected_dataset.csv always reflects the
+            # pipeline's true final result under its own real column name
+            # -- no downstream consumer needs to know to look for a
+            # separate 'svm_y_pred'/'svm_fair_target' column instead.
+            export_df = self.corrected_df.copy()
+            target_col = self.results.get("target_column")
+            if (
+                target_col
+                and "svm_fair_target" in export_df.columns
+                and target_col in export_df.columns
+                and not export_df[target_col].equals(export_df["svm_fair_target"])
+            ):
+                export_df[target_col] = export_df["svm_fair_target"]
             # 'biasclean_target'/'svm_fair_target' are internal bookkeeping
             # columns the pipeline adds so later stages (stage_tracker,
             # sampling_logger) have a stable column name to reference
             # regardless of which target column this dataset actually
-            # uses. They're exact duplicates of the real target column
-            # (already present under its original name, e.g. is_recid) --
-            # keeping them in the exported CSV adds two redundant columns
-            # with no new information, and throws off the column count
-            # reported in audit_trail.json. Drop them from the export only;
+            # uses. Now that the true final values have been copied into
+            # the named target column above, these are redundant in the
+            # export and would throw off the column count reported in
+            # audit_trail.json -- drop them from the export only;
             # self.corrected_df itself is untouched for anything upstream.
-            export_df = self.corrected_df.drop(
-                columns=[c for c in ("biasclean_target", "svm_fair_target") if c in self.corrected_df.columns]
+            export_df = export_df.drop(
+                columns=[c for c in ("biasclean_target", "svm_fair_target") if c in export_df.columns]
             )
             export_df.to_csv("biasclean_results/corrected_dataset.csv", index=False)
 
@@ -6259,10 +7476,39 @@ class UniversalBiasClean:
         initial_disparities = validation.get("initial_disparities", {})
         final_disparities = validation.get("final_disparities", {})
         fairness_improvement = validation.get("fairness_improvement", {})
+        # PHASE 3.5, Workstream C
+        initial_worst_group = validation.get("initial_worst_group", {})
+        final_worst_group = validation.get("final_worst_group", {})
+        initial_worst_group_deviation = validation.get("initial_worst_group_deviation", {})
+        final_worst_group_deviation = validation.get("final_worst_group_deviation", {})
+        worst_group_improvement_pct = validation.get("worst_group_improvement_pct", {})
+
+        # PHASE 3.5, Workstream B: same effective-target logic as the
+        # v3.7.2 fix (bug #6) -- read from svm_fair_target when present,
+        # else the named target column, so this CI is computed against
+        # the pipeline's true final result, not a frozen pre-SVM snapshot.
+        _target_col = self.results.get("target_column")
+        _effective_target_col = (
+            'svm_fair_target'
+            if (self.corrected_df is not None and 'svm_fair_target' in self.corrected_df.columns)
+            else _target_col
+        )
 
         features_merged = {}
         for feature, column in feature_map.items():
             test = feature_tests.get(feature, {})
+
+            ci_initial = None
+            ci_final = None
+            if self.original_df is not None and _target_col:
+                ci_initial = self.engine._worst_group_ratio_ci_direct(
+                    self.original_df, column, _target_col
+                )
+            if self.corrected_df is not None and _effective_target_col:
+                ci_final = self.engine._worst_group_ratio_ci_direct(
+                    self.corrected_df, column, _effective_target_col
+                )
+
             features_merged[feature] = {
                 "column": column,
                 "weight": self.config["weights"].get(feature, 0.05),
@@ -6274,6 +7520,35 @@ class UniversalBiasClean:
                 "improvement_pct": fairness_improvement.get(feature),
                 "group_rates_initial": diagnostics.get("group_rates_initial", {}).get(feature),
                 "group_rates_final": self.results.get("group_rates_final", {}).get(feature),
+                # PHASE 3.5, Workstream C: disparity_initial/disparity_final
+                # above are BiasClean's long-standing coefficient-of-
+                # variation figure -- an average across all groups. That
+                # average can improve while a single group gets worse (see
+                # this method's docstring on _calculate_worst_group_deviation_direct
+                # for the real North Carolina Ethnicity case that motivated
+                # this addition). These four fields report which single
+                # group deviates furthest from parity, before and after,
+                # so that case is visible in BiasClean's own output rather
+                # than only discoverable by an external judge computing a
+                # second metric BiasClean didn't report.
+                "worst_group_initial": initial_worst_group.get(feature),
+                "worst_group_final": final_worst_group.get(feature),
+                "worst_group_deviation_initial": initial_worst_group_deviation.get(feature),
+                "worst_group_deviation_final": final_worst_group_deviation.get(feature),
+                "worst_group_improvement_pct": worst_group_improvement_pct.get(feature),
+                # PHASE 3.5, Workstream B: a second, sample-size-aware
+                # significance lens (log relative-risk CI, Katz method,
+                # per Besse et al. 2018) alongside significant_bias above
+                # (which uses BiasClean's existing chi-square/fisher-exact
+                # test). ci_significance_initial/final report whether this
+                # feature's worst-group-vs-reference-group ratio is
+                # statistically distinguishable from parity AT THIS
+                # FEATURE'S OWN ACTUAL SAMPLE SIZE -- unlike the fixed 0.05
+                # composite threshold, which doesn't adapt to sample size
+                # at all. Reporting-only for now: does not change
+                # requires_mitigation or significant_bias.
+                "ci_significance_initial": ci_initial,
+                "ci_significance_final": ci_final,
             }
 
         audit_trail = {
@@ -6283,6 +7558,15 @@ class UniversalBiasClean:
             "mode": self.mode,
             "target_column": self.results.get("target_column"),
             "target_binarization": self.results.get("target_binarization"),
+            # BUG FIX (v3.7.4): other outcome-pattern columns tied at the
+            # same top confidence as target_column, if auto-detection had
+            # to break a tie -- empty list if the target was specified
+            # explicitly or there was no ambiguity. See PHASE 3 for the
+            # root-cause writeup.
+            "tied_outcome_candidates": self.results.get("tied_outcome_candidates", []),
+            # PHASE 3.5, Workstream A: see PHASE 7's comment for the full
+            # design writeup. Warn-only for now -- not yet a gate.
+            "worst_group_regressions": self.results.get("worst_group_regressions", []),
             "dataset": {
                 "original_records": len(self.original_df),
                 "corrected_records": len(self.corrected_df) if self.corrected_df is not None else len(self.original_df),
@@ -6360,9 +7644,9 @@ class UniversalBiasClean:
         # contradicting the correct "(no corrected_dataset.csv...)" note
         # printed moments later in the same run.
         if self.corrected_df is not None:
-            print(f"   Results saved to biasclean_results/ (corrected_dataset.csv, audit_trail.json)")
+            logger.info(f"   Results saved to biasclean_results/ (corrected_dataset.csv, audit_trail.json)")
         else:
-            print(f"   Results saved to biasclean_results/ (audit_trail.json only -- no mitigation was performed)")
+            logger.info(f"   Results saved to biasclean_results/ (audit_trail.json only -- no mitigation was performed)")
 
 # ============================================================================
 # GOVERNANCE REPORT GENERATOR (v3.0 NEW)
