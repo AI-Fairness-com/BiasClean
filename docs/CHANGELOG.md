@@ -2,7 +2,14 @@
 
 All notable changes to the BiasClean Toolkit will be documented in this file. The project adheres to [Semantic Versioning](https://semver.org).
 
-> **Note on this update:** versions 3.1.0 through 3.6.9 below were consolidated from the pipeline's own internal changelog (embedded in `biasclean_v3_5_1_terminal.py`) and from two internal validation reports — *Phase 1: Consolidation & Regression Testing* and *BiasClean External Validation in Justice Domain (Phase 2)* — both dated 2026-07-30. Exact release dates for the individual 3.1.x–3.5.x versions were not available at the time of that update; only year is shown. Versions 3.7.1 through 3.10.0 below were similarly consolidated from Phase 3 (independent benchmark vs. AIF360/Aequitas) and Phase 3.5 (fairness-hardening workstreams A/B/C) validation records. Version 3.10.1 documents Phase 4's first completed workstream (dependency pinning), and 3.10.2 documents the second (Dockerfile/reproducible environment). If you have the original dates, they should be added here.
+> **Note on this update:** versions 3.1.0 through 3.6.9 below were consolidated from the pipeline's own internal changelog (embedded in `biasclean_v3_5_1_terminal.py`) and from two internal validation reports — *Phase 1: Consolidation & Regression Testing* and *BiasClean External Validation in Justice Domain (Phase 2)* — both dated 2026-07-30. Exact release dates for the individual 3.1.x–3.5.x versions were not available at the time of that update; only year is shown. Versions 3.7.1 through 3.10.0 below were similarly consolidated from Phase 3 (independent benchmark vs. AIF360/Aequitas) and Phase 3.5 (fairness-hardening workstreams A/B/C) validation records. Version 3.10.1 documents Phase 4's first completed workstream (dependency pinning), 3.10.2 documents the second (Dockerfile/reproducible environment), and 3.10.3 documents the third (structured logging). If you have the original dates, they should be added here.
+
+## [3.10.3] - 2026 (Phase 4)
+
+### 🔧 Changed
+- Structured logging (Workstream F): every `print()` call inside the pipeline's own diagnostic output (feature mapping, constraint validation, rebalancing, SVM enforcement, safeguards, gates, reporting — 261 calls total) replaced with Python's `logging` module, mapped to severity by content rather than mechanically: phase progress banners → `INFO`, safeguard/gate/reversal/mapping-tie warnings → `WARNING`, the pipeline's own top-level failure handler → `ERROR`. No message's wording changed anywhere — only how and where each is emitted. The interactive CLI's menus and prompts, and the sample-dataset generators, are left as plain `print()`/`input()` since they're direct user-interface text, not diagnostic output.
+- Console output is unchanged in appearance and destination (explicitly targets stdout, matching `print()`'s original behavior — Python's default log handler targets stderr, which would otherwise have silently broken anyone piping console output). A fresh timestamped file (`biasclean_results/run_<timestamp>.log`) is now attached automatically at the start of every run, capturing every level with a timestamp, alongside `audit_trail.json` and `report.pdf` — satisfying the SOP's requirement for a permanent, filterable record without shell redirection.
+- Validated: COMPAS and Communities & Crime both re-run in native venv and in the rebuilt Docker image (`biasclean:3.10.2`) — 4 runs total, all reproducing their exact on-record `bias_scores`, with log files correctly capturing WARNING-level entries (tied-outcome-candidate ambiguity, validation-gate rejections, mapping ties) alongside routine INFO progress.
 
 ## [3.10.2] - 2026 (Phase 4)
 
@@ -489,7 +496,6 @@ Professional Report Generation - Flask-based pipeline producing publication-read
 ## 🔜 Upcoming Releases
 
 ### [Unreleased] Phase 4 — Internal Production Hardening
-- 📋 Structured logging replacing `print()` output (Workstream F)
 - 🛡️ Graceful malformed-input handling (Workstream G)
 
 ### [3.1.0] Advanced Traffic Light Optimization
