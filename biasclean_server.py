@@ -19,10 +19,20 @@ import json
 from datetime import datetime
 import traceback
 
-# Import the BiasClean pipeline
-# Assuming biasclean_v3_0.py is in the same directory
+# Import the BiasClean pipeline.
+# NOTE: this must match the actual pipeline filename sitting alongside
+# this server file. As of v3.10.1 that file is
+# biasclean_v3_5_1_terminal.py (the name is a historical artifact from
+# early versioning, not a "3.5.1" release) -- this import previously
+# pointed at 'biasclean_v3_terminal', a name that does not match any
+# pipeline file this project has actually shipped, meaning this server
+# (last touched when the pipeline was v3 -> v3.5.1) may never have been
+# runnable against the real pipeline in its current form. If the
+# pipeline file is ever renamed, this import must be updated to match --
+# a silent ModuleNotFoundError here means requests will fail at import
+# time before this server even starts.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from biasclean_v3_terminal import UniversalBiasClean
+from biasclean_v3_5_1_terminal import UniversalBiasClean
 import pandas as pd
 
 app = Flask(__name__)
@@ -67,9 +77,29 @@ def analyze():
         
         # Get form parameters
         domain = request.form.get('domain', 'justice')
-        target_column = request.form.get('target_column', None)
+        target_column = request.form.get('target_column', '').strip()
         mode = request.form.get('mode', 'audit_first')
         enable_svm = request.form.get('enable_svm', 'false').lower() == 'true'
+
+        # Required as of pipeline v3.10.1 -- BiasClean does not
+        # auto-detect the target/outcome column (see that version's
+        # changelog for why: no column-name pattern or statistic can
+        # substitute for knowing what a dataset actually measures). The
+        # HTML form already enforces this client-side, but /analyze can
+        # be called directly, so it's enforced here too rather than
+        # relying solely on the pipeline's own ValueError (which would
+        # otherwise be caught below and returned as a generic 500).
+        if not target_column:
+            return jsonify({
+                'error': 'Target column is required',
+                'details': (
+                    "BiasClean does not auto-detect the outcome/target "
+                    "column. Only you know what this dataset measures "
+                    "(e.g. which column records whether an applicant "
+                    "received a callback, a loan was approved, or a "
+                    "defendant reoffended). Please specify target_column."
+                )
+            }), 400
         
         # Save uploaded file
         filename = secure_filename(file.filename)
@@ -81,7 +111,7 @@ def analyze():
         print(f"Processing: {filename}")
         print(f"Domain: {domain}")
         print(f"Mode: {mode}")
-        print(f"Target: {target_column or '(auto-detect)'}")
+        print(f"Target: {target_column}")
         print(f"SVM: {enable_svm}")
         print(f"{'='*80}\n")
         
@@ -98,7 +128,7 @@ def analyze():
         # Process dataset
         results = pipeline.process_dataset(
             df=df,
-            target_column=target_column if target_column else None,
+            target_column=target_column,
             auto_approve_threshold=0.80
         )
         

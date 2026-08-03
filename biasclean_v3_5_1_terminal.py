@@ -5936,7 +5936,9 @@ class UniversalBiasClean:
         Args:
             file_path: Path to CSV file (optional if df provided)
             df: DataFrame to process (optional if file_path provided)
-            target_column: Outcome variable column name (optional, auto-detected)
+            target_column: Outcome variable column name (required as of
+                v3.10.1 -- no auto-detection; omitting this raises
+                ValueError)
             auto_approve_threshold: Confidence threshold for auto-approval
 
         Returns:
