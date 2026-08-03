@@ -1012,11 +1012,11 @@
           </div>
         </div>
 
-        <!-- TARGET COLUMN (OPTIONAL) -->
+        <!-- TARGET COLUMN (REQUIRED) -->
         <div class="form-group">
           <label class="form-label">
             <i class="fas fa-bullseye"></i>
-            Target Column (Optional)
+            Target Column (Required)
           </label>
           <input 
             type="text" 
@@ -1024,9 +1024,13 @@
             name="target_column" 
             class="form-input" 
             placeholder="e.g., two_year_recid, approved, hired"
+            required
           />
           <div class="form-info">
-            <i class="fas fa-lightbulb"></i> Leave blank for automatic detection. Specify the outcome/prediction column if known.
+            <i class="fas fa-lightbulb"></i> BiasClean cannot detect this for you — only you know what this dataset measures (e.g. which column records whether an applicant received a callback, a loan was approved, or a defendant reoffended). Type the exact column name from your file.
+          </div>
+          <div id="targetColumnHint" class="form-info" style="display:none;">
+            <i class="fas fa-list"></i> Columns found in your file: <span id="targetColumnHintList"></span>
           </div>
         </div>
 
@@ -1397,8 +1401,34 @@ document.addEventListener('DOMContentLoaded', function(){
       fileName.textContent = '✅ Selected: ' + file.name + ' (' + formatFileSize(file.size) + ')';
       fileName.style.color = 'var(--success)';
       showMessage('success', '✅ File selected: ' + file.name + ' - Ready for v3.0 audit');
+
+      // Best-effort client-side header preview -- purely informational,
+      // NOT a ranked or suggested list. Naive comma-split on the first
+      // line; if a file uses quoted fields with embedded commas this may
+      // misparse, so failures here are silent and never block the form --
+      // the actual target column is still typed by hand, as required.
+      const hintBox = document.getElementById('targetColumnHint');
+      const hintList = document.getElementById('targetColumnHintList');
+      hintBox.style.display = 'none';
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const firstLine = String(evt.target.result).split(/\r?\n/)[0];
+          const headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+          if (headers.length > 0) {
+            hintList.textContent = headers.join(', ');
+            hintBox.style.display = 'block';
+          }
+        } catch (err) {
+          // Silent -- this is a convenience preview only, never required.
+        }
+      };
+      // Only need the first line, but reading the whole small slice is
+      // simplest and cheap; cap at first 64KB in case of huge single-line files.
+      reader.readAsText(file.slice(0, 65536));
     } else {
       fileName.textContent = '';
+      document.getElementById('targetColumnHint').style.display = 'none';
     }
   });
 
@@ -1422,6 +1452,12 @@ document.addEventListener('DOMContentLoaded', function(){
       showMessage('error', '❌ Please select a domain');
       return;
     }
+
+    const targetCol = document.getElementById('targetColumn').value.trim();
+    if (!targetCol) {
+      showMessage('error', '❌ Please enter your dataset\'s target column — BiasClean does not auto-detect it. Only you know which column records the outcome being measured.');
+      return;
+    }
     
     // Show loading state
     submitBtn.disabled = true;
@@ -1433,12 +1469,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
     formData.append('domain', domainSelect.value);
-    
-    // Add target column if specified
-    const targetCol = document.getElementById('targetColumn').value.trim();
-    if (targetCol) {
-      formData.append('target_column', targetCol);
-    }
+    formData.append('target_column', targetCol);
     
     // Add mode
     const selectedMode = document.querySelector('input[name="mode"]:checked').value;
