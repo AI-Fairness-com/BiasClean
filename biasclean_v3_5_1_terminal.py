@@ -26,10 +26,217 @@ Features:
 - Stage-wise monitoring and attribution
 - Human-in-the-loop decision support
 
-Version: 3.10.1
+Version: 3.10.5
 License: Open Source
 Author: Hamid Tavakoli
 Date: January 2026
+
+Changelog (3.10.4 -> 3.10.5): REBALANCE-STAGE FUSE. Any feature whose
+rebalancing produces an actionable reversal (the disadvantaged group
+flips, victimizing the group that started advantaged) is now actively
+excluded and reverted to its original values, with the remaining
+feature(s) redone from scratch without it -- replacing the v3.4.0
+behavior of only flagging the reversal while still delivering it as
+the "final" result.
+- Real-data motivation: Governance/ACS PublicCoverage (renamed
+  columns) showed the disadvantaged group reverse for Ethnicity, Age,
+  and SocioeconomicStatus after rebalancing. Correctly flagged by the
+  existing rebalance_gate -- but the flagged, reversed result was
+  still what got delivered. Hamid's explicit direction: a thermostat
+  (proactive, _max_correction_without_crossing)/fuse
+  (reactive) design built specifically to prevent the pipeline from
+  creating new victims must not just disclose an overcorrection and
+  still hand it over -- it needs fixing.
+- Root cause the v3.4.0 flag-only design was built around: the
+  thermostat already prevents each feature's OWN pass from
+  overshooting past parity, but a LATER feature's pass can still
+  perturb an EARLIER feature's already-finalized row composition
+  through row-level overlap -- invisible to that earlier feature's
+  own clip, and only detectable after all features are compounded
+  together, by which point a clean per-feature undo is intractable
+  (this was a deliberate, documented scope decision at the time, not
+  an oversight -- undoing one feature's row-level changes after
+  several overlapping-row features have already run is a genuine
+  rollback problem, not a simple column operation).
+- Fixed via a different approach that sidesteps that intractability
+  entirely: rather than surgically subtracting one feature's
+  compounded contribution from a multi-feature-perturbed final state,
+  transform_industry now restarts the WHOLE sequential rebalancing
+  pass from the true original data with the reversed feature excluded
+  from correction. This is well-defined precisely because it never
+  asks "what would this feature's effect have been in isolation" --
+  every remaining feature's correction is recomputed fresh, now
+  correctly accounting for one less source of row-level interaction.
+  Bounded retry (up to len(biased_features)+1 attempts, capped at 8)
+  since excluding one feature can occasionally surface a reversal in
+  a different feature that previously looked clean; the old flag-only
+  behavior is kept as an honest last-resort if the retry limit is
+  ever reached with a reversal still unresolved (expected to be rare
+  -- most real cases have 1-3 biased features).
+- audit_trail.json's rebalance_gate gains a new 'excluded_features'
+  list (feature, reason, disadvantaged_before/after) documenting
+  exactly what was excluded and why; 'reason' text now distinguishes
+  "fuse excluded and fixed it" from the old "flagged, needs manual
+  review" case, which now only fires if the retry limit is reached.
+- Scope: only changes which features participate in rebalancing and
+  how many passes run: the per-feature rebalancing math itself
+  (_rebalance_feature_reweighing/_weighted, the thermostat clip,
+  _protected_row_uids) is completely untouched.
+
+ALSO IN 3.10.5: CONTINUOUS PROTECTED-ATTRIBUTE BUCKETING. Any column
+mapped to Age or SocioeconomicStatus that's numeric and would trip the
+excessive-cardinality skip (raw per-year Age; raw per-dollar Income)
+now gets bucketed into a small number of quantile-based ranges FIRST,
+before validation or rebalancing ever sees it -- rather than being
+excluded entirely or left as dozens/hundreds of near-empty groups.
+- Same real-data motivation as the fuse above: Governance's income
+  column had 859 distinct raw values, produced an illegible chart,
+  was the only feature that got WORSE during correction, and a
+  negative dollar value (ACS's real business/farm-loss convention)
+  ended up reported as its own "disadvantaged group" after SVM.
+  Fewer, larger, more stable groups also reduces exposure to the
+  rank-order gap the fuse above exists to catch, though the fuse
+  remains the actual backstop for whatever bucketing doesn't prevent.
+- _quantile_bucket_numeric_column() picks the largest quantile count
+  (quartiles by default, matching standard income/wealth-distribution
+  convention) whose smallest resulting bin still clears the
+  min-group-size floor, narrowing automatically for smaller datasets;
+  returns (None, None) if even 2 bins can't clear it, in which case
+  the existing cardinality-skip behavior is unchanged. Uses qcut's
+  own duplicate-boundary handling for skewed distributions, and
+  naturally absorbs outlier/edge values (negative income) into a
+  sensible range instead of surfacing them as singleton groups.
+- Scoped narrowly to Age and SocioeconomicStatus specifically (the two
+  features actually demonstrated to need this across Phase 5), not
+  every numeric protected-attribute match -- same minimal-blast-radius
+  principle as the Finance SES keyword fix. A dataset that already
+  provides pre-bucketed age (e.g. Education/OULAD's age_band) is left
+  untouched, since its cardinality never trips the trigger.
+- audit_trail.json gains self.bucketed_columns (column -> feature,
+  n_bins, bin_labels, min_bin_size) for transparency on any run where
+  bucketing fired.
+- Verified: quantile bucketing on raw income including negative values
+  (produces sensible ranges, no singleton negative-value group), a
+  too-small-for-2-bins dataset (correctly falls through unchanged,
+  no crash), and a full pipeline run confirming the bucketing log line
+  fires and downstream validation treats the result as an ordinary
+  low-cardinality categorical column.
+
+Changelog (3.10.3 -> 3.10.4): _select_best_column_per_feature's ranking
+now uses p-value as the tiebreaker between the small-group-warning gate
+and raw mapping confidence -- previously confidence alone decided which
+column wins once multiple candidates are approved for the same
+canonical feature.
+- Root cause: confidence measures how sure the keyword-matcher is that
+  a column NAMES the right feature (Tier 1/universal patterns score
+  85-98%, Tier 2/domain-specific patterns cap at a flat 75%) -- it says
+  nothing about whether that column's DATA shows a real disparity.
+  Real-data finding on German Credit (Finance): with 6 columns all
+  correctly identified as SocioeconomicStatus (after the 3.10.3 keyword
+  fix), confidence-first selection picked
+  InstallmentRatePctOfDisposableIncome (95% confidence, p=0.140 -- the
+  WEAKEST evidence of the six) over Property (75%, p=0.0000286),
+  Housing (75%, p=0.000112), and PresentEmploymentSince (75%,
+  p=0.00105) -- all three 100-5000x more statistically compelling, all
+  three lost purely because their pattern match sat in the lower-
+  confidence domain tier. Hamid's framing: "the tool should prefer the
+  column with the strongest actual evidence of a real disparity,
+  instead of ... the column it's most sure is correctly categorised."
+- Fixed: ranking tuple is now (has_small_group_warning, p_value,
+  -confidence) instead of (has_small_group_warning, -confidence).
+  Small-group-size disqualification stays first (unreliable statistics
+  are unreliable regardless of how low their p-value looks). Missing/
+  failed statistical tests rank as p=1.0 (no evidence), never an
+  advantage. Confidence still breaks a genuine p-value tie.
+- This also resolves, on its actual merits rather than by accident,
+  the "known residual limitation" the v3.6.7 docstring already flagged
+  for Communities & Crime's Region tie (state vs county, previously
+  documented as falling back to file order between two equal-warning,
+  equal-confidence candidates) -- state's p=1.2e-72 now correctly wins
+  over county's p=0.13 directly, not as a coincidence of column order.
+- Verified via 4 test scenarios: the real German Credit case (now
+  correctly selects the strongest-evidence candidate among the reliable
+  ones), a reconstruction of COMPAS's Age tie (no-warning candidate
+  still wins regardless of p-value -- the gate ordering is unchanged),
+  a reconstruction of Communities & Crime's Region tie (now resolves by
+  p-value instead of file order, same correct outcome), and a genuine
+  coin-flip tie (identical warning-status/p-value/confidence -- still
+  falls back to file order, unchanged last-resort behavior).
+- Also fixed: the "mapping ties detected" report text incorrectly said
+  ties are "chosen by its position in the file rather than by
+  confidence" in every case, even when selection was actually
+  confidence- or (now) p-value-driven -- misleading in both the German
+  Credit and earlier HMDA cases. Report copy now states the actual
+  deciding factor for that specific tie instead of a fixed claim.
+
+Changelog (3.10.2 -> 3.10.3): Finance domain's SocioeconomicStatus is
+the highest-weighted feature in that domain (0.30, above even
+Ethnicity's 0.20) -- but on German Credit (a benchmark dataset
+specifically famous for documented real bias), it was only ever
+catching InstallmentRatePctOfDisposableIncome, a loan-structuring
+ratio, not a genuine wealth signal, while the dataset's real SES
+columns (SavingsAccountBonds, Property, Housing, PresentEmploymentSince,
+Job) went uncaptured entirely -- explaining a suspiciously clean
+"0.0000 bias / 0.00% improvement" first result on a dataset known for
+the opposite.
+- Investigated whether the unused ontology_extensions/FinancialFactors
+  block (income/debt/balance/asset/liability/expense/salary/employment)
+  was meant to fill this gap. It was NOT wired in anywhere in the
+  codebase (confirmed via full-file search) -- but checking ALL 7
+  domains' ontology_extensions together revealed most are NOT
+  SES-related at all (Health's ClinicalFactors: bmi/smoking/medication;
+  Hiring's ProfessionalFactors: experience/qualification/degree;
+  Education's AcademicFactors: gpa/attendance/exam; Governance's
+  GovernanceFactors: tenure/endorsement/campaign). Wiring
+  ontology_extensions into SocioeconomicStatus generically would have
+  been a NEW, worse bug -- misclassifying legitimate clinical,
+  professional, and academic predictor variables as protected-attribute
+  signals in 5 of 7 domains. Not done.
+- Fixed instead via the mechanism that was already correctly wired in
+  and already domain-scoped: Finance's contextual_patterns
+  (HierarchicalMapper.domain_ontologies, Tier 2) already listed income/
+  salary/debt/balance/asset/liability for SocioeconomicStatus -- just
+  missing the keywords German Credit's own column names actually use.
+  Added savings/property/housing/employment/job, scoped to Finance
+  only (no cross-domain collision risk, e.g. Justice's "PropertyCrime"
+  or Hiring's ubiquitous "Job*" columns are untouched since this list
+  is per-domain, not universal).
+- Scope: this is a keyword-list addition only, at Tier 2 (confidence
+  0.75, domain-specific), not a change to the universal_ontology tier
+  or to any other domain's contextual_patterns. Justice/Hiring/Business/
+  HMDA's previously-mapped results are unaffected -- verified no
+  regression on all four.
+
+Changelog (3.10.1 -> 3.10.2): camelCase/PascalCase column names were
+silently defeating word-boundary pattern matching in ALL tiers
+(universal, domain contextual, exclusion) -- found on the German
+Credit dataset (Finance), whose cleaned-up column names use PascalCase
+with zero separators ('AgeInYears', 'PersonalStatusAndSex',
+'ForeignWorker'). 20 of that dataset's 21 columns mapped to nothing,
+producing a report that read as a clean "0.0000 bias / 0 significant"
+result but had actually audited zero protected attributes -- visually
+indistinguishable from a genuine low-bias finding.
+- Root cause: the word-boundary check (_pattern_matches) only treats
+  non-alphanumeric characters as boundaries, deliberately, so 'age'
+  can't false-match inside 'wage'/'stage'/'garage'. With no separators
+  anywhere in a PascalCase name, legitimate matches ('age' in
+  'AgeInYears', 'sex' in 'PersonalStatusAndSex') never sit at a
+  recognized boundary either, so they fall through to Unknown exactly
+  like a real false positive would.
+- Fixed: map_column now inserts a word-boundary at every camelCase/
+  PascalCase case transition (lower->upper, and the acronym case
+  UPPER->Upper, e.g. 'HTTPResponse'->'HTTP Response') before matching,
+  restoring real word boundaries for these names without weakening the
+  existing wage/stage/garage protection at all -- those remain single
+  lowercase runs with no case transition to split on. Purely additive:
+  snake_case, space-separated, and already-lowercase column names are
+  unaffected (no case transitions to find), so no previously-correct
+  mapping changes.
+- Separately noted, NOT fixed here (real but distinct issue): even
+  with correct tokenization, 'ForeignWorker' still wouldn't match
+  MigrationStatus's patterns (migration/immigrant/citizenship/visa/
+  resident) -- 'foreign' isn't in that list. A keyword-coverage gap,
+  not a tokenization bug; left for a separate decision.
 
 Changelog (3.10.0 -> 3.10.1): Target-column auto-detection REMOVED.
 target_column is now a required parameter -- no default, no silent
@@ -1612,7 +1819,7 @@ Changelog (3.1.0 -> 3.1.1):
   outcome_pattern at all -- auto-detect will now raise a clear error
   and ask for a manual target instead of silently picking a split flag.
 """
-__version__ = "3.10.1"
+__version__ = "3.10.5"
 
 # ============================================================================
 
@@ -1847,6 +2054,88 @@ def smart_read_csv(path_or_buffer, **kwargs):
             )
 
     return df
+
+
+# ============================================================================
+# CONTINUOUS PROTECTED-ATTRIBUTE BUCKETING
+# ============================================================================
+
+def _quantile_bucket_numeric_column(
+    series: pd.Series, max_bins: int = 4, min_bin_size: int = 50
+) -> Tuple[Optional[pd.Series], Optional[Dict]]:
+    """Bucket a numeric column into a small number of quantile-based
+    groups, for columns whose raw granularity is too fine for reliable
+    bias measurement (each individual value its own "group").
+
+    Root cause this fixes: raw per-year Age (and raw per-dollar Income)
+    treated every distinct value as its own comparison group, repeatedly
+    found across Phase 5 real-data validation to produce many groups
+    with only a handful of samples -- structurally exempting exactly
+    the groups most likely to show real disparity from ever clearing
+    the minimum-group-size floor (NC, Business, German Credit, likely
+    Heart Disease, Education/bar_pass, and Governance's raw income
+    reaching min_group_size=1 and a negative-dollar-value "group" after
+    SVM). Quantile bucketing groups the ACTUAL observed distribution
+    into ranges rather than isolating each raw value, which also
+    naturally absorbs outliers/edge values (e.g. a negative income from
+    ACS PUMS's business-loss convention) into a sensible range instead
+    of surfacing them as their own nonsensical singleton group.
+
+    Strategy: pick the LARGEST number of quantile bins (from max_bins
+    down to 2) whose smallest resulting bin still clears min_bin_size --
+    quartiles (4) by default, matching the standard convention for
+    income/wealth-distribution analysis in economics and policy
+    literature, automatically narrowing for smaller datasets rather
+    than using a fixed bin count regardless of sample size. Returns
+    (None, None) if even 2 bins can't clear the floor (dataset too
+    small for bucketing to help) -- caller falls back to its existing
+    skip-with-a-reason behavior in that case, unchanged.
+
+    Uses pandas' own qcut with duplicates='dropped' to handle skewed
+    distributions where quantile boundaries collide (e.g. many
+    identical values clustered at one end) -- silently produces fewer
+    bins than requested in that case rather than raising, which the
+    bin-size check below already accounts for.
+
+    Returns (bucketed_series, info) where bucketed_series holds
+    human-readable range labels (e.g. '18-24', '-6,000-22,300') and
+    info records how many bins were used and their boundaries, for
+    transparency in the mapping justification.
+    """
+    numeric = pd.to_numeric(series, errors="coerce")
+    valid = numeric.dropna()
+    if len(valid) < min_bin_size * 2:
+        return None, None  # too few values for even 2 viable bins
+
+    for n_bins in range(max_bins, 1, -1):
+        try:
+            binned = pd.qcut(numeric, q=n_bins, duplicates="drop")
+        except (ValueError, IndexError):
+            continue
+        bin_sizes = binned.value_counts()
+        if bin_sizes.empty or bin_sizes.min() < min_bin_size:
+            continue
+
+        def _fmt(edge: float) -> str:
+            return f"{edge:,.0f}" if abs(edge) >= 1 else f"{edge:.2f}"
+
+        label_map = {
+            interval: f"{_fmt(interval.left)}-{_fmt(interval.right)}"
+            for interval in binned.cat.categories
+        }
+        labeled = binned.map(label_map)
+        # Preserve the original Series' NaNs/index rather than qcut's
+        # own (which drops non-numeric-coercible rows silently).
+        result = pd.Series(index=series.index, dtype=object)
+        result.loc[valid.index] = labeled.loc[valid.index]
+        return result, {
+            "n_bins": len(label_map),
+            "requested_bins": max_bins,
+            "bin_labels": sorted(label_map.values()),
+            "min_bin_size": int(bin_sizes.min()),
+        }
+
+    return None, None  # even 2 bins couldn't clear min_bin_size
 
 
 # ============================================================================
@@ -2481,7 +2770,20 @@ class HierarchicalMapper:
             "finance": {
                 "outcome_patterns": self.config["outcome_patterns"],
                 "contextual_patterns": {
-                    "SocioeconomicStatus": ["income", "salary", "debt", "balance", "asset", "liability"],
+                    # v3.10.3: added savings/property/housing/employment.
+                    # Root cause: German Credit's own SavingsAccountBonds,
+                    # Property, Housing, and PresentEmploymentSince columns
+                    # are genuine, direct wealth/socioeconomic-status
+                    # signals -- the kind of feature this famous benchmark
+                    # dataset is specifically known for showing real
+                    # disparity on -- but none of them contained any of
+                    # the original 6 keywords, so SocioeconomicStatus (the
+                    # highest-weighted feature in this domain, 0.30) was
+                    # only ever catching InstallmentRatePctOfDisposableIncome,
+                    # a loan-structuring ratio, not a genuine wealth proxy
+                    # (see the "0.0000 bias, 0.00% improvement" first-run
+                    # result on a dataset famous for real, documented bias).
+                    "SocioeconomicStatus": ["income", "salary", "debt", "balance", "asset", "liability", "savings", "property", "housing", "employment", "job"],
                     "Region": ["postcode", "zipcode", "state", "county", "branch"],
                     "MigrationStatus": ["citizenship", "visa", "resident", "immigration"]
                 },
@@ -2565,7 +2867,32 @@ class HierarchicalMapper:
 
     def map_column(self, column_name: str, sample_values: pd.Series) -> Dict:
         """Map a single column using 3-tier hierarchical rules"""
-        col_lower = column_name.lower()
+        # v3.10.2: insert word-boundaries at camelCase/PascalCase
+        # transitions before matching, not just at non-alphanumeric
+        # separators. Root cause found on the German Credit dataset
+        # (Finance): its cleaned-up column names use PascalCase with no
+        # underscores at all ('AgeInYears', 'PersonalStatusAndSex',
+        # 'ForeignWorker'). The word-boundary check every tier relies on
+        # (_pattern_matches) only treats non-alphanumeric characters as
+        # boundaries -- deliberately, to stop 'age' from false-matching
+        # inside 'wage'/'stage'/'garage' (see that method's docstring).
+        # But with zero separators anywhere in the column name, 'age' in
+        # 'AgeInYears' and 'sex' in 'PersonalStatusAndSex' never sit at
+        # a recognized boundary either, so they fall through to Unknown
+        # exactly like a real false positive would -- 20 of 21 columns
+        # in that dataset mapped to nothing, producing a report that
+        # looked like a clean "0.0000 bias / 0 significant" result but
+        # had actually audited zero protected attributes. Splitting on
+        # case transitions (lower->upper, and the acronym case
+        # UPPER->Upper e.g. 'HTTPResponse'->'HTTP Response') restores a
+        # real boundary for PascalCase/camelCase names without weakening
+        # the existing wage/stage/garage protection at all -- those stay
+        # single lowercase runs with no case transition to split on.
+        # Purely additive: snake_case, space-separated, and already-
+        # lowercase column names are unaffected (no case transitions to
+        # find), so every previously-correct mapping stays identical.
+        spaced_name = re.sub(r'(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])', ' ', column_name)
+        col_lower = spaced_name.lower()
 
         # TIER 1: Universal attributes (highest priority)
         for feature, config in self.universal_ontology.items():
@@ -3099,40 +3426,135 @@ class BiasCleanEngine:
         for i, (feature, weight) in enumerate(biased_features, 1):
             logger.info(f"   {feature:<25} {weight:<10.2f} #{i}")
 
-        # Apply rebalancing in weight-priority order. v3.2.0: fresh
-        # bookkeeping for this run -- read by UniversalBiasClean right
-        # after this call to populate audit_trail.json's
-        # excluded_small_groups / rebalance_method / reversal_checks.
-        self.rebalance_log = []
-        df_before_any = df.copy()
-        for feature, weight in biased_features:
-            column = self._feature_map.get(feature)
-            if column and column in df_optimized.columns:
-                if rebalance_method == "reweighing":
-                    df_optimized = self._rebalance_feature_reweighing(
-                        df_optimized, column, target, weight, feature_name=feature
-                    )
-                else:
-                    df_optimized = self._rebalance_feature_weighted(
-                        df_optimized, column, target, weight, feature_name=feature
-                    )
-
-        # v3.2.0: reversal detection. Every earlier release only checked
-        # whether a disparity's MAGNITUDE shrank or grew; nothing checked
-        # whether the same group stayed disadvantaged. A gap that shrinks
-        # toward zero and a gap that overshoots past zero into the
-        # opposite group look identical to a magnitude-only check --
-        # confirmed on real COMPAS data that Preferential Sampling alone
-        # (no size floor) could flip Ethnicity's disadvantaged group.
+        # v3.10.5: REBALANCE-STAGE FUSE -- actively excludes and reverts
+        # any feature whose rebalancing produces an actionable reversal,
+        # instead of only flagging it (the v3.4.0 "regulator flag"
+        # behavior this replaces). Root cause of why a flag-only response
+        # wasn't enough: the thermostat (_max_correction_without_crossing)
+        # already prevents each feature's OWN pass from overshooting past
+        # parity -- but a LATER feature's pass can still perturb an
+        # EARLIER feature's already-finalized row composition through
+        # row-level overlap (the same interaction _protected_row_uids
+        # exists to guard against for too-small-excluded groups, but not
+        # for groups that WERE successfully rebalanced). By the time the
+        # old single end-of-loop check ran, multiple features' effects
+        # were already compounded together, making a clean per-feature
+        # undo intractable -- which is exactly why v3.4.0 deliberately
+        # scoped this to "flag for manual review" rather than auto-revert.
+        #
+        # Real-data motivation: Governance/ACS PublicCoverage (renamed
+        # columns) showed the disadvantaged group flip for Ethnicity, Age,
+        # and SocioeconomicStatus after rebalancing -- correctly flagged,
+        # but the flagged (reversed) result was still what got delivered
+        # as "final". Hamid's explicit direction: this is not acceptable
+        # for a thermostat/fuse design built specifically to prevent the
+        # pipeline from creating new victims -- it needs fixing, not just
+        # disclosing.
+        #
+        # Fix: rather than trying to surgically subtract one feature's
+        # compounded contribution from a multi-feature-perturbed final
+        # state (the intractable problem above), restart the ENTIRE
+        # sequential pass from the true original data (df_before_any)
+        # with the reversed feature's column excluded from correction
+        # entirely. This is a clean, well-defined operation precisely
+        # because it never asks "what would this feature's effect have
+        # been in isolation" -- it recomputes every remaining feature's
+        # correction fresh, now correctly accounting for one less
+        # source of row-level interaction. Iterates (bounded) since
+        # excluding one feature can occasionally surface a reversal in
+        # a different feature that previously looked clean.
+        MAX_REBALANCE_ATTEMPTS = min(len(biased_features) + 1, 8)
+        remaining_features = list(biased_features)
+        self.rebalance_excluded_features = []  # [{feature, reason, disadvantaged_before, disadvantaged_after}]
+        df_optimized = None
         self.reversal_checks = {}
-        for feature, weight in biased_features:
-            column = self._feature_map.get(feature)
-            if column and column in df_optimized.columns:
-                self.reversal_checks[feature] = self._detect_reversal(
-                    df_before_any.drop(columns=["_biasclean_row_uid"], errors="ignore"),
-                    df_optimized.drop(columns=["_biasclean_row_uid"], errors="ignore"),
-                    column, target
-                )
+        df_before_any = df.copy()
+
+        for attempt in range(1, MAX_REBALANCE_ATTEMPTS + 1):
+            df_attempt = df_before_any.copy()
+            self.rebalance_log = []
+            self._protected_row_uids = set()
+            for feature, weight in remaining_features:
+                column = self._feature_map.get(feature)
+                if column and column in df_attempt.columns:
+                    if rebalance_method == "reweighing":
+                        df_attempt = self._rebalance_feature_reweighing(
+                            df_attempt, column, target, weight, feature_name=feature
+                        )
+                    else:
+                        df_attempt = self._rebalance_feature_weighted(
+                            df_attempt, column, target, weight, feature_name=feature
+                        )
+
+            # v3.2.0: reversal detection. Every earlier release only checked
+            # whether a disparity's MAGNITUDE shrank or grew; nothing checked
+            # whether the same group stayed disadvantaged. A gap that shrinks
+            # toward zero and a gap that overshoots past zero into the
+            # opposite group look identical to a magnitude-only check --
+            # confirmed on real COMPAS data that Preferential Sampling alone
+            # (no size floor) could flip Ethnicity's disadvantaged group.
+            attempt_reversal_checks = {}
+            threshold_by_feature = {
+                e.get("feature"): e.get("disparity_threshold")
+                for e in self.rebalance_log if e.get("disparity_threshold") is not None
+            }
+            actionable_this_attempt = []
+            for feature, weight in remaining_features:
+                column = self._feature_map.get(feature)
+                if column and column in df_attempt.columns:
+                    check = self._detect_reversal(
+                        df_before_any.drop(columns=["_biasclean_row_uid"], errors="ignore"),
+                        df_attempt.drop(columns=["_biasclean_row_uid"], errors="ignore"),
+                        column, target
+                    )
+                    attempt_reversal_checks[feature] = check
+                    if check and check.get("reversed"):
+                        threshold = threshold_by_feature.get(feature)
+                        gap = check.get("after_gap")
+                        if threshold is None or gap is None or gap >= threshold:
+                            actionable_this_attempt.append((feature, check))
+
+            df_optimized = df_attempt
+            self.reversal_checks = attempt_reversal_checks
+
+            if not actionable_this_attempt:
+                break  # clean -- no actionable reversal among the features we tried this attempt
+
+            if attempt == MAX_REBALANCE_ATTEMPTS:
+                # Attempt cap reached -- fall back to the old, honest
+                # last-resort behavior: keep this result and let
+                # process_dataset's rebalance_gate flag whatever's left
+                # for manual review, same as pre-v3.10.5 behavior. This
+                # should be rare in practice (most real cases have 1-3
+                # biased features, resolving within 1-2 exclusions).
+                logger.warning(f"\n   ⛔ REBALANCE FUSE: reached the retry limit "
+                      f"({MAX_REBALANCE_ATTEMPTS} attempts) still finding an actionable "
+                      f"reversal -- falling back to flagging for manual review rather than "
+                      f"further exclusion.")
+                break
+
+            for feature, check in actionable_this_attempt:
+                logger.warning(f"\n   ⛔ REBALANCE FUSE: '{feature}' reversed the disadvantaged "
+                      f"group ('{check.get('disadvantaged_before')}' -> "
+                      f"'{check.get('disadvantaged_after')}') -- excluding this feature from "
+                      f"mitigation and reverting to its original (uncorrected) values, then "
+                      f"redoing the remaining feature(s)' rebalancing from scratch.")
+                self.rebalance_excluded_features.append({
+                    "feature": feature,
+                    "reason": "excluded after its rebalancing reversed the disadvantaged group; "
+                              "reverted to original (uncorrected) values for this feature",
+                    "disadvantaged_before": check.get("disadvantaged_before"),
+                    "disadvantaged_after": check.get("disadvantaged_after"),
+                })
+            excluded_this_round = {f for f, _ in actionable_this_attempt}
+            remaining_features = [(f, w) for f, w in remaining_features if f not in excluded_this_round]
+            # Deliberately no early-return here even if remaining_features
+            # is now empty: the NEXT loop iteration still needs to run (it
+            # will trivially produce df_before_any unchanged, since the
+            # inner per-feature loop has nothing left to iterate) so that
+            # df_optimized actually reflects the fully-reverted state,
+            # not the previous attempt's dataframe with the now-excluded
+            # feature's bad rebalancing still baked into its row values.
 
         return df_optimized.drop(columns=["_biasclean_row_uid"], errors="ignore")
 
@@ -4139,12 +4561,24 @@ class ReportGenerator:
         return reason
 
     @staticmethod
-    def _detect_mapping_conflicts(mappings: Dict) -> List[str]:
+    def _detect_mapping_conflicts(mappings: Dict, selected_columns: Optional[Dict[str, str]] = None) -> List[str]:
         """Surface cases where more than one original column matched
         the same canonical feature (or more than one column matched as
-        a candidate outcome variable). The pipeline currently resolves
-        these ties silently, by column order rather than confidence --
-        this makes that tie visible without changing which column wins."""
+        a candidate outcome variable).
+
+        v3.10.4: this message used to assert the tie was "chosen by its
+        position in the file rather than by confidence" -- unconditionally,
+        even when it wasn't true. That claim was stale: it describes the
+        pre-v3.6.7 last-wins-overwrite behavior, not the confidence-then-
+        p-value-based ranking _select_best_column_per_feature has used
+        since (file order is now only the last-resort fallback for a
+        genuine coin-flip tie). Confirmed wrong on real data twice
+        (HMDA's Ethnicity tie, German Credit's SocioeconomicStatus tie)
+        -- both were actually decided by confidence/p-value, not position.
+        Fixed: state which column was actually selected (from
+        selected_columns, i.e. results['features'][feature]['column'])
+        instead of asserting a specific, unverified mechanism.
+        """
         by_feature: Dict[str, list] = {}
         for col, m in mappings.items():
             feature = m.get("feature")
@@ -4157,10 +4591,16 @@ class ReportGenerator:
                 cols_sorted = sorted(cols, key=lambda x: x[1], reverse=True)
                 cols_str = ", ".join(f"{c} ({conf:.0%})" for c, conf in cols_sorted)
                 label = "the outcome variable" if feature == "__outcome__" else f"'{feature}'"
+                winner = (selected_columns or {}).get(feature)
+                winner_txt = (
+                    f"'{winner}' was used for the actual analysis (based on statistical "
+                    f"evidence and mapping confidence together, not simply which one was listed first)."
+                    if winner else
+                    "Only one is actually used for the analysis."
+                )
                 warnings.append(
                     f"{len(cols)} columns were all matched to {label}: {cols_str}. "
-                    f"Only one is actually used, chosen by its position in the file rather than "
-                    f"by confidence -- double-check this is the column you intended."
+                    f"{winner_txt} Double-check this is the column you intended."
                 )
         return warnings
 
@@ -4313,6 +4753,21 @@ class ReportGenerator:
                 f"The final predictions use the rebalanced stage instead."
             )
 
+        # v3.10.4: surface an accurate reason in the plain-language "Why
+        # this recommendation" section (the one part of the PDF a
+        # no-code user is expected to actually read) when no mitigation
+        # was attempted specifically because the combined score stayed
+        # under 0.05 despite one or more individually significant
+        # features -- otherwise this section falls back to "No specific
+        # concerns were logged" directly underneath a "Significant
+        # Biases: 2" figure elsewhere in the same report, the same
+        # contradiction already fixed in the console log's Reason: line.
+        # Only the composite-below-threshold reason is surfaced here
+        # (not the genuine no-bias-at-all case), since that's the one
+        # that reads as a false all-clear.
+        if not svm_validation_for_reasons.get('svm_applied') and 'combined score' in (svm_validation_for_reasons.get('reason') or ''):
+            plain_reasons.append(svm_validation_for_reasons['reason'])
+
         # v3.4.0: Fairness Regulator backstop -- surface it if the proactive
         # clip in rebalancing didn't fully prevent a reversal. Unlike the
         # SVM gate, this is a FLAG not an auto-fallback (see rebalance_gate's
@@ -4388,7 +4843,12 @@ class ReportGenerator:
                     f"overcorrection, not fairness: review before relying on this result."
                 )
 
-        mapping_conflicts = self._detect_mapping_conflicts(mappings)
+        selected_columns = {
+            feature: fdata.get("column")
+            for feature, fdata in (results.get("features", {}) or {}).items()
+            if fdata.get("column")
+        }
+        mapping_conflicts = self._detect_mapping_conflicts(mappings, selected_columns)
         findings = self._plain_feature_findings(results)
 
         findings_html = ""
@@ -6018,14 +6478,25 @@ class UniversalBiasClean:
         happens to be on disk.
 
         Known residual limitation, not fixed here: if two candidates
-        have identical warning-status AND identical confidence AND
-        neither's group structure differs meaningfully (a true
-        coin-flip tie), the choice still falls back to file order. This
-        is now a deliberate, documented last resort rather than the
-        only mechanism, but it isn't eliminated -- flag any such case
-        encountered during the Phase 2 validation the same way the
-        3.6.3 changelog flagged NIJ's four same-pattern Recidivism_*
-        columns, rather than treating it as silently resolved.
+        have identical warning-status AND identical p-value AND
+        identical confidence (a true coin-flip tie), the choice still
+        falls back to file order. This is now a deliberate, documented
+        last resort rather than the only mechanism, but it isn't
+        eliminated -- flag any such case encountered during the Phase 2
+        validation the same way the 3.6.3 changelog flagged NIJ's four
+        same-pattern Recidivism_* columns, rather than treating it as
+        silently resolved.
+
+        v3.10.4 UPDATE: p-value inserted as the tiebreaker between the
+        warning-status gate and confidence (see the ranking tuple's own
+        comment below for the real-data case -- German Credit's
+        SocioeconomicStatus -- that motivated this). This also happens
+        to resolve the Communities & Crime Region case documented above
+        on its merits (state's p=1.2e-72 vs county's p=0.13) rather than
+        by the file-order accident this docstring previously described
+        as the deciding factor -- the outcome is unchanged (state still
+        wins) but for the right reason now, not a coincidence of column
+        order.
         """
         feature_map: Dict[str, str] = {}
         feature_quality: Dict[str, Any] = {}
@@ -6037,11 +6508,39 @@ class UniversalBiasClean:
             warnings = validation.get("warnings", []) or []
             has_small_group_warning = any("Small group size" in w for w in warnings)
             confidence = mapping.get("confidence", 0)
+            # v3.10.4: p-value inserted as the primary tiebreaker, ahead
+            # of raw mapping confidence. Root cause found on German
+            # Credit (Finance): confidence only measures how sure the
+            # keyword-matcher is that a column NAMES the right feature
+            # (Tier 1/universal patterns score 85-98%, Tier 2/domain
+            # patterns cap at a flat 75%) -- it says nothing about
+            # whether that column's DATA actually shows a real
+            # disparity. With 6 columns all correctly identified as
+            # SocioeconomicStatus, confidence-first selection picked
+            # InstallmentRatePctOfDisposableIncome (95%, p=0.140 -- the
+            # WEAKEST evidence of the six) over Property (75%,
+            # p=0.0000286), Housing (75%, p=0.000112), and
+            # PresentEmploymentSince (75%, p=0.00105) -- all three
+            # 100-5000x more statistically compelling, all three lost
+            # purely because their pattern match happened to sit in the
+            # lower-confidence domain tier. Once a column already passed
+            # the small-group-size gate (i.e. its statistics are
+            # considered reliable enough to trust at all), which column
+            # actually shows the stronger real disparity should decide
+            # -- not which one merely sounds more certainly named.
+            # Missing/failed statistical tests (no p_value recorded)
+            # rank as if p=1.0 -- no evidence, not an advantage.
+            p_value = (validation.get("statistics", {}) or {}).get("p_value")
+            if p_value is None:
+                p_value = 1.0
             # Sorts ascending: no-warning (False) beats has-warning (True)
-            # first; within the same warning-status, higher confidence
-            # (stored negated) wins. Equal tuples never satisfy strict
-            # '<', so the first-encountered column is kept on a true tie.
-            candidate_quality = (has_small_group_warning, -confidence)
+            # first; within the same warning-status, lower p-value
+            # (stronger evidence) wins; within an exact p-value tie,
+            # higher confidence (stored negated) wins. Equal tuples never
+            # satisfy strict '<', so the first-encountered column is kept
+            # on a true coin-flip tie -- same documented last-resort
+            # fallback as before, just harder to reach now.
+            candidate_quality = (has_small_group_warning, p_value, -confidence)
             if feature not in feature_quality or candidate_quality < feature_quality[feature]:
                 feature_map[feature] = column
                 feature_quality[feature] = candidate_quality
@@ -6109,9 +6608,49 @@ class UniversalBiasClean:
                 logger.info(f"     • {tier.title()}: {count}")
 
             # ================================================================
-            # PHASE 3: CONSTRAINT VALIDATION
+            # PHASE 2.5: CONTINUOUS PROTECTED-ATTRIBUTE BUCKETING
             # ================================================================
-            logger.info(f"\n{'='*80}")
+            # v3.10.5: for any column mapped to Age or SocioeconomicStatus
+            # (the two canonical features repeatedly found across Phase 5
+            # real-data validation to arrive as raw, near-continuous
+            # values -- raw per-year Age in NC/Business/German Credit/
+            # Heart Disease/bar_pass, raw per-dollar Income in Governance,
+            # the latter reaching min_group_size=1 and a negative-dollar
+            # "group" after SVM) that's numeric and would otherwise trip
+            # the excessive-cardinality skip below, bucket it into a
+            # small number of quantile-based groups FIRST, in place,
+            # before validation computes any statistics against it. This
+            # runs before PHASE 3 specifically so validation naturally
+            # sees the bucketed labels as an ordinary low-cardinality
+            # categorical column -- no other phase needs to know
+            # bucketing happened. Scoped narrowly to these two features
+            # (not every numeric protected-attribute match) for the same
+            # reason the Finance SES keyword fix was scoped to Finance
+            # only: minimize blast radius to the features actually
+            # demonstrated to need it, rather than a blanket rule.
+            BUCKETABLE_FEATURES = {"Age", "SocioeconomicStatus"}
+            self.bucketed_columns = {}  # column -> bucketing info, for audit_trail transparency
+            for column, mapping in raw_mappings.items():
+                feature = mapping.get("feature")
+                if feature not in BUCKETABLE_FEATURES:
+                    continue
+                if not pd.api.types.is_numeric_dtype(self.original_df[column]):
+                    continue
+                n_unique = self.original_df[column].nunique(dropna=True)
+                min_observed_group = self.original_df[column].value_counts(dropna=True).min() if n_unique else None
+                if min_observed_group is None or min_observed_group >= config.THRESHOLDS["min_samples_per_group"]:
+                    continue  # every group already clears the floor, e.g. a pre-bucketed age_band -- leave untouched
+                bucketed, info = _quantile_bucket_numeric_column(
+                    self.original_df[column], max_bins=4,
+                    min_bin_size=int(config.THRESHOLDS["min_samples_per_group"])
+                )
+                if bucketed is None:
+                    continue  # dataset too small even for 2 viable bins -- falls through to the existing skip below, unchanged
+                logger.info(f"   📊 Bucketing '{column}' ({feature}): {n_unique} raw values -> "
+                      f"{info['n_bins']} groups {info['bin_labels']} (min group size: {info['min_bin_size']})")
+                self.original_df[column] = bucketed
+                self.bucketed_columns[column] = {"feature": feature, **info}
+
             logger.info("PHASE 3: CONSTRAINT VALIDATION")
             logger.info(f"{'='*80}")
 
@@ -6452,39 +6991,27 @@ class UniversalBiasClean:
                 self.rebalance_log = list(self.engine.rebalance_log)
                 self.reversal_checks = dict(getattr(self.engine, "reversal_checks", {}) or {})
 
-                # v3.4.0 Fairness Regulator backstop ("the fuse"): the
-                # proactive clip in _rebalance_feature_weighted /
-                # _rebalance_feature_reweighing is the primary defense
-                # against a rebalancing correction crossing past parity
-                # (see those methods' docstrings for the real COMPAS Age
-                # case that motivated this). This is the safety net for
-                # anything that still gets through despite the clip -- e.g.
-                # a later feature's rebalancing perturbing an earlier
-                # feature's row composition through row-level overlap,
-                # which the per-feature regulator can't see. Detected and
-                # flagged here, NOT silently auto-reverted: undoing one
-                # feature's specific row changes after multiple features
-                # have already been rebalanced (with overlapping rows) is
-                # a real row-level rollback problem, not a simple column
-                # operation -- flagging for manual review is the honest,
-                # safe scope for this release.
-                # v3.4.0 follow-up finding: clipping alone does NOT fully
-                # solve this for 3+-group features. Reweighing pushes every
-                # group toward the SAME target (the population mean), so
-                # near-parity convergence is the formula working correctly
-                # -- but several groups landing within a couple of points of
-                # each other means "who's technically lowest" can still
-                # flip from per-cell rounding noise alone, even though no
-                # group crossed the mean by more than a hair (verified on
-                # real COMPAS: Age's post-rebalancing gap was only 2.55
-                # points, well under Age's own disparity_threshold of
-                # 0.072 -- the SAME yardstick this pipeline already uses
-                # elsewhere to decide "is this gap big enough to act on").
-                # Materiality filter: only treat a residual reversal as an
-                # ACTIONABLE regulator failure if the after-state gap is
-                # still at or above the feature's own disparity_threshold;
-                # below that, it's near-parity noise, not overcorrection --
-                # logged for transparency either way, but not gated.
+                # v3.4.0 Fairness Regulator ("the thermostat" -- proactive
+                # clip in _rebalance_feature_weighted/_rebalance_feature_
+                # reweighing) already prevents each feature's OWN pass from
+                # overshooting past parity. v3.10.5 REBALANCE-STAGE FUSE
+                # (reactive, inside transform_industry itself): actively
+                # excludes and reverts any feature whose rebalancing still
+                # produced an actionable reversal -- e.g. via a LATER
+                # feature's pass perturbing an EARLIER feature's row
+                # composition through row-level overlap, which the
+                # per-feature thermostat can't see -- and redoes the
+                # remaining features' correction from the original data
+                # without it. Replaces the old v3.4.0 flag-only behavior
+                # (found insufficient on real Governance/ACS data: Hamid's
+                # explicit direction was that a thermostat/fuse design
+                # built to prevent the pipeline creating new victims must
+                # not just disclose an overcorrection and still deliver
+                # it). self.reversal_checks and self.rebalance_log here
+                # already reflect transform_industry's FINAL attempt, so
+                # normally nothing is left to report as still-actionable --
+                # only the (rare) case where the bounded retry limit was
+                # reached still surfaces here.
                 threshold_by_feature = {
                     e.get("feature"): e.get("disparity_threshold")
                     for e in self.rebalance_log if e.get("disparity_threshold") is not None
@@ -6501,22 +7028,50 @@ class UniversalBiasClean:
                     else:
                         actionable_reversals.append(feature)
 
+                excluded_features = list(getattr(self.engine, "rebalance_excluded_features", []) or [])
+
+                if actionable_reversals:
+                    # Retry limit was reached with a reversal still
+                    # unresolved -- same honest last-resort disclosure as
+                    # before, now explicitly noting exclusion was already
+                    # attempted first.
+                    reason = (
+                        f"the rebalance-stage fuse excluded {len(excluded_features)} feature(s) "
+                        f"but still could not fully resolve a reversal in: "
+                        f"{', '.join(actionable_reversals)} -- needs manual review before "
+                        f"trusting these features' rebalanced rates"
+                    ) if excluded_features else (
+                        f"regulator did not fully prevent a reversal in: "
+                        f"{', '.join(actionable_reversals)} -- needs manual review before "
+                        f"trusting these features' rebalanced rates"
+                    )
+                elif excluded_features:
+                    names = ", ".join(e["feature"] for e in excluded_features)
+                    reason = (
+                        f"rebalance-stage fuse excluded {len(excluded_features)} feature(s) that "
+                        f"reversed the disadvantaged group during correction ({names}) -- reverted "
+                        f"to original (uncorrected) values for those, then successfully rebalanced "
+                        f"the remaining feature(s) without reversal"
+                    )
+                else:
+                    reason = "no actionable reversal detected after rebalancing (regulator held)"
+
                 self.rebalance_gate = {
                     "accepted": len(actionable_reversals) == 0,
-                    "reason": (
-                        "no actionable reversal detected after rebalancing (regulator held)"
-                        if not actionable_reversals
-                        else f"regulator did not fully prevent a reversal in: "
-                             f"{', '.join(actionable_reversals)} -- needs manual review before "
-                             f"trusting these features' rebalanced rates"
-                    ),
+                    "reason": reason,
                     "reversed_features": actionable_reversals,
                     "near_parity_reversals": near_parity_reversals,
+                    "excluded_features": excluded_features,
                 }
+                if excluded_features:
+                    for e in excluded_features:
+                        logger.warning(f"\n   ⛔ REBALANCE FUSE: '{e['feature']}' was excluded and "
+                              f"reverted to its original values after reversing the disadvantaged "
+                              f"group ('{e['disadvantaged_before']}' -> '{e['disadvantaged_after']}').")
                 if actionable_reversals:
-                    logger.warning(f"\n   ⛔ REBALANCE GATE: regulator did not fully prevent a reversal in: "
-                          f"{', '.join(actionable_reversals)}. Flagged for manual review -- see "
-                          f"audit_trail.json's rebalance_gate block.")
+                    logger.warning(f"\n   ⛔ REBALANCE GATE: still unresolved after the fuse's retry "
+                          f"limit -- reversal remains in: {', '.join(actionable_reversals)}. Flagged "
+                          f"for manual review -- see audit_trail.json's rebalance_gate block.")
                 if near_parity_reversals:
                     logger.warning(f"\n   ℹ️  Near-parity rank swap (not gated -- gap below this feature's "
                           f"own disparity threshold): {', '.join(near_parity_reversals)}")
@@ -7107,10 +7662,39 @@ class UniversalBiasClean:
 
             # FIX: Ensure svm_validation exists even if no mitigation
             if not diagnostic_results.get("requires_mitigation", False):
-                # No mitigation was performed at all
+                # No mitigation was performed at all.
+                #
+                # v3.10.4: this used to say "No significant bias detected"
+                # unconditionally -- but requires_mitigation is False for
+                # TWO different reasons (significant_bias_count > 0 AND
+                # initial_bias_score > 0.05, both required), and only one
+                # of them actually means "nothing significant was found."
+                # Found on real data twice (HMDA, German Credit): both
+                # runs had 2 statistically significant features sitting
+                # elsewhere in the very same report, while this line
+                # claimed none were detected -- a direct, visible
+                # contradiction between the executive summary and the
+                # statistical tests table right below it. The real reason
+                # in both cases was the SECOND condition: the combined/
+                # composite score across all features stayed under 0.05
+                # even though individual features cleared their own
+                # significance bar. Branching on which condition actually
+                # failed gives an accurate reason either way.
+                sig_count = diagnostic_results.get("significant_bias_count", 0)
+                composite_score = diagnostic_results.get("initial_bias_score", 0)
+                if sig_count == 0:
+                    no_mitigation_reason = "No significant bias detected in any feature - no mitigation performed"
+                else:
+                    no_mitigation_reason = (
+                        f"{sig_count} feature{'s' if sig_count != 1 else ''} showed statistically "
+                        f"significant bias, but the combined score across all features "
+                        f"({composite_score:.4f}) stayed below the 0.05 threshold that triggers "
+                        f"automatic mitigation - no mitigation performed. Review the individually "
+                        f"significant feature(s) below even though no correction was attempted."
+                    )
                 svm_validation = {
                     'svm_applied': False,
-                    'reason': 'No significant bias detected - no mitigation performed',
+                    'reason': no_mitigation_reason,
                     'post_svm_bias_score': diagnostic_results.get('initial_bias_score', 0)
                 }
                 # v3.6.4 FIX: diagnostic_results["final_bias_score"] is
