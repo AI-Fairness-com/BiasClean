@@ -26,10 +26,45 @@ Features:
 - Stage-wise monitoring and attribution
 - Human-in-the-loop decision support
 
-Version: 3.10.0
+Version: 3.10.1
 License: Open Source
 Author: Hamid Tavakoli
 Date: January 2026
+
+Changelog (3.10.0 -> 3.10.1): Target-column auto-detection REMOVED.
+target_column is now a required parameter -- no default, no silent
+substitution, no ranked suggestion list.
+- Root cause / decision record: no defensible mechanism exists to
+  blind-guess a target/outcome column from column names or statistics
+  alone. Two independent real-data failures proved this: (1) Hiring/
+  OpenIntro_resume.csv -- the true target 'received_callback' scored
+  the SAME 20% low-confidence tier as 22 unrelated columns, and among
+  that tier the binary-column fallback picked 'job_fed_contractor'
+  purely because it appeared earlier in column order (20 of this
+  dataset's 30 columns are binary, so "is binary" carries zero
+  separating power); (2) COMPAS -- three candidates (is_recid,
+  is_violent_recid, two_year_recid) tied at 90% confidence with no
+  statistical basis for preferring one recidivism definition over
+  another, a domain judgment call no column-name pattern can make.
+- Matches established field practice: AIF360 (label_name is a
+  required constructor arg on every dataset class), Fairlearn (y_true
+  is a required argument to every metric), and Aequitas (requires a
+  specifically-named label_value column prepared by the user) all
+  require an explicit target/label with zero auto-detection, because
+  "what does this dataset measure" is a real-world-purpose question
+  only the dataset's owner can answer.
+- Fixed: process_dataset's target-column block now raises a clear
+  ValueError when target_column is omitted, instead of running
+  outcome-pattern + binary-column fallback selection. The
+  already-correct "specified but not found" path (Workstream G,
+  Phase 4) is unchanged. The interactive CLI's target prompt no longer
+  accepts a blank Enter to trigger auto-detection; it now loops until
+  a valid column name is given. No ranked/suggested-candidate list is
+  shown in either place -- a ranked shortlist would still imply a
+  confidence this tier cannot honestly claim (see finding (1) above).
+- Scope: purely input-validation -- no change to mapping, rebalancing,
+  SVM enforcement, or statistical-test logic. Datasets already run
+  with an explicitly-specified target_column are unaffected.
 
 Changelog (3.9.2 -> 3.10.0): Phase 3.5 integration -- Workstream B's
 dual-criteria significance test is now cross-referenced against
@@ -1577,7 +1612,7 @@ Changelog (3.1.0 -> 3.1.1):
   outcome_pattern at all -- auto-detect will now raise a clear error
   and ask for a manual target instead of silently picking a split flag.
 """
-__version__ = "3.10.0"
+__version__ = "3.10.1"
 
 # ============================================================================
 
@@ -6010,122 +6045,68 @@ class UniversalBiasClean:
                 raise ValueError(
                     f"Target column '{target_column}' was not found in this "
                     f"dataset. Available columns include: {available_preview}"
-                    f"{more}. Check for a typo, or omit target_column to let "
-                    f"auto-detection pick a candidate instead."
+                    f"{more}. Check for a typo and re-run with the correct "
+                    f"column name -- BiasClean does not auto-detect the "
+                    f"target column, so this must be specified exactly."
                 )
             else:
-                outcome_candidates = []
-                for col, mapping in raw_mappings.items():
-                    if mapping.get("feature") == "__outcome__":
-                        outcome_candidates.append((col, mapping.get("confidence", 0), "outcome-pattern match"))
-                outcome_candidates.sort(key=lambda x: x[1], reverse=True)
-
-                # BUG FIX (v3.7.4): when two or more outcome-pattern candidates
-                # tie at the same top confidence (e.g. COMPAS's is_recid,
-                # is_violent_recid, and two_year_recid all match at 90%),
-                # sort() being stable means the winner was decided purely by
-                # which column happened to come first in the CSV's original
-                # column order -- not by anything principled, since there is
-                # no statistical basis for preferring one recidivism
-                # definition over another; that's a domain judgment call.
-                # The real problem wasn't the tie-break itself (there's no
-                # "more correct" answer to auto-detect toward) but that nobody
-                # running the pipeline could see the tie ever happened -- only
-                # the winner was ever printed. Found when a is_recid-based
-                # result was compared against a differently-run two_year_recid
-                # benchmark without anyone noticing they were different
-                # outcome definitions for several days of downstream work.
-                # Fixed: store every top-confidence-tied candidate so both the
-                # console output and the audit trail can surface the ambiguity
-                # explicitly, without changing which column ends up selected
-                # (auto-proceeding with one is still correct for the
-                # non-technical "just press Enter" workflow this project
-                # deliberately targets -- the fix is visibility, not a
-                # different selection algorithm).
-                self._tied_outcome_candidates = []
-                if len(outcome_candidates) > 1:
-                    top_confidence = outcome_candidates[0][1]
-                    tied = [c for c in outcome_candidates if c[1] == top_confidence]
-                    if len(tied) > 1:
-                        self._tied_outcome_candidates = [c[0] for c in tied]
-                        logger.warning(f"   ⚠️  {len(tied)} columns matched the outcome pattern at equal "
-                              f"{top_confidence:.0%} confidence: {', '.join(c[0] for c in tied)}")
-                        logger.info(f"      Only one will be auto-selected below (by column order, not "
-                              f"by which definition is 'correct' -- that's a domain judgment call "
-                              f"auto-detection can't make). If these represent genuinely different "
-                              f"outcome definitions, consider re-running with the target specified "
-                              f"explicitly to confirm the right one for your analysis.")
-
-                # Exclude columns already recognized as protected attributes
-                # (Gender, Ethnicity, Age, etc.) from the fallback search --
-                # a column being binary doesn't make it a valid *outcome*.
-                # Auto-detect picking e.g. 'subject_sex' as the target would
-                # silently invert the whole analysis (auditing "bias in who
-                # is male vs female" instead of using sex as a protected
-                # attribute to check bias *against*), which is a much worse
-                # failure than just erroring out and asking for a manual pick.
-                already = {c[0] for c in outcome_candidates}
-                protected_cols = {
-                    col for col, mapping in raw_mappings.items()
-                    if mapping.get("feature") not in (None, "__exclude__", "__outcome__")
-                }
-                # Defense in depth: never let a dataset-bookkeeping column
-                # (train/test split flags, CV fold indices, holdout
-                # markers) win the binary-fallback race, even if a real
-                # outcome column's name isn't recognized by any
-                # outcome_pattern. This is what actually bit us on the
-                # NIJ Recidivism Challenge dataset: 'Training_Sample' (a
-                # numeric 0/1 70/30 split flag with nothing to do with
-                # recidivism) was auto-selected as the target ahead of
-                # the real outcome 'Recidivism_Within_3years' once that
-                # column fell through to Unknown. Match against the
-                # name with separators stripped, so 'Training_Sample',
-                # 'training-sample', and 'TRAININGSAMPLE' all match the
-                # same bookkeeping token -- exact-token match only (not
-                # substring) to avoid excluding a legitimately-named
-                # feature that happens to contain one of these words.
-                _BOOKKEEPING_TOKENS = {
-                    "trainingsample", "traintestsplit", "istrain", "istest",
-                    "istraining", "istestset", "cvfold", "kfold", "fold",
-                    "datasetsplit", "datasplit", "holdout", "holdoutflag",
-                    "isholdout", "split", "partition", "datapartition",
-                }
-                binary_candidates = []
-                for col in self.original_df.columns:
-                    if col in already or col in protected_cols:
-                        continue
-                    col_norm = re.sub(r'[^a-z0-9]', '', col.lower())
-                    if col_norm in _BOOKKEEPING_TOKENS:
-                        continue
-                    if self.original_df[col].nunique(dropna=True) == 2:
-                        is_numeric = pd.api.types.is_numeric_dtype(self.original_df[col])
-                        binary_candidates.append((col, 1 if is_numeric else 0, "binary column fallback"))
-                binary_candidates.sort(key=lambda x: x[1], reverse=True)
-
-                final_target = None
-                skipped = []
-                for col, confidence, reason in outcome_candidates + binary_candidates:
-                    try:
-                        coerced_target, target_binarization_map = coerce_binary_target(self.original_df, col)
-                    except ValueError as e:
-                        skipped.append((col, str(e).split(".")[0]))
-                        continue
-                    final_target = col
-                    self.original_df[final_target] = coerced_target
-                    label = f"{confidence:.0%} confidence, {reason}" if reason == "outcome-pattern match" else reason
-                    logger.info(f"   Auto-detected target: '{final_target}' ({label})")
-                    break
-
-                if skipped:
-                    for col, why in skipped:
-                        logger.info(f"   Skipped '{col}' as target candidate: {why}")
-
-                if final_target is None:
-                    raise ValueError(
-                        "No suitable binary target column found automatically "
-                        f"(tried and rejected: {[c for c, _ in skipped]}). "
-                        "Please specify a target column manually."
-                    )
+                # ------------------------------------------------------------
+                # AUTO-DETECTION REMOVED (v3.10.1).
+                #
+                # This branch used to rank outcome-pattern keyword matches,
+                # then fall back to picking among all remaining binary
+                # columns. Real-data findings showed both tiers are
+                # undefensible:
+                #
+                #   (1) Hiring/OpenIntro_resume.csv: the true target
+                #       'received_callback' scored the SAME 20%
+                #       low-confidence bucket as 22 unrelated columns (no
+                #       ranking within that bucket at all). The binary
+                #       fallback then picked 'job_fed_contractor' -- not
+                #       because it was more target-like, but purely because
+                #       it sits earlier in the CSV's column order. 20 of
+                #       this dataset's 30 columns are binary, so "is
+                #       binary" has zero separating power here; there was
+                #       no other signal to rank on.
+                #   (2) COMPAS: is_recid / is_violent_recid /
+                #       two_year_recid tied at 90% confidence with no
+                #       statistical basis for preferring one recidivism
+                #       definition over another -- a domain judgment call,
+                #       not something inferable from the data (v3.7.4 only
+                #       made this tie visible; it never had a principled
+                #       way to break it).
+                #
+                # No dataset-side signal -- keyword match, cardinality, or
+                # column position -- can substitute for knowing what a
+                # dataset actually measures. This matches how the
+                # established fairness toolkits already work: AIF360's
+                # label_name, Fairlearn's y_true, and Aequitas's
+                # label_value are all required, user-supplied inputs with
+                # no auto-detection attempted. A ranked "top candidates"
+                # shortlist was considered and rejected for the same
+                # reason -- it would still imply a confidence this tier
+                # cannot honestly claim.
+                #
+                # target_column is therefore a required argument. Fail
+                # loudly and explain why, rather than silently guessing.
+                # ------------------------------------------------------------
+                available_preview = ", ".join(list(self.original_df.columns)[:15])
+                more = "" if len(self.original_df.columns) <= 15 else f", ... and {len(self.original_df.columns) - 15} more"
+                raise ValueError(
+                    "A target column must be specified -- BiasClean does not "
+                    "auto-detect the outcome/target column.\n"
+                    "Only you know what this dataset measures and what "
+                    "decision it represents (e.g. which column records "
+                    "whether an applicant received a callback, a loan was "
+                    "approved, or a defendant reoffended). No column-name "
+                    "pattern or statistic can reliably substitute for that "
+                    "knowledge -- this matches how AIF360, Fairlearn, and "
+                    "Aequitas all require an explicit target/label column "
+                    "with no auto-detection.\n"
+                    f"Available columns include: {available_preview}{more}.\n"
+                    "Please re-run with target_column set to the correct "
+                    "column name for your dataset."
+                )
 
             self.target_binarization_map = target_binarization_map
             if target_binarization_map:
@@ -8579,7 +8560,11 @@ def run_interactive_pipeline():
         print("Invalid choice. Exiting.")
         return None
 
-    # Optional: Specify target column
+    # Required (v3.10.1): Specify target column -- no auto-detection.
+    # See the decision record in process_dataset's target-column block
+    # (and the 3.10.0 -> 3.10.1 changelog entry at the top of this file)
+    # for why: no column-name pattern or statistic can substitute for
+    # knowing what this dataset actually measures -- only you know that.
     print(f"\n{'='*80}")
     print("TARGET COLUMN SELECTION")
     print(f"{'='*80}")
@@ -8593,8 +8578,21 @@ def run_interactive_pipeline():
         print(f"  {idx:2}. {col:30} (unique: {uniq:5}, dtype: {dtype})")
 
     print()
-    target_input = input("Enter target column name (or press Enter for auto-detection): ").strip()
-    target_column = target_input if target_input else None
+    print("BiasClean does not auto-detect which column is your outcome/target.")
+    print("Only you know what this dataset measures -- e.g. which column records")
+    print("whether an applicant received a callback, a loan was approved, or a")
+    print("defendant reoffended. Please choose the correct column from the list above.")
+    print()
+    target_column = ""
+    while not target_column:
+        target_input = input("Enter target column name (required): ").strip()
+        if not target_input:
+            print("A target column is required -- BiasClean will not guess this for you.")
+            continue
+        if target_input not in df.columns:
+            print(f"'{target_input}' was not found in this dataset's columns. Please check for a typo.")
+            continue
+        target_column = target_input
 
     # Optional: Auto-approval threshold
     print()
@@ -8833,6 +8831,13 @@ def run_biasclean_interactive():
 def quick_audit(csv_path, domain="justice", target=None):
     """
     Quick audit for Python users.
+
+    NOTE (v3.10.1): `target` is required in practice -- there is no
+    auto-detection fallback. Omitting it (or leaving it None) will raise
+    a ValueError from process_dataset explaining why and listing the
+    dataset's available columns. The default of None is kept here only
+    so a missing target fails with that clear message rather than a
+    TypeError; it is not usable as an actual default.
 
     Example:
         results = quick_audit("data.csv", domain="health", target="diagnosis")
