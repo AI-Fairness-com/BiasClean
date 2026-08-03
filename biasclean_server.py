@@ -32,7 +32,7 @@ import traceback
 # a silent ModuleNotFoundError here means requests will fail at import
 # time before this server even starts.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from biasclean_v3_5_1_terminal import UniversalBiasClean
+from biasclean_v3_5_1_terminal import UniversalBiasClean, smart_read_csv
 import pandas as pd
 
 app = Flask(__name__)
@@ -115,8 +115,17 @@ def analyze():
         print(f"SVM: {enable_svm}")
         print(f"{'='*80}\n")
         
-        # Load CSV
-        df = pd.read_csv(upload_path)
+        # Load CSV -- delimiter-auto-detecting (see smart_read_csv in the
+        # pipeline module for why: a plain pd.read_csv would silently
+        # collapse a semicolon-delimited file like the real UCI
+        # bank-full.csv into one garbage column instead of erroring).
+        try:
+            df = smart_read_csv(upload_path)
+        except ValueError as e:
+            return jsonify({
+                'error': 'Could not parse this CSV',
+                'details': str(e)
+            }), 400
         
         # Initialize pipeline
         pipeline = UniversalBiasClean(

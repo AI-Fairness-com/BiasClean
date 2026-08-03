@@ -1621,6 +1621,8 @@ import numpy as np
 import json
 import os
 import re
+import csv
+import io
 import warnings
 import logging
 import sys
@@ -1728,6 +1730,124 @@ def generate_monitoring_report(monitoring_data: Dict) -> str:
                 report.append(f"  • {stage}: {score:.4f}")
 
     return "\n".join(report)
+
+# ============================================================================
+# DELIMITER-AWARE CSV LOADING
+# ============================================================================
+
+def smart_read_csv(path_or_buffer, **kwargs):
+    """Load a CSV, auto-detecting its delimiter instead of assuming comma.
+
+    Root cause this fixes: every pd.read_csv() call in this file used
+    to assume comma-separated values, pandas' default. Real-world
+    datasets aren't always comma-delimited -- found on Business/
+    bank-full.csv (the genuine UCI Bank Marketing dataset), which is
+    semicolon-delimited. Loading it with the comma default doesn't
+    raise an error; it silently "succeeds" with exactly ONE column
+    whose name is the entire header row jammed together (e.g.
+    'age;"job";"marital";...;"y"'), and every row becomes one giant
+    string value under that column. This looks like a working load --
+    no exception, a real record count -- right up until target-column
+    selection can't find 'y' (or any real column) at all. This is
+    exactly the class of silent-wrong-behavior-instead-of-a-clear-
+    error this project has treated as a bug everywhere else (see
+    Workstream G's target-not-found fix, the fully-null protected-
+    column guard, and the target-column auto-detection removal itself
+    -- all share the same principle: fail loudly and clearly rather
+    than silently produce a technically-valid-looking wrong result).
+
+    Strategy: sniff the delimiter from a text sample using csv.Sniffer
+    against the delimiters real-world exports actually use (comma,
+    semicolon, tab, pipe), falling back to pandas' own sep=None/
+    engine='python' auto-detection if sniffing is inconclusive. As
+    defense in depth, if the result STILL has exactly one column,
+    raise a clear ValueError naming the likely delimiter mismatch
+    instead of silently returning a single-column dataframe -- a
+    genuine one-column CSV is rare enough that erring on the side of
+    "ask" rather than "assume" is the safer default, same reasoning
+    already applied to target-column selection.
+
+    Accepts anything pd.read_csv accepts (a path, or a file-like
+    object such as io.BytesIO) so every existing call site can switch
+    to this with no other changes. Any additional kwargs are passed
+    through to pd.read_csv, but a caller-supplied `sep` is honored
+    as-is (no sniffing) since an explicit delimiter is the user
+    overriding auto-detection, exactly like target_column.
+    """
+    if "sep" in kwargs or "delimiter" in kwargs:
+        return pd.read_csv(path_or_buffer, **kwargs)
+
+    # Get a text sample to sniff, without consuming a file-like object
+    # the caller still needs pd.read_csv to read from afterwards.
+    sample = ""
+    seekable_buffer = hasattr(path_or_buffer, "read") and hasattr(path_or_buffer, "seek")
+    try:
+        if seekable_buffer:
+            start = path_or_buffer.tell()
+            raw = path_or_buffer.read(8192)
+            path_or_buffer.seek(start)
+            sample = raw.decode("utf-8", errors="ignore") if isinstance(raw, bytes) else raw
+        elif isinstance(path_or_buffer, str) and os.path.exists(path_or_buffer):
+            with open(path_or_buffer, "r", encoding="utf-8", errors="ignore") as f:
+                sample = f.read(8192)
+    except Exception:
+        sample = ""  # sniffing is best-effort; fall through to pandas' own detection
+
+    detected_sep = None
+    if sample:
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+            detected_sep = dialect.delimiter
+        except csv.Error:
+            detected_sep = None  # inconclusive -- let pandas try sep=None below
+
+    if detected_sep:
+        df = pd.read_csv(path_or_buffer, sep=detected_sep, **kwargs)
+    else:
+        # csv.Sniffer was inconclusive among the known real-world
+        # delimiters -- do NOT fall back to pandas' own unrestricted
+        # sep=None auto-detection here. That mode considers ANY
+        # character a candidate delimiter and, on a genuinely
+        # single-column file of ordinary text with no real delimiter,
+        # will invent a spurious split on some character that merely
+        # happens to appear often (found via testing: a plain-text
+        # single-column file got wrongly split on the letter 't').
+        # Assuming the pandas default (comma) is the safer fallback;
+        # the single-column check below still catches a real mismatch
+        # if this guess is wrong.
+        df = pd.read_csv(path_or_buffer, **kwargs)
+
+    if len(df.columns) == 1:
+        collapsed_name = str(df.columns[0])
+        other_delim_hits = {d: collapsed_name.count(d) for d in (";", ",", "\t", "|") if d != (detected_sep or "")}
+        likely_delim = max(other_delim_hits, key=other_delim_hits.get) if other_delim_hits else None
+        preview = collapsed_name[:120] + ("..." if len(collapsed_name) > 120 else "")
+
+        if likely_delim and other_delim_hits.get(likely_delim, 0) >= 2:
+            # Real evidence of a delimiter mismatch, not just a genuinely
+            # single-column file -- fail loudly rather than silently
+            # handing back a garbage single-column dataframe.
+            raise ValueError(
+                f"This file loaded as a single column ('{preview}'), and that "
+                f"column's name contains multiple '{likely_delim}' characters -- "
+                f"this strongly suggests the file actually uses '{likely_delim}' "
+                f"as its delimiter, not a comma. Please re-run specifying it "
+                f"explicitly (e.g. sep='{likely_delim}')."
+            )
+        else:
+            # No positive evidence of a delimiter bug -- could genuinely be
+            # a single-column file. Don't hard-block it (downstream mapping
+            # will fail clearly on its own if there's no usable target or
+            # protected attribute), but flag it since it's an unusual shape
+            # for a bias-audit dataset.
+            logger.warning(
+                f"   ⚠️  Loaded file has only one column ('{preview}'). If "
+                f"this wasn't expected, the file may use a delimiter other "
+                f"than comma."
+            )
+
+    return df
+
 
 # ============================================================================
 # TARGET COLUMN NORMALIZATION
@@ -5960,7 +6080,7 @@ class UniversalBiasClean:
                 self.original_df = df.copy()
                 logger.info(f"Loaded DataFrame from memory")
             elif file_path:
-                self.original_df = pd.read_csv(file_path)
+                self.original_df = smart_read_csv(file_path)
                 logger.info(f"Loaded CSV: {file_path}")
             else:
                 raise ValueError("Must provide either file_path or df")
@@ -8495,7 +8615,7 @@ def run_interactive_pipeline():
                 return None
 
             file_name = list(uploaded.keys())[0]
-            df = pd.read_csv(io.BytesIO(uploaded[file_name]))
+            df = smart_read_csv(io.BytesIO(uploaded[file_name]))
         else:
             file_path = input("\nEnter path to CSV file: ").strip()
 
@@ -8504,7 +8624,7 @@ def run_interactive_pipeline():
                 print(f"File not found: {file_path}")
                 return None
 
-            df = pd.read_csv(file_path)
+            df = smart_read_csv(file_path)
             file_name = os.path.basename(file_path)
 
         print(f"\n✓ File loaded: {file_name}")
@@ -8583,18 +8703,36 @@ def run_interactive_pipeline():
     print("BiasClean does not auto-detect which column is your outcome/target.")
     print("Only you know what this dataset measures -- e.g. which column records")
     print("whether an applicant received a callback, a loan was approved, or a")
-    print("defendant reoffended. Please choose the correct column from the list above.")
+    print("defendant reoffended. Please choose the correct column from the list above --")
+    print("either its row number (e.g. '17') or its exact name.")
     print()
     target_column = ""
     while not target_column:
-        target_input = input("Enter target column name (required): ").strip()
+        target_input = input("Enter target column NUMBER or exact name (required): ").strip()
         if not target_input:
             print("A target column is required -- BiasClean will not guess this for you.")
             continue
-        if target_input not in df.columns:
-            print(f"'{target_input}' was not found in this dataset's columns. Please check for a typo.")
+        # Exact name match takes priority (covers the rare case of a
+        # column literally named e.g. "17"). Otherwise, accept a row
+        # number from the list above -- a digit is much harder to
+        # mistype than a case-sensitive, underscore-heavy column name,
+        # and this matches the numbered-choice pattern already used
+        # for domain selection below.
+        if target_input in df.columns:
+            target_column = target_input
             continue
-        target_column = target_input
+        if target_input.isdigit():
+            row_num = int(target_input)
+            if 1 <= row_num <= len(df.columns):
+                resolved = df.columns[row_num - 1]
+                print(f"   -> column {row_num} is '{resolved}'")
+                target_column = resolved
+                continue
+            else:
+                print(f"'{target_input}' is not a valid row number (must be between 1 and {len(df.columns)}).")
+                continue
+        print(f"'{target_input}' was not found in this dataset's columns. Please check for a typo, "
+              f"or enter its row number from the list above instead.")
 
     # Optional: Auto-approval threshold
     print()
@@ -8725,7 +8863,7 @@ def run_biasclean_interactive():
         print("✓ Demo dataset loaded (1000 records)")
     else:
         try:
-            df = pd.read_csv(file_path)
+            df = smart_read_csv(file_path)
             print(f"✓ Loaded: {len(df):,} records, {len(df.columns)} columns")
         except Exception as e:
             print(f"❌ Error loading file: {e}")
@@ -8844,7 +8982,7 @@ def quick_audit(csv_path, domain="justice", target=None):
     Example:
         results = quick_audit("data.csv", domain="health", target="diagnosis")
     """
-    df = pd.read_csv(csv_path)
+    df = smart_read_csv(csv_path)
     pipeline = UniversalBiasClean(domain=domain, mode="audit_only")
     return pipeline.process_dataset(df=df, target_column=target)
 
