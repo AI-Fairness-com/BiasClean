@@ -26,10 +26,97 @@ Features:
 - Stage-wise monitoring and attribution
 - Human-in-the-loop decision support
 
-Version: 3.10.7
+Version: 3.10.10
 License: Open Source
 Author: Hamid Tavakoli
 Date: January 2026
+
+Changelog (3.10.9 -> 3.10.10): SVM-REJECTION NARRATIVE FIX. Found
+during the post-v3.10.9 full re-validation sweep, real-data cases on
+Heart Disease, studentInfo, and Governance/ACS Public Coverage. The
+v3.6.2 fix (see that changelog entry) made svm_validation
+['post_svm_bias_score'] get overwritten to equal pre_svm_bias_score
+whenever the SVM validation gate rejects the classifier result --
+correct for audit_trail.json's headline svm_enforcement block (which
+should mirror bias_scores.final, not the discarded classifier's own
+number). But report.pdf's "Why this recommendation" narrative (the
+"SVM fairness enforcement made the measured bias score WORSE... from
+X after rebalancing to Y after SVM" sentence) reads from that SAME
+overwritten field -- so once post_svm_bias_score got overwritten,
+this sentence always rendered X and Y as the identical number
+("from 0.030 after rebalancing to 0.030 after SVM"), silently hiding
+the actual regression the sentence exists to describe. Fix: the raw,
+never-overwritten classifier score is now also stored under a new,
+stable key ('raw_svm_bias_score', set once when the SVM stage first
+computes its score and never touched again), and the narrative
+sentence now reads from that key instead of post_svm_bias_score.
+audit_trail.json's post_svm_bias_score behavior is UNCHANGED --
+still intentionally mirrors the fallback per v3.6.2 -- only the
+plain-language narrative's source changed. NOTE: a separate,
+currently unexplained inconsistency was also observed during this
+same real-data round -- Heart Disease's audit_trail.json showed
+post_svm_bias_score as the RAW (un-overwritten) value despite a
+gate rejection, while studentInfo's and Governance's both showed
+the correctly-overwritten value as this file's code says they
+always should. This patch does not touch the overwrite logic
+itself (line ~7826) and does not explain that divergence -- worth
+re-running Heart Disease against this exact file to see whether it
+reproduces before assuming it's fixed.
+
+Changelog (3.10.8 -> 3.10.9): HIRING KEYWORD REFINEMENT (Hamid's
+decision, found during v3.10.8 re-validation). "experience" removed
+from Hiring's SocioeconomicStatus contextual_patterns. Real-data case:
+years_experience on OpenIntro_resume.csv newly cleared item 5's
+confidence-scaling threshold (81%, p=1.79e-05) and got mapped to
+SocioeconomicStatus for the first time under v3.10.8 -- a column that
+never reached auto-approval under the old flat-75% Tier-2 cap. On
+review, years of work experience is a job-relevant qualification, not
+a genuine socioeconomic-status proxy the way education/qualification/
+degree/salary are -- the same category of judgment call as Finance's
+foreign/ForeignExchangeRate false-positive risk (v3.10.6): the
+matching logic worked correctly, the keyword itself was the wrong one
+for what it's meant to detect. "education", "qualification", "degree",
+and "salary" remain in Hiring's SocioeconomicStatus patterns,
+unaffected -- only "experience" was removed. Verified: years_experience
+confirmed to no longer match any remaining SES keyword. Real-data
+re-confirmation (re-running Hiring, expecting a reversion to 2 mapped
+features) still needed.
+
+Changelog (3.10.7 -> 3.10.8): NEW BUG FOUND AND FIXED DURING REAL-DATA
+RE-VALIDATION (not one of the original 11 open items). Found on: HMDA/
+hmda_wa_race_cut.csv's re-run under v3.10.7 -- the "Mapping ties
+detected" section still showed the generic "Only one is actually used
+for the analysis" fallback message, and the item-3 p-value transparency
+addition never appeared, despite both being implemented in v3.10.6.
+Root cause: self.results (the dict passed to generate_report() for
+report.pdf, at BOTH of its call sites) never included a "features" key
+anywhere in the file -- confirmed via exhaustive search. audit_trail.json
+gets its own, separately-built "features" dict (via a local
+features_merged variable used only for that JSON file), so the saved
+audit_trail.json always looked correct while report.pdf's
+_detect_mapping_conflicts, which reads results.get("features", {}) to
+build selected_columns, always received an empty dict -- meaning
+"winner" was ALWAYS falsy. This means the v3.10.4 winner-naming fix
+("'X' was used for the actual analysis...") has never actually fired in
+ANY delivered report.pdf, for any Phase 5 dataset, mitigated or not --
+it silently fell back to the generic message every time, and the
+v3.10.6 item-3 addition inherited the same dead input. This bug predates
+this validation round entirely; it was only surfaced now because HMDA's
+mapping-ties section was actually re-inspected against real output for
+the first time since the winner-naming fix shipped. Fix: self.results
+now includes "features": {feature: {"column": col} for feature, col in
+feature_map.items()} at both dict-construction sites (the no-mitigation/
+audit-blocked early exit, and the main path) -- minimal population,
+mirroring what features_merged already correctly built for
+audit_trail.json, scoped to the one field _detect_mapping_conflicts
+actually needs. Verified against HMDA's real mapping data (loaded from
+the actual re-run's audit_trail.json): winner now correctly names
+'derived_race', and the p-value transparency line correctly surfaces
+derived_ethnicity's own significance (p=6.215e-94, significant on its
+own) -- confirming this is real, informative signal that was silently
+inaccessible in every prior report.pdf. Real-data re-confirmation
+against German Credit and Governance (also has mapping ties) still
+needed to confirm this fix generalizes beyond HMDA.
 
 Changelog (3.10.6 -> 3.10.7): OPEN ITEM 5 CLOSED. Tier 2 (domain-
 specific contextual_patterns) matches were flat-capped at 0.75
@@ -1905,7 +1992,7 @@ Changelog (3.1.0 -> 3.1.1):
   outcome_pattern at all -- auto-detect will now raise a clear error
   and ask for a manual target instead of silently picking a split flag.
 """
-__version__ = "3.10.7"
+__version__ = "3.10.10"
 
 # ============================================================================
 
@@ -2929,7 +3016,18 @@ class HierarchicalMapper:
             "hiring": {
                 "outcome_patterns": self.config["outcome_patterns"],
                 "contextual_patterns": {
-                    "SocioeconomicStatus": ["education", "qualification", "degree", "experience", "salary"],
+                    # v3.10.9 FIX: "experience" removed (Hamid's decision,
+                    # real-data case: years_experience on OpenIntro_resume.csv
+                    # newly cleared item 5's confidence-scaling threshold and
+                    # got mapped to SocioeconomicStatus for the first time --
+                    # years of work experience is a job-relevant
+                    # qualification, not a genuine socioeconomic-status
+                    # proxy the way education/qualification/degree/salary
+                    # are. Same category of judgment call as Finance's
+                    # foreign/ForeignExchangeRate false-positive risk:
+                    # matching logic worked correctly, the keyword itself
+                    # was just the wrong one for what it's meant to detect.
+                    "SocioeconomicStatus": ["education", "qualification", "degree", "salary"],
                     "DisabilityStatus": ["disability", "accommodation", "accessibility"],
                     "Region": ["location", "postcode", "office", "branch"],
                     "MigrationStatus": ["visa", "citizenship", "residency", "work_permit"]
@@ -4968,7 +5066,17 @@ class ReportGenerator:
         # user to manually consider disabling SVM.
         if svm_validation_for_reasons.get('svm_worsened_fairness'):
             pre_svm = svm_validation_for_reasons.get('pre_svm_bias_score')
-            post_svm = svm_validation_for_reasons.get('post_svm_bias_score')
+            # v3.10.10 FIX: read raw_svm_bias_score (the actual classifier
+            # output, set once and never overwritten) instead of
+            # post_svm_bias_score, which the v3.6.2 gate-rejection fix
+            # intentionally overwrites to match pre_svm_bias_score -- using
+            # it here made this sentence always read "from X to X", hiding
+            # the real regression the sentence exists to describe. Falls
+            # back to post_svm_bias_score for older-shaped svm_validation
+            # dicts (e.g. skipped/disabled paths) that never set the new key.
+            post_svm = svm_validation_for_reasons.get(
+                'raw_svm_bias_score', svm_validation_for_reasons.get('post_svm_bias_score')
+            )
             pre_txt = f"{pre_svm:.3f}" if isinstance(pre_svm, (int, float)) else "unknown"
             post_txt = f"{post_svm:.3f}" if isinstance(post_svm, (int, float)) else "unknown"
             gate_caught_it = (results.get('svm_gate', {}) or {}).get('accepted') is False
@@ -6651,6 +6759,20 @@ class UniversalBiasClean:
             },
             "mappings": self.approved_mappings if hasattr(self, "approved_mappings") else {},
             "feature_map": feature_map,
+            # v3.10.8 FIX (found during HMDA re-validation, real data): this
+            # dict never included a "features" key anywhere in the file --
+            # confirmed via exhaustive grep. _detect_mapping_conflicts's
+            # selected_columns is built from results.get("features", {}),
+            # so "winner" was ALWAYS empty here, meaning the v3.10.4
+            # winner-naming fix ("'X' was used for the actual analysis...")
+            # and the v3.10.6 item-3 p-value transparency addition BOTH
+            # silently fell back to the generic "Only one is actually used
+            # for the analysis" message in every delivered report.pdf, for
+            # every Phase 5 dataset -- not just no-mitigation ones. This is
+            # the minimal population needed (mirrors what features_merged
+            # already correctly builds for audit_trail.json, just scoped to
+            # the one field _detect_mapping_conflicts actually reads).
+            "features": {feature: {"column": col} for feature, col in feature_map.items()},
             "deployment_info": {"deployment_decision": audit_results.get("recommendation", {})},
             "group_rates_final": {},
             "feature_interactions": {},
@@ -7599,6 +7721,19 @@ class UniversalBiasClean:
                             'svm_feature_count': len(svm_results['feature_columns']),
                             'pre_svm_bias_score': pre_svm_bias,
                             'post_svm_bias_score': svm_bias_score,
+                            # v3.10.10 FIX: post_svm_bias_score gets overwritten to
+                            # pre_svm_bias_score below (~line 7826, the v3.6.2 fix)
+                            # whenever the gate rejects, so any consumer that needs
+                            # the classifier's ACTUAL computed score -- not the
+                            # after-fallback number -- has nowhere left to read it
+                            # from. report.pdf's "Why this recommendation" narrative
+                            # is exactly that consumer (see plain_reasons ~line
+                            # 5037): it needs the true pre/post numbers to explain
+                            # HOW MUCH worse SVM made things, and was silently
+                            # degenerating into "from 0.030 to 0.030" once
+                            # post_svm_bias_score got overwritten on rejection. This
+                            # key is set once here and never touched again.
+                            'raw_svm_bias_score': svm_bias_score,
                             'svm_worsened_fairness': svm_worsened_fairness,
                         }
 
@@ -8298,6 +8433,11 @@ class UniversalBiasClean:
                 if getattr(self, "target_binarization_map", None) else None
             ),
             "feature_map": feature_map,
+            # v3.10.8 FIX -- see the matching comment at the no-mitigation
+            # results dict above for the full root-cause writeup. Same fix,
+            # same reasoning, applied to this (the main/mitigated-path)
+            # results dict, which had the identical gap.
+            "features": {feature: {"column": col} for feature, col in feature_map.items()},
             "metadata": {
                 "domain": self.domain,
                 "jurisdiction": self.jurisdiction,
