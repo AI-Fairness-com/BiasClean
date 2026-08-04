@@ -26,10 +26,96 @@ Features:
 - Stage-wise monitoring and attribution
 - Human-in-the-loop decision support
 
-Version: 3.10.5
+Version: 3.10.7
 License: Open Source
 Author: Hamid Tavakoli
 Date: January 2026
+
+Changelog (3.10.6 -> 3.10.7): OPEN ITEM 5 CLOSED. Tier 2 (domain-
+specific contextual_patterns) matches were flat-capped at 0.75
+confidence regardless of actual statistical evidence strength -- even
+a domain match with an extremely low, highly significant p-value
+could never clear the 0.80 default auto-approval threshold on
+confidence alone. This is exactly why German Credit needed a manual
+auto_approve_threshold=0.70 override to include its real SES columns
+(see the v3.10.3->v3.10.4 saga below). Fixed (Hamid's direction: vary
+within a range based on statistical validation strength): once
+validation's p-value is known, a Tier-2 match's confidence is now
+adjusted upward from its 0.75 base -- p<0.001: +0.06 (clears the
+default 0.80 threshold), p<0.01: +0.04, p<0.05: +0.02, not
+significant: +0.0 (stays at 0.75, still requires manual override,
+appropriately conservative). Capped at 0.81, deliberately kept below
+Tier 1/universal's 0.85 floor so a domain-specific match can never
+outrank a universal one even at its strongest. Original confidence
+preserved under "base_confidence" for audit-trail transparency.
+Verified via synthetic tests mirroring the exact logic (5 threshold
+cases, Tier 1/universal confirmed unaffected, confidence never
+exceeds 0.85). Practical side effect surfaced during verification:
+German Credit's Property column (p=2.86e-05) would now auto-approve
+at the DEFAULT 0.80 threshold -- the auto_approve_threshold=0.70
+override this project has used throughout Phase 5 may no longer be
+needed for that dataset; worth re-testing without it. Real-data
+re-confirmation pending, as with all v3.10.6 fixes.
+
+Changelog (3.10.5 -> 3.10.6): POST-PHASE-5 OPEN-ITEM FIXES. Six items
+from the Phase 5 validation round's open-items list closed, ahead of
+handover to the incoming Technical Director. All verified structurally
+(syntax, targeted regex/pattern tests, synthetic regression checks
+against the real functions) in the environment these fixes were
+written in -- real-data re-confirmation against HMDA, German Credit,
+studentInfo, and Governance is still pending as of this version.
+- Item 6: the exclusion condition deciding whether
+  validate_protected_attribute() runs excluded "__exclude__"/None but
+  not "__outcome__" -- a column pattern-matched as a plausible-but-
+  unchosen outcome candidate (e.g. predicted_loan_approved on HMDA)
+  fell through into a nonsensical protected-attribute validation call.
+  Confirmed inert/cosmetic (already discarded downstream), but dead,
+  misleading work. Fixed by adding "__outcome__" to the exclusion list.
+- Item 4: two keyword-coverage gaps fixed. Finance/German Credit's
+  ForeignWorker went unrecognized by MigrationStatus -- added explicit
+  foreign_worker/foreign_national/foreign_born patterns (a bare
+  "foreign" stem was tested and rejected first: it would also match
+  ForeignExchangeRate, an FX/currency concept, a real semantic false-
+  positive risk). Education/studentInfo's imd_band (UK's own official
+  deprivation index) went unrecognized by SocioeconomicStatus -- added
+  "imd"/"deprivation" keywords, both stress-tested boundary-safe.
+- Item 8: Census/ACS PUMS variable codes now recognized at the
+  universal (Tier 1) level -- AGEP, RAC1P, PINCP, POVPIP, PUMA, CIT,
+  NATIVITY, DIS. All 8 stress-tested against a broad plausible-column-
+  name list with zero false-positive collisions. Deliberately did NOT
+  add ST (collides with st_number/postal_st) or HISP (would silently
+  recreate item 3's problem under a new column name).
+- Item 3: HMDA-style Race-vs-Hispanic-origin ties stay clustered under
+  the existing single weighted Ethnicity slot (Hamid's explicit
+  decision, no 8th feature added) -- but _detect_mapping_conflicts now
+  surfaces the non-selected candidate's own individually-tested
+  p-value/significance in the report's "Mapping ties detected" section
+  (data already computed during validation for every tied candidate,
+  previously discarded once one was selected). Informational only,
+  doesn't change which column is used or add any new weight.
+- Item 9: the reversal-reporting loop feeding "Why this recommendation"
+  printed every SVM-stage reversal as if actionable regardless of
+  whether svm_gate had actually rejected the SVM result. Real-data
+  case: Governance's 6 "(after SVM)" reversal bullets printed even
+  though the delivered result uses the rebalanced stage, not SVM.
+  Fixed: SVM-stage reversal entries are now skipped when svm_gate
+  rejected the SVM result, since the existing "VALIDATION GATE
+  REJECTED..." message already covers it.
+- Item 10: fuse-excluded features dropped out of reversal-checking
+  entirely once excluded, even though the final row composition still
+  shifts from OTHER features' resampling -- Governance's Age (excluded/
+  reverted) still drifted -9.6% purely as a side effect, uncaught.
+  Fixed: a post-hoc diagnostic pass now runs the same reversal check
+  against every excluded feature after rebalancing settles, recording
+  any drift (worst-group shift or gap-widening) into
+  rebalance_excluded_features[i]["post_exclusion_drift"] -- never
+  re-excludes or re-reverts anything, purely visibility.
+- Item 1 (MaritalStatus, Business) and item 5 (Tier 2's flat 0.75
+  confidence cap) remain open -- item 1 closed as an accepted
+  limitation (Hamid declined adding an 8th feature category at this
+  stage); item 5 awaits a policy decision. Item 11 (fair_reduction SVM
+  result reproducibility) is under active investigation, root cause
+  not yet confirmed -- see biasclean-justice-validation.md.
 
 Changelog (3.10.4 -> 3.10.5): REBALANCE-STAGE FUSE. Any feature whose
 rebalancing produces an actionable reversal (the disadvantaged group
@@ -1819,7 +1905,7 @@ Changelog (3.1.0 -> 3.1.1):
   outcome_pattern at all -- auto-detect will now raise a clear error
   and ask for a manual target instead of silently picking a split flag.
 """
-__version__ = "3.10.5"
+__version__ = "3.10.7"
 
 # ============================================================================
 
@@ -2708,11 +2794,25 @@ class HierarchicalMapper:
         # Universal ontology (highest priority) - SAME FOR ALL DOMAINS
         self.universal_ontology = {
             "Age": {
-                "patterns": ["age", "birth_year", "dob", "date_of_birth", "age_at", "years_old"],
+                # v3.10.6 (open item 8): added "agep", the ACS/Census PUMS
+                # variable code for age. Stress-tested against a broad
+                # plausible-column-name list (district/distance/cost/
+                # test_score/etc.) with zero false-positive collisions
+                # under the whole-token boundary rule.
+                "patterns": ["age", "birth_year", "dob", "date_of_birth", "age_at", "years_old", "agep"],
                 "data_types": ["int64", "float64"]
             },
             "Ethnicity": {
-                "patterns": ["race", "ethnicity", "ethnic", "racial"],
+                # v3.10.6 (open item 8): added "rac1p", the ACS/Census PUMS
+                # race code. Deliberately did NOT add "hisp" (Hispanic-
+                # origin) here -- ACS represents race (RAC1P) and Hispanic
+                # origin (HISP) as two distinct variables, and this
+                # pipeline currently has only one Ethnicity slot (open
+                # item 3, unresolved). Adding "hisp" now would silently
+                # recreate that exact problem under a new column name
+                # instead of waiting for item 3's real fix (a separate
+                # Race vs. Hispanic-origin category).
+                "patterns": ["race", "ethnicity", "ethnic", "racial", "rac1p"],
                 "value_mappings": {
                     "African-American": ["black", "african american", "aa", "afr_am"],
                     "Caucasian": ["white", "caucasian", "european"],
@@ -2723,6 +2823,8 @@ class HierarchicalMapper:
                 }
             },
             "Gender": {
+                # No change needed for open item 8: ACS's SEX variable
+                # already matches the existing "sex" pattern exactly.
                 "patterns": ["sex", "gender"],
                 "value_mappings": {
                     "Male": ["m", "male", "man", "men"],
@@ -2730,19 +2832,40 @@ class HierarchicalMapper:
                 }
             },
             "SocioeconomicStatus": {
-                "patterns": ["income", "salary", "wage", "earnings", "wealth", "poverty", "ses"],
+                # v3.10.6 (open item 8): added "pincp" (total person's
+                # income) and "povpip" (income-to-poverty ratio), the
+                # ACS/Census PUMS variable codes. Both stress-tested clean.
+                "patterns": ["income", "salary", "wage", "earnings", "wealth", "poverty", "ses", "pincp", "povpip"],
                 "data_types": ["int64", "float64"]
             },
             "Region": {
-                "patterns": ["region", "state", "county", "zipcode", "postcode", "location"],
+                # v3.10.6 (open item 8): added "puma" (ACS's Public Use
+                # Microdata Area code, stress-tested clean). Deliberately
+                # did NOT add "st" (ACS's own State code): stress-testing
+                # found it collides with plausible real column names like
+                # st_number and postal_st under the whole-token boundary
+                # rule. The existing "state" pattern already covers the
+                # common case (and is what Governance's own validated
+                # dataset uses after renaming), so this gap is accepted
+                # rather than fixed with an unsafe short token.
+                "patterns": ["region", "state", "county", "zipcode", "postcode", "location", "puma"],
                 "data_types": ["object"]
             },
             "MigrationStatus": {
-                "patterns": ["migration", "immigrant", "citizenship", "visa", "resident"],
+                # v3.10.6 (open item 8): added "cit" (ACS citizenship
+                # status code) and "nativity" (ACS nativity code). Both
+                # stress-tested clean against plausible column names
+                # (citation_count, city_name, etc. -- none false-matched).
+                "patterns": ["migration", "immigrant", "citizenship", "visa", "resident", "cit", "nativity"],
                 "data_types": ["object"]
             },
             "DisabilityStatus": {
-                "patterns": ["disability", "handicap", "impairment", "condition"],
+                # v3.10.6 (open item 8): added "dis" (ACS disability
+                # status code). Stress-tested clean against plausible
+                # column names (district, distance, dispatch_time,
+                # dissolved, etc. -- none false-matched under the
+                # whole-token boundary rule).
+                "patterns": ["disability", "handicap", "impairment", "condition", "dis"],
                 "data_types": ["object"]
             }
         }
@@ -2785,7 +2908,21 @@ class HierarchicalMapper:
                     # result on a dataset famous for real, documented bias).
                     "SocioeconomicStatus": ["income", "salary", "debt", "balance", "asset", "liability", "savings", "property", "housing", "employment", "job"],
                     "Region": ["postcode", "zipcode", "state", "county", "branch"],
-                    "MigrationStatus": ["citizenship", "visa", "resident", "immigration"]
+                    # v3.10.6: added foreign_worker/foreign_national/
+                    # foreign_born (open item 4). Root cause: German
+                    # Credit's own ForeignWorker column -- a real,
+                    # documented protected-attribute proxy in this
+                    # benchmark dataset -- went unrecognized by every
+                    # existing MigrationStatus keyword. A bare "foreign"
+                    # stem was considered and rejected: _pattern_matches'
+                    # whole-token rule would also match a plausible
+                    # Finance column like ForeignExchangeRate, an FX/
+                    # currency concept with nothing to do with immigration
+                    # status -- a real semantic false-positive risk, not
+                    # a matching-logic bug. These three explicit compound
+                    # patterns close the German Credit gap without that
+                    # ambiguity. Scoped to Finance only.
+                    "MigrationStatus": ["citizenship", "visa", "resident", "immigration", "foreign_worker", "foreign_national", "foreign_born"]
                 },
                 "exclusion_patterns": ["id", "name", "applicant_id", "ssn", "account", "customer_id"]
             },
@@ -2802,7 +2939,18 @@ class HierarchicalMapper:
             "education": {
                 "outcome_patterns": self.config["outcome_patterns"],
                 "contextual_patterns": {
-                    "SocioeconomicStatus": ["income", "parent_income", "scholarship", "fee", "financial_aid"],
+                    # v3.10.6: added "imd"/"deprivation" (open item 4,
+                    # Education's share of it). Root cause: studentInfo
+                    # (OULAD)'s own imd_band column -- the UK's official
+                    # socioeconomic deprivation index, the standard SES
+                    # metric this exact dataset directly provides -- went
+                    # unrecognized by every existing SocioeconomicStatus
+                    # keyword, leaving zero SES coverage on a UK dataset
+                    # for the UK-weighted domain that weights SES second-
+                    # highest (0.25). Both new tokens are whole-token-safe
+                    # under _pattern_matches' boundary rule. Scoped to
+                    # Education only.
+                    "SocioeconomicStatus": ["income", "parent_income", "scholarship", "fee", "financial_aid", "imd", "deprivation"],
                     "DisabilityStatus": ["disability", "learning_difficulty", "special_needs", "support"],
                     "Region": ["postcode", "school_district", "catchment", "borough"],
                     "MigrationStatus": ["first_language", "english_additional", "immigrant", "asylum"]
@@ -3555,6 +3703,68 @@ class BiasCleanEngine:
             # df_optimized actually reflects the fully-reverted state,
             # not the previous attempt's dataframe with the now-excluded
             # feature's bad rebalancing still baked into its row values.
+
+        # v3.10.6 FIX (open item 10): once a feature is fuse-excluded, it
+        # drops out of `remaining_features` and is never reversal-checked
+        # again -- but df_optimized's final ROW composition still shifts
+        # from df_before_any as a side effect of every OTHER feature's
+        # resampling (rows get duplicated/removed for their sake), which
+        # can silently move an excluded feature's own group rates even
+        # though its column values are never touched. Real-data case:
+        # Governance's Age was excluded/reverted by the fuse, yet still
+        # showed disparity worsening -9.6% (0.1717->0.1883) purely from
+        # other features' resampling, and Ethnicity's worst group shifted
+        # (6.0->5.0) the same way -- neither was caught by anything,
+        # since exclusion was previously treated as "this feature is now
+        # safe to ignore." This post-hoc check runs the same
+        # _detect_reversal used for included features, but AFTER
+        # df_optimized is fully settled, purely diagnostically -- it
+        # never re-excludes or re-reverts anything (that would risk an
+        # unbounded cascade), it just records what happened so it's
+        # visible in audit_trail.json and the report instead of silently
+        # unmonitored.
+        for entry in self.rebalance_excluded_features:
+            column = self._feature_map.get(entry["feature"])
+            if not column or column not in df_optimized.columns:
+                continue
+            drift_check = self._detect_reversal(
+                df_before_any.drop(columns=["_biasclean_row_uid"], errors="ignore"),
+                df_optimized.drop(columns=["_biasclean_row_uid"], errors="ignore"),
+                column, target
+            )
+            # Also compute the feature's OWN before-state gap (by comparing
+            # df_before_any against itself) so a magnitude-only drift --
+            # gap widening with no outright group flip, e.g. Age's case
+            # above -- is caught too, not just a worst-group reversal.
+            before_self_check = self._detect_reversal(
+                df_before_any.drop(columns=["_biasclean_row_uid"], errors="ignore"),
+                df_before_any.drop(columns=["_biasclean_row_uid"], errors="ignore"),
+                column, target
+            )
+            if drift_check:
+                before_gap = (before_self_check or {}).get("after_gap")
+                after_gap = drift_check.get("after_gap")
+                gap_widened = (
+                    isinstance(before_gap, (int, float)) and isinstance(after_gap, (int, float))
+                    and after_gap > before_gap
+                )
+                worst_group_shifted = bool(drift_check.get("reversed"))
+                if worst_group_shifted or gap_widened:
+                    logger.warning(
+                        f"\n   ⚠️  POST-EXCLUSION DRIFT: '{entry['feature']}' was excluded and "
+                        f"reverted, but its own disparity still moved as a side effect of other "
+                        f"features' resampling (worst group: '{drift_check.get('disadvantaged_before')}' "
+                        f"-> '{drift_check.get('disadvantaged_after')}', gap: "
+                        f"{before_gap if before_gap is not None else '?'} -> {after_gap if after_gap is not None else '?'})."
+                    )
+                entry["post_exclusion_drift"] = {
+                    "worst_group_before": drift_check.get("disadvantaged_before"),
+                    "worst_group_after": drift_check.get("disadvantaged_after"),
+                    "worst_group_shifted": worst_group_shifted,
+                    "gap_before": before_gap,
+                    "gap_after": after_gap,
+                    "gap_widened": gap_widened,
+                }
 
         return df_optimized.drop(columns=["_biasclean_row_uid"], errors="ignore")
 
@@ -4578,18 +4788,34 @@ class ReportGenerator:
         Fixed: state which column was actually selected (from
         selected_columns, i.e. results['features'][feature]['column'])
         instead of asserting a specific, unverified mechanism.
+
+        v3.10.6 (open item 3): for Ethnicity specifically, a losing
+        candidate isn't always a redundant duplicate of the winner --
+        HMDA's derived_race vs. derived_ethnicity tie is the real-data
+        case that surfaced this: ACS/HMDA-style data represents race and
+        Hispanic origin as two genuinely distinct variables, and this
+        pipeline has only one weighted Ethnicity slot (adding a second
+        would mean a new protected-attribute category with its own
+        evidence-based weight, out of scope here -- see open item 3's
+        resolution notes). Rather than silently dropping the non-selected
+        candidate's own finding, its own p-value/significance (already
+        computed during validation, just previously discarded after
+        selection) is now surfaced alongside the winner's, so a reader
+        can see whether the excluded column also shows a notable pattern
+        worth a manual look -- informational only, doesn't change which
+        column is used or add any new weight.
         """
         by_feature: Dict[str, list] = {}
         for col, m in mappings.items():
             feature = m.get("feature")
             if feature in (None, "__exclude__"):
                 continue
-            by_feature.setdefault(feature, []).append((col, m.get("confidence", 0)))
+            by_feature.setdefault(feature, []).append((col, m))
         warnings = []
         for feature, cols in by_feature.items():
             if len(cols) > 1:
-                cols_sorted = sorted(cols, key=lambda x: x[1], reverse=True)
-                cols_str = ", ".join(f"{c} ({conf:.0%})" for c, conf in cols_sorted)
+                cols_sorted = sorted(cols, key=lambda x: x[1].get("confidence", 0), reverse=True)
+                cols_str = ", ".join(f"{c} ({m.get('confidence', 0):.0%})" for c, m in cols_sorted)
                 label = "the outcome variable" if feature == "__outcome__" else f"'{feature}'"
                 winner = (selected_columns or {}).get(feature)
                 winner_txt = (
@@ -4598,10 +4824,26 @@ class ReportGenerator:
                     if winner else
                     "Only one is actually used for the analysis."
                 )
-                warnings.append(
+                msg = (
                     f"{len(cols)} columns were all matched to {label}: {cols_str}. "
                     f"{winner_txt} Double-check this is the column you intended."
                 )
+                if feature not in ("__outcome__",) and winner:
+                    for col, m in cols_sorted:
+                        if col == winner:
+                            continue
+                        stats = (m.get("validation", {}) or {}).get("statistics", {}) or {}
+                        p_value = stats.get("p_value")
+                        if p_value is not None:
+                            sig_txt = "statistically significant on its own" if p_value < 0.05 else "not statistically significant on its own"
+                            msg += (
+                                f" For transparency: the non-selected '{col}' was also individually "
+                                f"tested (p={p_value:.4g}, {sig_txt}) -- this doesn't feed into the "
+                                f"composite score above, but is worth a manual look if '{col}' "
+                                f"represents a genuinely distinct concept (e.g. Hispanic origin vs. "
+                                f"race) rather than a duplicate of '{winner}'."
+                            )
+                warnings.append(msg)
         return warnings
 
     def _plain_feature_findings(self, results: Dict) -> List[Dict]:
@@ -4821,6 +5063,28 @@ class ReportGenerator:
                 continue
             is_svm_stage = '(after SVM)' in feature
             base_feature = feature.split(' (')[0]
+            # v3.10.6 FIX (open item 9): SVM-stage reversals used to be
+            # printed here unconditionally, even when svm_gate had
+            # already REJECTED the SVM result entirely -- meaning the
+            # delivered result uses the rebalanced stage, not SVM, so
+            # these reversals never actually apply to what's being
+            # recommended. Real-data case: Governance's classifier
+            # collapsed and was rejected (5 new reversals: Age, Gender,
+            # DisabilityStatus, MigrationStatus, Ethnicity), yet all 6
+            # "(after SVM)" reversal lines still printed under "Why this
+            # recommendation" with "review before relying on this
+            # result" -- directly implying they're part of the delivered
+            # output when they're from a discarded attempt. The earlier
+            # "VALIDATION GATE REJECTED THE CLASSIFIER RESULT" message
+            # (see svm_gate_for_reasons block above) already tells the
+            # reader the SVM attempt was thrown out and why; individually
+            # re-litigating each of its reversals here just contradicts
+            # that message. Skipped entirely rather than reworded, so
+            # this section reflects only what the delivered
+            # (rebalanced-stage) result actually contains, per Hamid's
+            # explicit framing of this open item.
+            if is_svm_stage and svm_gate_for_reasons.get('accepted') is False:
+                continue
             if not is_svm_stage and base_feature in near_parity_features:
                 after_gap = check.get('after_gap')
                 threshold = disparity_threshold_by_feature.get(base_feature)
@@ -6800,7 +7064,22 @@ class UniversalBiasClean:
                     }]
                 else:
                     feature = mapping.get("feature")
-                    if feature and feature not in ["__exclude__", None]:
+                    # v3.10.6 FIX (open item 6): this condition excluded
+                    # "__exclude__" and None but not "__outcome__" -- so any
+                    # column that Tier-2 pattern-matched as a plausible-but-
+                    # unchosen outcome candidate (e.g. predicted_loan_approved
+                    # on HMDA, not the actual final_target) still fell through
+                    # into validate_protected_attribute(feature="__outcome__"),
+                    # a nonsensical protected-attribute validation against a
+                    # sentinel string. Confirmed inert/cosmetic: the resulting
+                    # validation dict was already discarded downstream by
+                    # _select_best_column_per_feature's own "__outcome__"
+                    # skip (see that function's filter), so no delivered
+                    # result was ever affected -- but it's dead, misleading
+                    # work that shows up in column_mappings output. Now
+                    # excluded here too, routing these columns to the same
+                    # unvalidated-passthrough branch as __exclude__/None.
+                    if feature and feature not in ["__exclude__", "__outcome__", None]:
                         validation = self.validator.validate_protected_attribute(
                             self.original_df, column, final_target, feature
                         )
@@ -6811,6 +7090,56 @@ class UniversalBiasClean:
                             validation_summary["warnings"] += 1
                         else:
                             validation_summary["passed"] += 1
+
+                        # v3.10.6 FIX (open item 5): Tier 2 (domain-specific
+                        # contextual_patterns) matches were flat-capped at
+                        # 0.75 confidence regardless of how strong the
+                        # match's actual statistical evidence turned out to
+                        # be -- meaning even a domain match with an
+                        # extremely low, highly significant p-value could
+                        # never clear the 0.80 default auto-approval
+                        # threshold on confidence alone (this is exactly
+                        # why German Credit needed a manual
+                        # auto_approve_threshold=0.70 override to include
+                        # its real SES columns, see the v3.10.3->v3.10.4
+                        # saga above). Now, once validation has actually
+                        # run and a p-value is available, a Tier-2 match's
+                        # confidence is adjusted upward from its 0.75 base
+                        # by an amount that scales with how strong that
+                        # evidence is -- capped at 0.81, deliberately kept
+                        # just above the 0.80 default threshold but still
+                        # below Tier 1/universal's 0.85 floor, so a
+                        # domain-specific match can never outrank a
+                        # universal one even at its strongest, and only
+                        # genuinely strong evidence (p<0.001) can clear
+                        # auto-approval without a manual override -- a
+                        # weak or non-significant Tier-2 match stays at
+                        # its original 0.75 and still requires one, which
+                        # is the conservative behavior a fairness tool
+                        # should default to. The original tier-assigned
+                        # confidence is preserved under "base_confidence"
+                        # for audit-trail transparency; this never touches
+                        # Tier 1/universal matches (those already vary
+                        # 85-98% via a different, pre-existing mechanism)
+                        # or the __outcome__ tier (excluded from this
+                        # branch entirely, see the item-6 fix above).
+                        if mapping.get("tier") == "domain":
+                            p_value = (validation.get("statistics", {}) or {}).get("p_value")
+                            if p_value is not None:
+                                if p_value < 0.001:
+                                    bonus = 0.06
+                                elif p_value < 0.01:
+                                    bonus = 0.04
+                                elif p_value < 0.05:
+                                    bonus = 0.02
+                                else:
+                                    bonus = 0.0
+                                base_confidence = mapping.get("confidence", 0.75)
+                                mapping = {
+                                    **mapping,
+                                    "base_confidence": base_confidence,
+                                    "confidence": min(base_confidence + bonus, 0.81),
+                                }
 
                         validated_proposals[column] = [{
                             **mapping,
