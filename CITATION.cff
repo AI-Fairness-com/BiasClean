@@ -4,8 +4,7 @@ title: "BiasClean Toolkit: Evidence-Based Bias Mitigation for UK Datasets"
 authors:
   - family-names: "Tavakoli"
     given-names: "Hamid"
-version: 2.0.0
-doi: 10.0000/your-doi-here
+version: 3.10.10
 date-released: 2025-11-25
 url: "https://github.com/AI-Fairness-com/BiasClean"
 repository-code: "https://github.com/AI-Fairness-com/BiasClean"
@@ -18,4 +17,4 @@ keywords:
   - "justice-domain"
   - "evidence-based"
 license: Apache-2.0
-abstract: "BiasClean Toolkit is a domain-aware pre-processing framework for detecting and mitigating demographic bias in UK datasets before modelling. Implements evidence-weighted multi-domain bias reduction with COMPAS validation demonstrating 5.6% bias reduction."
+abstract: "BiasClean Toolkit is a domain-aware pre-processing framework for detecting and mitigating demographic bias in UK datasets before modelling. Implements evidence-weighted multi-domain bias reduction, validated against real datasets across all seven supported domains including COMPAS in the Justice domain."
