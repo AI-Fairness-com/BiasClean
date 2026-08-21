@@ -1,8 +1,8 @@
-# 🧹 BiasClean Toolkit v3.6.9
+# 🧹 BiasClean Toolkit v3.10.10
 
 [![GitHub Repository](https://img.shields.io/badge/GitHub-AI--Fairness--com%2FBiasClean-blue)](https://github.com/AI-Fairness-com/BiasClean)
 ![Python](https://img.shields.io/badge/python-3.8%2B-green)
-![Version](https://img.shields.io/badge/Version-3.6.9-blue)
+![Version](https://img.shields.io/badge/Version-3.10.10-blue)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Domains](https://img.shields.io/badge/Domains-7%20Supported-brightgreen)
 
@@ -46,7 +46,8 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
      original v3.0 release and have not been independently re-checked with
      the same real-data rigor as Justice. -->
 
-#### Live Production Tool: https://www.ai-fairness.com
+#### Live Production Tool
+Not yet live for BiasClean; pending Technical Director sign-off (same status as the FDK Toolkit).
 <!-- TODO(Hamid): flagged previously as stale — confirm whether this URL is
      currently accurate before this update is published; leaving as-is rather
      than guessing at a replacement. -->
@@ -62,9 +63,9 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 |----------|-------------|
 | [BiasClean_Methodology.md](BiasClean_Methodology.md) | Safety design (thermostats/fuses), evidence-based weighting framework, and citations |
 | [DISCLAIMER.md](DISCLAIMER.md) | Legal and ethical disclaimer – BiasClean is not a legal compliance tool |
-| [docs/thresholds.md](docs/thresholds.md) | GREEN/YELLOW/RED threshold rationale with exact values |
-| [docs/weighting.md](docs/weighting.md) | Domain-specific weighting framework (SIW-ESW-PLW) with 7 domain tables |
-| [docs/tradeoffs.md](docs/tradeoffs.md) | Ethical boundaries, risks, and four questions before remediation |
+| [BiasClean_Methodology.md § Thresholds](BiasClean_Methodology.md) | GREEN/YELLOW/RED threshold rationale with exact values |
+| [BiasClean_Methodology.md § Weighting](BiasClean_Methodology.md) | Domain-specific weighting framework (SIW-ESW-PLW) with 7 domain tables |
+| [README.md § Four Questions Before Remediation](#four-questions-before-remediation) | Ethical boundaries, risks, and four questions before remediation |
 | [examples/compas_biasclean_demo.ipynb](examples/compas_biasclean_demo.ipynb) | Complete COMPAS workflow with all 4 execution modes |
 | [examples/basic_usage.ipynb](examples/basic_usage.ipynb) | Basic usage example |
 | [examples/custom_dataset.ipynb](examples/custom_dataset.ipynb) | Custom dataset example |
@@ -105,7 +106,7 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 - **Professional reports** with executive summaries
 
 #### ✅ Production Readiness
-- **Single-file distribution** (181KB, 4,420 lines, 11 classes, 80 functions)
+- **Single-file distribution** (~529KB, 10,044 lines, 15 classes, 119 functions)
 - **No test code, no Colab dependencies** - 100% production code
 - **Standard libraries only** (pandas, numpy, scikit-learn, matplotlib, seaborn)
 - **Cross-platform compatibility** (Windows, Mac, Linux, Python 3.8+)
@@ -127,13 +128,13 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 | **Legacy (No SVM)** | ❌ No | ✅ Yes | ❌ No | Corrected dataset + report |
 | **Legacy (+ SVM)** | ❌ No | ✅ Yes | ✅ Yes | Corrected dataset + model outputs |
 
-**Source:** Chapter 33.3, Table 33.1, p. 297
+**Source:** Chapter 33.3, Table 33.1
 
 ---
 
 ## 🌍 Overview
 
-**BiasClean v3.6.9** is a production-ready audit-first fairness pipeline with traffic light governance, designed to prevent harm by auditing datasets before any bias mitigation is applied. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling safe fairness assessment and conditional mitigation.
+**BiasClean v3.10.10** is a production-ready audit-first fairness pipeline with traffic light governance, designed to prevent harm by auditing datasets before any bias mitigation is applied. It provides a transparent, defensible, multi-domain weighting framework aligned with **UK structural inequality patterns** and regulatory expectations, enabling safe fairness assessment and conditional mitigation.
 
 The toolkit implements an **audit-first architecture** with clear traffic light recommendations (🟢🟡🔴), preventing deployment of bias mitigation on unsuitable datasets and ensuring human oversight for borderline cases.
 
@@ -201,7 +202,7 @@ BiasClean is distributed as a single-file pipeline plus a lightweight web servic
 ```
 BiasClean/
 │
-├── biasclean_v3_5_1_terminal.py    # MAIN PIPELINE (v3.6.9 internally — see docs/CHANGELOG.md)
+├── biasclean_v3_5_1_terminal.py    # MAIN PIPELINE (v3.10.10 internally — see docs/CHANGELOG.md)
 │   ├── UniversalBiasClean (core orchestration class)
 │   ├── run_biasclean_interactive() / run_interactive_pipeline() (no-code entry points)
 │   └── quick_audit() (diagnostics without mitigation)
@@ -267,7 +268,7 @@ The toolkit includes comprehensive validation:
 
 Statistical Diagnosis: Chi-square tests for distribution uniformity
 
-Fairness Metrics: 34 FDK metrics across group fairness, error parity, robustness, and causal dimensions
+Fairness Metrics: 158 FDK metrics across seven domains, spanning group fairness, error parity, robustness, and causal dimensions
 
 Production Readiness: Dual validation with bias scores and distribution alignment
 
@@ -283,7 +284,7 @@ python -m pytest tests/
 - Does not replace human judgment or organizational governance
 - Traffic light indicators represent statistical thresholds, not legal verdicts
 
-**Before remediation, ask four questions (Source: Chapter 37.2, p. 333):**
+**Before remediation, ask four questions (Source: Chapter 37.2):**
 1. Is the disparity real and meaningful?
 2. Does the disparity reflect a legitimate pattern or bias?
 3. Can you explain the change to affected communities?
@@ -307,7 +308,7 @@ The book BiasClean: Evidence-Weighted Pre-Processing for UK Fairness Audits rema
 #### 📚 Citation & Credits
 If you use or reference BiasClean v3.0 in your research or production, please cite:
 
-Tavakoli, H. (2026). BiasClean: Audit-First Fairness Pipeline for Algorithmic Governance.
+Tavakoli, H. (2026). BiasClean: Audit-First Fairness Pipeline for Algorithmic Governance (v3.10.10).
 
 Related Publication:
 Tavakoli, H. (2026). BiasClean: An Audit-First, No-Code Methodology for Fairness Monitoring and Governance-Aware Bias Mitigation. IEEE Transactions on Artificial Intelligence and Society.
@@ -316,11 +317,11 @@ Repository: AI-Fairness-com/BiasClean
 Correspondence: h.tavakoli@ai-fairness.com
 
 #### BibTeX Citation
-@software{BiasClean2026v30,
+@software{BiasClean2026,
   author  = {Hamid Tavakoli},
-  title   = {BiasClean Toolkit v3.0: Production-Ready Audit-First Fairness Pipeline with Traffic Light Governance},
+  title   = {BiasClean Toolkit: Production-Ready Audit-First Fairness Pipeline with Traffic Light Governance},
   year    = {2026},
   url     = {https://github.com/AI-Fairness-com/BiasClean},
-  version = {v3.0.0},
+  version = {v3.10.10},
   note    = {Audit-first architecture with traffic light governance for 7 UK domains}
 }

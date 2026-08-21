@@ -1,7 +1,7 @@
 # BiasClean™ Methodology: Safety, Security, and Evidence Base
 
 **AI Fairness CIO — Hamid Tavakoli**
-**Version documented: 3.6.9 · July 2026**
+**Version documented: 3.10.10 · August 2026**
 
 ---
 
@@ -128,7 +128,7 @@ A confidence document that omits its own limitations is not trustworthy. These a
 - **The weighting framework is UK-specific**, as detailed above — this is a known, stated design choice, not an oversight, but users applying it to other jurisdictions should understand what that means for their results.
 - **SVM enforcement has less real-data coverage than rebalancing.** Across Phase 2's five validated datasets, SVM enforcement was meaningfully exercised in only two (rejected on COMPAS, accepted on Communities and Crime) — the other three either skipped it by necessity at scale or never triggered it. This mechanism's real-world behavior is less thoroughly tested than the rebalancing path.
 - **BiasClean cannot validate a dataset it cannot understand.** When a dataset arrives with undocumented, cryptic column encodings and no data dictionary, BiasClean's honest behavior is to fail loudly or map almost nothing — and it now does so correctly — but this is a limit on what any tool can respons­ibly claim about data whose meaning is unknown, not something more automation can solve.
-- **This document, and the two it summarizes, cover the Justice domain only.** The same weighting framework and mitigation mechanisms apply to BiasClean's other six domains (Healthcare, Finance, Education, Hiring, Business, Governance), but the depth of real-data validation described here has not yet been repeated for each of them.
+- **This document, and the two it summarizes, cover the Justice domain in the greatest depth.** The same weighting framework and mitigation mechanisms apply to BiasClean's other six domains (Healthcare, Finance, Education, Hiring, Business, Governance); each has since undergone its own real-data validation (see the Phase 5 Six-Domain Validation Report), though at a shallower depth (one to two datasets per domain) than Justice's six-dataset validation.
 
 ---
 
