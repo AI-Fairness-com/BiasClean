@@ -71,15 +71,6 @@ Not yet live for BiasClean; pending Technical Director sign-off (same status as 
 | [examples/custom_dataset.ipynb](examples/custom_dataset.ipynb) | Custom dataset example |
 | [examples/multi_domain_test.ipynb](examples/multi_domain_test.ipynb) | Multi-domain testing |
 
-<!-- Note: docs/thresholds.md, docs/weighting.md, and docs/tradeoffs.md above
-     do not currently resolve — docs/ contains different files instead
-     (architecture.md, domains.md, DOMAIN_SPECIALIZATION_GUIDE.md, etc.).
-     The examples/*.ipynb links were checked and do exist. This predates this
-     update and is a separate, pre-existing issue from the version-number
-     staleness — flagged rather than silently removed, since the three docs/
-     files may exist elsewhere and just need uploading, or the links may need
-     retargeting to the docs/ files that do exist. -->
-
 
 **Source for all documentation:** Tavakoli, H. (2026). *BiasClean: Audit-First Fairness Pipeline for Algorithmic Governance*. Chapters 8, 33, 34, 36, 37.
 
