@@ -48,9 +48,6 @@ pipeline = UniversalBiasClean(domain='justice', mode='audit_first')
 
 #### Live Production Tool
 Not yet live for BiasClean; pending Technical Director sign-off (same status as the FDK Toolkit).
-<!-- TODO(Hamid): flagged previously as stale — confirm whether this URL is
-     currently accurate before this update is published; leaving as-is rather
-     than guessing at a replacement. -->
 
 ---
 
