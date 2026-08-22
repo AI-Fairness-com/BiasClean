@@ -20,11 +20,11 @@
 
 ## Documentation
 
-- [x] Full changelog from v3.0 through v3.10.4, documenting every version's behavior, in `docs/CHANGELOG.md`.
+- [x] Full changelog from v3.0 through v3.10.10, documenting every version's behavior, in `docs/CHANGELOG.md`.
 - [x] Independent phase reports for Phase 1 (Consolidation & Regression Testing), Phase 2 (External Validation), Phase 3 (Benchmark vs. AIF360), and Phase 4 (Internal Production Hardening), in `/docs`.
 - [x] Docker build/run instructions, including the North Carolina memory-tuning guidance, in `docs/DOCKER_SETUP.md`.
 - [x] Methodology document (`BiasClean_Methodology.md`) covering the SIW-ESW-PLW weighting framework and its UK regulatory grounding.
-- [x] User guide for non-technical operation (`USER_GUIDE.md`, this phase).
+- [x] User guide for non-technical operation (`USER_GUIDE_JUSTICE.md`, this phase).
 - [x] Limitations note, positioning BiasClean as a screening tool rather than a compliance certification (`LIMITATIONS_JUSTICE.md`, this phase).
 - [x] This sign-off checklist itself, as the explicit closure record for the Justice domain.
 
@@ -39,4 +39,4 @@ These are real, acknowledged gaps — not oversights — and are intentionally e
 
 ## Sign-off
 
-Justice domain: **v3.10.4**, considered production-ready under the scope above as of this checklist's date.
+Justice domain: **v3.10.10**, considered production-ready under the scope above as of this checklist's date.
