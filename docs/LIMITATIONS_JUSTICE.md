@@ -17,7 +17,7 @@ A screening tool. It flags statistically measurable disparities in outcome rates
 
 It means: given the protected attributes BiasClean was able to map with sufficient confidence and sample size, the measured statistical gap in outcome rate either did not clear this domain's significance threshold, or was narrowed by rebalancing to within that threshold. It does not mean the dataset or downstream model is fair in any broader sense, nor that no disparity exists on a dimension the pipeline didn't measure (an unmapped column, an intersectional effect across two protected attributes at once, or a protected attribute not present in the dataset at all).
 
-## Known operating constraints (Justice domain, as of v3.10.4)
+## Known operating constraints (Justice domain, as of v3.10.10)
 
 - SVM fairness enforcement must remain disabled for very large datasets (North Carolina's 20.3M rows, specifically) on machines with less than approximately 32GB of available memory — a hardware constraint, not a correctness one.
 - Auto-detection of the target/outcome column can be ambiguous when several columns plausibly represent the same underlying outcome (e.g. multiple recidivism-window definitions); the pipeline surfaces this ambiguity but resolves it by column order, not by domain judgment — reviewing the mapping confirmation step is worthwhile when this occurs.
