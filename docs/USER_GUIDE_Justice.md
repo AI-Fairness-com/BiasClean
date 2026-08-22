@@ -1,6 +1,6 @@
 # BiasClean — User Guide (Justice Domain)
 
-This guide covers running BiasClean's Justice-domain pipeline (v3.10.4) as a non-technical user, on your own dataset, and reading the resulting report. It assumes no coding background.
+This guide covers running BiasClean's Justice-domain pipeline (v3.10.10) as a non-technical user, on your own dataset, and reading the resulting report. It assumes no coding background.
 
 ## What this tool does
 
@@ -15,11 +15,11 @@ Two ways to run BiasClean, both equivalent:
 ### Option A — Docker (recommended, no local Python setup needed)
 
 ```bash
-docker build -t biasclean:3.10.4 .
+docker build -t biasclean:3.10.10 .
 docker run -it \
   -v "/path/to/your/data:/app/Justice_Real Datasets" \
   -v "/path/to/your/output:/app/biasclean_results" \
-  biasclean:3.10.4
+  biasclean:3.10.10
 ```
 
 See `docs/DOCKER_SETUP.md` for full setup details, including memory allocation guidance for large files.
