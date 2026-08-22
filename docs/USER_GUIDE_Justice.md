@@ -6,7 +6,7 @@ This guide covers running BiasClean's Justice-domain pipeline (v3.10.10) as a no
 
 BiasClean audits a criminal-justice dataset (arrests, citations, recidivism, sentencing, etc.) for disparities in outcome rates across groups defined by protected attributes — Ethnicity, Gender, Age, Region — and, where the disparity is real and correctable, produces a rebalanced version of the dataset alongside a full record of what changed and why.
 
-It does **not** decide whether a disparity is discrimination, does **not** certify legal compliance, and does **not** replace a human reviewer's judgment. See `LIMITATIONS.md` for the full scope of what this tool is (and isn't) for.
+It does **not** decide whether a disparity is discrimination, does **not** certify legal compliance, and does **not** replace a human reviewer's judgment. See `LIMITATIONS_JUSTICE.md` for the full scope of what this tool is (and isn't) for.
 
 ## Running it
 
