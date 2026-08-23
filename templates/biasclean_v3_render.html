@@ -1018,19 +1018,19 @@
             <i class="fas fa-bullseye"></i>
             Target Column (Required)
           </label>
-          <input 
-            type="text" 
+                    <select 
             id="targetColumn" 
             name="target_column" 
             class="form-input" 
-            placeholder="e.g., two_year_recid, approved, hired"
             required
-          />
+          >
+            <option value="">— Upload a file first —</option>
+          </select>
           <div class="form-info">
-            <i class="fas fa-lightbulb"></i> BiasClean cannot detect this for you — only you know what this dataset measures (e.g. which column records whether an applicant received a callback, a loan was approved, or a defendant reoffended). Type the exact column name from your file.
+            <i class="fas fa-lightbulb"></i> BiasClean cannot detect this for you — only you know what this dataset measures (e.g. which column records whether an applicant received a callback, a loan was approved, or a defendant reoffended). This list is filtered to columns that could plausibly be a target (binary, not an identifier) — pick the one that matches what this dataset actually measures.
           </div>
           <div id="targetColumnHint" class="form-info" style="display:none;">
-            <i class="fas fa-list"></i> Columns found in your file: <span id="targetColumnHintList"></span>
+            <i class="fas fa-exclamation-triangle"></i> <span id="targetColumnHintList"></span>
           </div>
         </div>
 
@@ -1312,12 +1312,126 @@ document.addEventListener('DOMContentLoaded', function(){
   };
 
   // Helper functions
-  function formatFileSize(bytes) {
+    function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // ---- Minimal quote-aware CSV row splitter (handles quoted fields with embedded commas) ----
+  function splitCsvRows(text) {
+    const rows = [];
+    let field = '', row = [], inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else inQuotes = false;
+        } else field += c;
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ',') { row.push(field); field = ''; }
+        else if (c === '\n' || c === '\r') {
+          if (c === '\r' && text[i + 1] === '\n') i++;
+          row.push(field); field = '';
+          rows.push(row); row = [];
+        } else field += c;
+      }
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  // Parses a byte-sliced sample of the file into headers + up to maxRows
+  // data rows. Drops a truncated final row (field count mismatch) so a
+  // partial row from the byte-slice cutoff can't corrupt the per-column
+  // value counts below.
+  function parseSampleRows(text, maxRows) {
+    const allRows = splitCsvRows(text);
+    if (allRows.length === 0) return { headers: [], rows: [] };
+    const headers = allRows[0].map(h => h.trim());
+    let dataRows = allRows.slice(1, 1 + maxRows);
+    if (dataRows.length && dataRows[dataRows.length - 1].length !== headers.length) {
+      dataRows = dataRows.slice(0, -1);
+    }
+    return { headers, rows: dataRows };
+  }
+
+  // Mirrors the pipeline's own requirement (target_column is cast via
+  // .astype(int) and its mean used as a positive rate throughout
+  // biasclean_v3_5_1_terminal.py -- audit, rebalancing, and SVM all
+  // depend on this): every non-empty sampled value in a genuine target
+  // column must parse to exactly 0 or 1.
+  function isStrictBinaryColumn(values) {
+    let sawAny = false;
+    for (const raw of values) {
+      const v = (raw || '').trim();
+      if (v === '') continue;
+      sawAny = true;
+      const n = Number(v);
+      if (Number.isNaN(n) || (n !== 0 && n !== 1)) return false;
+    }
+    return sawAny;
+  }
+
+  // Samples real data rows (not just the header) and filters to columns
+  // that are plausible targets. Deliberately does NOT rank or suggest
+  // any candidate over another -- per BiasClean's own v3.10.1 design
+  // decision, only the dataset's owner knows which of these plausible
+  // columns is the actual outcome. Filtering removes what CAN'T be a
+  // target (non-binary); it never guesses what IS the target.
+  function computeCandidateTargetColumns(text) {
+    const { headers, rows } = parseSampleRows(text, 1000);
+    const candidates = [];
+    for (let col = 0; col < headers.length; col++) {
+      const values = rows.map(r => r[col] !== undefined ? r[col] : '');
+      if (isStrictBinaryColumn(values)) candidates.push(headers[col]);
+    }
+    return { headers, candidates };
+  }
+
+  // Populates the Target Column dropdown from a sample of the uploaded
+  // file, filtered to plausible (strict-binary) candidates only. Falls
+  // back to the full unfiltered header list, with a visible warning, if
+  // sampling finds no strict-binary column at all, so the dropdown is
+  // never left empty.
+  function populateTargetColumnDropdown(file) {
+    const targetSelect = document.getElementById('targetColumn');
+    const hintBox = document.getElementById('targetColumnHint');
+    const hintList = document.getElementById('targetColumnHintList');
+    hintBox.style.display = 'none';
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      try {
+        const { headers, candidates } = computeCandidateTargetColumns(String(evt.target.result));
+        const optionList = candidates.length ? candidates : headers;
+
+        targetSelect.innerHTML = '';
+        const blank = document.createElement('option');
+        blank.value = '';
+        blank.textContent = candidates.length ? '— select a column —' : '— select a column (unfiltered) —';
+        targetSelect.appendChild(blank);
+        optionList.forEach(h => {
+          const opt = document.createElement('option');
+          opt.value = h;
+          opt.textContent = h;
+          targetSelect.appendChild(opt);
+        });
+
+        if (!candidates.length) {
+          hintList.textContent = 'Could not identify a binary (0/1) column from a sample of this file — showing all columns instead. Double-check your choice carefully.';
+          hintBox.style.display = 'block';
+        }
+      } catch (err) {
+        // Sampling failed (e.g. unusual encoding) -- fall back to a plain
+        // text field so the form is never blocked by this convenience feature.
+        targetSelect.outerHTML = '<input type="text" id="targetColumn" name="target_column" class="form-input" placeholder="e.g., two_year_recid, approved, hired" required />';
+      }
+    };
+    reader.readAsText(file.slice(0, 500000));
   }
 
   function showMessage(type, text) {
@@ -1402,33 +1516,11 @@ document.addEventListener('DOMContentLoaded', function(){
       fileName.style.color = 'var(--success)';
       showMessage('success', '✅ File selected: ' + file.name + ' - Ready for v3.0 audit');
 
-      // Best-effort client-side header preview -- purely informational,
-      // NOT a ranked or suggested list. Naive comma-split on the first
-      // line; if a file uses quoted fields with embedded commas this may
-      // misparse, so failures here are silent and never block the form --
-      // the actual target column is still typed by hand, as required.
-      const hintBox = document.getElementById('targetColumnHint');
-      const hintList = document.getElementById('targetColumnHintList');
-      hintBox.style.display = 'none';
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        try {
-          const firstLine = String(evt.target.result).split(/\r?\n/)[0];
-          const headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-          if (headers.length > 0) {
-            hintList.textContent = headers.join(', ');
-            hintBox.style.display = 'block';
-          }
-        } catch (err) {
-          // Silent -- this is a convenience preview only, never required.
-        }
-      };
-      // Only need the first line, but reading the whole small slice is
-      // simplest and cheap; cap at first 64KB in case of huge single-line files.
-      reader.readAsText(file.slice(0, 65536));
-    } else {
+            populateTargetColumnDropdown(file);
+        } else {
       fileName.textContent = '';
       document.getElementById('targetColumnHint').style.display = 'none';
+      document.getElementById('targetColumn').innerHTML = '<option value="">— Upload a file first —</option>';
     }
   });
 
