@@ -4,6 +4,41 @@ All notable changes to the BiasClean Toolkit will be documented in this file. Th
 
 > **Note on this update:** versions 3.1.0 through 3.6.9 below were consolidated from the pipeline's own internal changelog (embedded in `biasclean_v3_5_1_terminal.py`) and from two internal validation reports — *Phase 1: Consolidation & Regression Testing* and *BiasClean External Validation in Justice Domain (Phase 2)* — both dated 2026-07-30. Exact release dates for the individual 3.1.x–3.5.x versions were not available at the time of that update; only year is shown. Versions 3.7.1 through 3.10.0 below were similarly consolidated from Phase 3 (independent benchmark vs. AIF360/Aequitas) and Phase 3.5 (fairness-hardening workstreams A/B/C) validation records. Version 3.10.1 documents Phase 4's first completed workstream (dependency pinning), 3.10.2 documents the second (Dockerfile/reproducible environment), 3.10.3 documents the third (structured logging), and 3.10.4 documents the fourth and final (malformed-input handling). If you have the original dates, they should be added here.
 
+## [3.10.10] - 2026 (Phase 5)
+
+### 🔧 Fixed
+- Report-narrative rounding bug: "Why this recommendation" always displayed an SVM-stage-rejected score as unchanged ("from X to X") regardless of its true magnitude, because the field it read is deliberately overwritten back to the pre-SVM value on rejection (existing, correct v3.6.2 behavior for the delivered result, but wrong for describing what SVM actually produced before being rejected). Fixed via a new, never-overwritten `raw_svm_bias_score` key that preserves the true value for narrative purposes alone. Confirmed via Heart Disease (Docker): `post_svm_bias_score` mirroring pre-SVM on rejection is the correct by-design behavior, not a second bug.
+
+## [3.10.9] - 2026 (Phase 5)
+
+### 🔧 Fixed
+- Hiring's SocioeconomicStatus keyword list incorrectly matched `years_experience` — a job-relevant qualification, not a genuine socioeconomic-status proxy. Removed; Hiring's SES mapping reverts cleanly to its correct 2-feature baseline.
+
+## [3.10.8] - 2026 (Phase 5)
+
+### 🔧 Fixed
+- `self.results` never included a `features` key at either construction site, so `report.pdf`'s mapping-conflict/winner-naming logic (added in 3.10.4) and the p-value transparency addition (added in 3.10.6) both silently received an empty dict and never actually fired in any delivered report.pdf for any Phase 5 dataset — `audit_trail.json` was unaffected, since it builds its own separate features dict. Found during HMDA re-validation. Fixed by populating `features` at both sites from the same `feature_map` data already used elsewhere. Verified against HMDA's real mapping data: winner now correctly names `derived_race`, and the p-value line correctly surfaces `derived_ethnicity`'s own significance (p=6.215e-94).
+
+## [3.10.6] - [3.10.7] - 2026 (Phase 5)
+*(Eight post-Phase-5 open items, shipped together across these two versions; individual item numbers below refer to that shared list.)*
+
+### 🔧 Fixed
+- Item 9: the "Why this recommendation" reversal-reporting loop listed every SVM-stage reversal as actionable regardless of whether the SVM validation gate had rejected the result — Governance showed 6 "(after SVM)" bullets even though the delivered result used the rebalanced stage. Fixed to skip SVM-stage reversal entries once the gate has rejected them.
+- Item 10: features excluded/reverted by the rebalance-stage fuse dropped out of reversal-checking entirely, even though the dataset's row composition still shifts from other features' resampling — Governance's excluded Age drifted -9.6% as an uncaught side effect. Fixed via a post-hoc diagnostic pass that re-checks every excluded feature for drift after rebalancing settles (visibility only — never re-excludes or re-reverts).
+- Item 5: Tier 2's flat 0.75 confidence cap now scales upward with statistical strength once a p-value is known (p<0.001: +0.06, p<0.01: +0.04, p<0.05: +0.02), capped at 0.81 — below Tier 1's 0.85 floor, so a strong Tier-2 match can now clear the default 80% auto-approval threshold without a manual override.
+
+### 🔧 Changed
+- Item 6: `validate_protected_attribute()`'s exclusion list now includes `"__outcome__"`, closing a dead-but-misleading code path that ran a nonsensical validation call against non-target outcome-pattern matches.
+- Item 4: two keyword gaps closed — Finance/German Credit's `ForeignWorker` now recognized by MigrationStatus (Finance-scoped); Education/studentInfo's `imd_band` (UK deprivation index) now recognized by SocioeconomicStatus (Education-scoped).
+- Item 8: Census/ACS PUMS variable codes (AGEP, RAC1P, PINCP, POVPIP, PUMA, CIT, NATIVITY, DIS) added at the universal Tier-1 level; ST and HISP deliberately excluded (real collision risk / would recreate Item 3 under a new name).
+- Item 3: mapping-tie reporting now surfaces the losing candidate's own individually-tested p-value alongside the winner, for transparency (Ethnicity/Hispanic-origin remain one slot, per Hamid's no-new-feature policy).
+
+## [3.10.5] - 2026 (Phase 5)
+
+### 🔧 Fixed
+- Rebalance-stage fuse: any feature whose rebalancing reverses the disadvantaged group is now excluded and reverted, with remaining features redone from scratch — replacing the previous flag-only behavior that disclosed a reversal without preventing it.
+- Continuous protected-attribute bucketing: raw/near-continuous Age or SocioeconomicStatus columns are now quantile-bucketed (max 4 bins, min bin size 50) before validation. An initial silent failure was root-caused to an average-density heuristic that looked healthy on skewed real income data despite hundreds of near-empty groups; fixed by checking the real minimum observed group size directly. Confirmed on Governance (income cleanly bucketed into 4 ranges, fuse exclusions reduced from 3 to 2, composite improved 0.2036→0.1310, +35.7%) and, as a bonus cross-domain confirmation, on German Credit's AgeInYears.
+
 ## [3.10.4] - 2026 (Phase 4)
 
 ### 🔧 Fixed
