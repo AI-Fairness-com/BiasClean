@@ -16,6 +16,9 @@ from werkzeug.utils import secure_filename
 import os
 import sys
 import json
+import shutil
+import threading
+import uuid
 from datetime import datetime
 import traceback
 
@@ -43,6 +46,21 @@ app.config['RESULTS_FOLDER'] = 'biasclean_results'
 # Create necessary directories
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['RESULTS_FOLDER'], exist_ok=True)
+
+# The pipeline (biasclean_v3_5_1_terminal.py, _save_results and
+# generate_report) writes its three output files to a single hardcoded
+# path -- "biasclean_results/corrected_dataset.csv", "biasclean_results/
+# audit_trail.json", "biasclean_results/report.pdf" -- with no run-specific
+# naming and no configurable output directory. That's fine for a single
+# local user, but this server runs multiple gunicorn threads: two
+# concurrent /analyze requests would each write to the same three paths,
+# so one run's files could silently overwrite another's before either
+# user has downloaded them. Rather than modify the pipeline itself (its
+# current file-writing behavior is exactly what Phase 5/6 validated),
+# this lock serializes the write-then-relocate step below so only one
+# request at a time can be inside the pipeline's shared output folder.
+_pipeline_lock = threading.Lock()
+PIPELINE_OUTPUT_DIR = "biasclean_results"
 
 # Store HTML template path
 HTML_TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates', 'biasclean_v3_render.html')
@@ -127,26 +145,46 @@ def analyze():
                 'details': str(e)
             }), 400
         
-        # Initialize pipeline
-        pipeline = UniversalBiasClean(
-            domain=domain,
-            mode=mode,
-            enable_svm=enable_svm
-        )
-        
-        # Process dataset
-        results = pipeline.process_dataset(
-            df=df,
-            target_column=target_column,
-            auto_approve_threshold=0.80
-        )
-        
+        # Each run gets its own results subfolder (timestamp + a short
+        # random suffix, so two requests in the same second still can't
+        # collide). The pipeline itself always writes to the shared
+        # PIPELINE_OUTPUT_DIR -- the lock below ensures no other request
+        # can be mid-write there while this run's files are moved out.
+        run_id = f"{timestamp}_{uuid.uuid4().hex[:8]}"
+        run_dir = os.path.join(app.config['RESULTS_FOLDER'], run_id)
+
+        with _pipeline_lock:
+            # Initialize pipeline
+            pipeline = UniversalBiasClean(
+                domain=domain,
+                mode=mode,
+                enable_svm=enable_svm
+            )
+
+            # Process dataset
+            results = pipeline.process_dataset(
+                df=df,
+                target_column=target_column,
+                auto_approve_threshold=0.80
+            )
+
+            # Relocate this run's output files out of the shared
+            # PIPELINE_OUTPUT_DIR into run_dir, still inside the lock,
+            # before any other queued request's pipeline run can start
+            # writing to the same shared path.
+            os.makedirs(run_dir, exist_ok=True)
+            for produced_name in ('corrected_dataset.csv', 'audit_trail.json', 'report.pdf'):
+                produced_path = os.path.join(PIPELINE_OUTPUT_DIR, produced_name)
+                if os.path.exists(produced_path):
+                    shutil.move(produced_path, os.path.join(run_dir, produced_name))
+
         # Extract key metrics for JSON response
         response_data = {
             'success': True,
             'mode': mode,
             'svm_enabled': enable_svm,
-            'timestamp': timestamp
+            'timestamp': timestamp,
+            'run_id': run_id
         }
         
         # Extract audit results if available. The pipeline returns
@@ -209,14 +247,9 @@ def analyze():
         response_data.setdefault('significant_biases', '0')
         response_data.setdefault('vulnerable_groups', '0')
         
-        # Find generated files. v3.1 consolidation: the pipeline now
-        # writes exactly 3 files instead of the previous 11+ spread
-        # across biasclean_results/ and biasclean_results/v27_exports/
-        # (biasclean_report.html, GOVERNANCE_REPORT.txt, 3 chart PNGs,
-        # pipeline_summary.json, feature_mappings.json, and 6 more JSON
-        # files) -- see UniversalBiasClean._save_results and
-        # ReportGenerator.generate_report in biasclean_v3_terminal.py.
-        results_dir = app.config['RESULTS_FOLDER']
+        # Find generated files -- now inside this run's own subfolder,
+        # not the shared PIPELINE_OUTPUT_DIR (files were already moved
+        # out above, inside the lock).
         files = {}
 
         for file_type, pattern in [
@@ -224,7 +257,7 @@ def analyze():
             ('corrected', 'corrected_dataset.csv'),
             ('audit_trail', 'audit_trail.json'),
         ]:
-            file_path = os.path.join(results_dir, pattern)
+            file_path = os.path.join(run_dir, pattern)
             if os.path.exists(file_path):
                 files[file_type] = pattern
 
@@ -245,13 +278,22 @@ def analyze():
             'details': str(e)
         }), 500
 
-@app.route('/download/<filename>')
-def download_file(filename):
-    """Serve generated result files for download"""
+@app.route('/download/<run_id>/<filename>')
+def download_file(run_id, filename):
+    """Serve generated result files for download, scoped to the run
+    that produced them (see the per-run subfolder change in /analyze).
+    secure_filename() on both segments, plus resolving and checking the
+    final path stays inside RESULTS_FOLDER, since both are taken
+    directly from the URL."""
     try:
-        file_path = os.path.join(app.config['RESULTS_FOLDER'], filename)
+        safe_run_id = secure_filename(run_id)
+        safe_filename = secure_filename(filename)
+        results_root = os.path.abspath(app.config['RESULTS_FOLDER'])
+        file_path = os.path.abspath(os.path.join(results_root, safe_run_id, safe_filename))
+        if not file_path.startswith(results_root + os.sep):
+            return jsonify({'error': 'Invalid path'}), 400
         if os.path.exists(file_path):
-            return send_file(file_path, as_attachment=True, download_name=filename)
+            return send_file(file_path, as_attachment=True, download_name=safe_filename)
         else:
             return jsonify({'error': 'File not found'}), 404
     except Exception as e:
