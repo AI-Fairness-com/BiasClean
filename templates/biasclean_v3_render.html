@@ -1592,10 +1592,15 @@ document.addEventListener('DOMContentLoaded', function(){
         const mode = data.mode || selectedMode;
         const svmEnabled = data.svm_enabled || enableSVM;
         
-        // File references
+        // File references. Server sends {corrected, report, audit_trail}
+        // -- report.pdf, not the older biasclean_report.html, and
+        // pipeline_summary.json no longer exists as of the v3.1
+        // consolidation; audit_trail.json is its replacement. run_id
+        // scopes downloads to this specific run.
+        const runId = data.run_id;
         const cleanedFile = data.files?.corrected || 'corrected_dataset.csv';
-        const reportFile = data.files?.report || 'biasclean_report.html';
-        const summaryFile = data.files?.summary || 'pipeline_summary.json';
+        const reportFile = data.files?.report || 'report.pdf';
+        const auditTrailFile = data.files?.audit_trail || 'audit_trail.json';
         
         showMessage('success', `✅ v3.0 Analysis Complete! ${auditIcon} ${auditStatus} - ${biasReduction}% bias reduction`);
         
@@ -1677,16 +1682,16 @@ document.addEventListener('DOMContentLoaded', function(){
         // Download buttons
         resultsHTML += `
             <div class="download-buttons">
-              <a href="/download/${cleanedFile}" class="download-btn" download>
+              <a href="/download/${runId}/${cleanedFile}" class="download-btn" download>
                 <i class="fas fa-file-csv"></i> Download Corrected Dataset
               </a>
               
-              <a href="/download/${reportFile}" class="download-btn secondary" download>
-                <i class="fas fa-file-code"></i> Download HTML Report
+              <a href="/download/${runId}/${reportFile}" class="download-btn secondary" download>
+                <i class="fas fa-file-pdf"></i> Download Report (PDF)
               </a>
               
-              <a href="/download/${summaryFile}" class="download-btn secondary" download>
-                <i class="fas fa-file-alt"></i> Download JSON Summary
+              <a href="/download/${runId}/${auditTrailFile}" class="download-btn secondary" download>
+                <i class="fas fa-file-alt"></i> Download Audit Trail (JSON)
               </a>
             </div>
           </div>
