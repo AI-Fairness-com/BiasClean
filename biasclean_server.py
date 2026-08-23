@@ -45,7 +45,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['RESULTS_FOLDER'], exist_ok=True)
 
 # Store HTML template path
-HTML_TEMPLATE_PATH = 'biasclean_v3_render.html'
+HTML_TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates', 'biasclean_v3_render.html')
 
 @app.route('/')
 def index():
