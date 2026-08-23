@@ -2497,6 +2497,16 @@ class BiasCleanConfig:
         "pos_rate_upper": 0.95,        # line 546: validate_outcome
         "min_group_calc": 10,          # line 918: disparity calculation
         "harm_threshold": 0.05,        # practical significance threshold
+        # v3.10.11: a genuine outcome varying independently across 7
+        # unrelated protected characteristics essentially never shows
+        # zero disparity on every single one at once -- this pattern is
+        # far more consistent with a mis-selected, leaked, or otherwise
+        # meaningless target column than with real fairness. Same lesson
+        # as the amended Justice/COMPAS report's Finding 5 (is_recid): a
+        # technically valid column choice can still be semantically
+        # wrong, and suspiciously clean results deserve the same
+        # scrutiny as suspiciously bad ones, not less.
+        "suspiciously_uniform_disparity": 0.01,
     }
 
     SVM_DEFAULT = False  # matches v2.7 line 2520: test_rebalancing_only = True
@@ -2612,10 +2622,20 @@ class PreMitigationAuditor:
 
         total_disparity = sum(f["weighted"] for f in per_feature.values())
 
+        # See config.THRESHOLDS["suspiciously_uniform_disparity"]: every
+        # computed feature landing below this at once is the tell, not
+        # any single feature being low on its own (a dataset can
+        # legitimately be unbiased on ONE characteristic).
+        suspiciously_uniform = (
+            len(per_feature) >= 2
+            and all(f["disparity"] < config.THRESHOLDS["suspiciously_uniform_disparity"] for f in per_feature.values())
+        )
+
         return {
             "per_feature": per_feature,
             "aggregate_bias": total_disparity,
-            "n_features": len(per_feature)
+            "n_features": len(per_feature),
+            "suspiciously_uniform": suspiciously_uniform
         }
 
     def _find_vulnerable_groups(self, df, target, feature_map) -> dict:
@@ -2674,14 +2694,19 @@ class PreMitigationAuditor:
                 "proceed": False
             }
 
+        suspiciously_uniform = results["baseline_fairness"].get("suspiciously_uniform", False)
+
         # YELLOW conditions
-        if bias > 0.15 or vulnerable > 0:
+        if bias > 0.15 or vulnerable > 0 or suspiciously_uniform:
             return {
                 "traffic_light": "🟡 YELLOW",
                 "action": "REVIEW REQUIRED",
                 "rationale": [
                     f"Moderate bias: {bias:.3f}" if bias > 0.15 else None,
-                    f"Vulnerable groups: {vulnerable}" if vulnerable > 0 else None
+                    f"Vulnerable groups: {vulnerable}" if vulnerable > 0 else None,
+                    "Near-zero disparity on every protected feature at once -- double-check this is the "
+                    "correct target column, not a near-duplicate, ID-like, or otherwise leaked column"
+                    if suspiciously_uniform else None
                 ],
                 "proceed": True  # Allow with caution
             }
